@@ -54,6 +54,7 @@
     <string name="filter_empty">No apps match the current filters</string>
     <string name="system_app_badge">System</string>
     <string name="crash_info_title">Crash details</string>
+    <string name="crash_detail_close">Close crash details</string>
 
     <string name="permission_banner_title">App list incomplete — grant package visibility</string>
     <string name="permission_banner_title_compact">Incomplete app list — tap to grant</string>
@@ -71,8 +72,10 @@
     <string name="crash_history_loading">Loading crash history…</string>
     <string name="crash_history_count_format">%1$d crash records</string>
     <string name="crash_event_subtitle_format">%1$s · %2$s · %3$s</string>
-    <string name="crash_source_ueh">Uncaught exception</string>
-    <string name="crash_source_looper">Main thread loop</string>
+    <string name="crash_source_ueh">UEH</string>
+    <string name="crash_source_looper">Looper</string>
+    <string name="crash_source_ueh_a11y">Uncaught exception handler</string>
+    <string name="crash_source_looper_a11y">Main thread loop</string>
     <string name="observe_menu_filter">Filter</string>
     <string name="observe_menu_export">Export logs</string>
     <string name="observe_menu_stats">Statistics</string>

@@ -41,8 +41,8 @@ summary: "docs/ + dev/ 完整导航索引（自动生成）"
 | [crash-handler.md](architecture/crash-handler.md) | 通过 Looper 续命与 UncaughtExceptionHandler 替换拦截崩溃 |
 | [crash-history-ui.md](architecture/crash-history-ui.md) | Phase 4C-β CrashHistoryFragment：时间倒序列表、字段、筛选、空态、CrashLogRepository 读取契约 |
 | [crash-intelligent-analysis.md](architecture/crash-intelligent-analysis.md) | 在 JSONL 观测层之上做规则分类、签名聚类与诊断建议；默认端侧离线，不自动修复目标 app |
-| [crash-log-backends.md](architecture/crash-log-backends.md) | CrashLogBackend 抽象、hook 侧 root 优先并行写入、模块侧 root ingest 与管理；canonical JSONL 为 SSOT |
-| [crash-logging.md](architecture/crash-logging.md) | hook 侧异步持久化全量拦截崩溃；多后端编排见 crash-log-backends.md |
+| [crash-log-backends.md](architecture/crash-log-backends.md) | CrashLogBackend 抽象、4B-α Phase 2 并行写入已实现；root / ingest defer 4B-β；canonical JSONL 为 SSOT |
+| [crash-logging.md](architecture/crash-logging.md) | hook 侧异步持久化全量拦截崩溃；4B-α 部分 MVP 已实现；多后端编排见 crash-log-backends.md |
 | [crash-log-ipc.md](architecture/crash-log-ipc.md) | hook 目标进程向模块进程写入 CrashEvent 的 IPC 机制对比；编排见 crash-log-backends.md（多后端并行、root 优先） |
 | [crash-notification.md](architecture/crash-notification.md) | 目标 app 崩溃后 Toast / 系统通知的触发条件、线程模型、PendingIntent 与 ActivityCrashInfo 详情页 |
 | [crash-stats-ui.md](architecture/crash-stats-ui.md) | observe/detail 域中的全局统计页与单应用崩溃列表/统计页 IA、路由、指标和数据聚合需求（Phase 4D） |
@@ -50,10 +50,10 @@ summary: "docs/ + dev/ 完整导航索引（自动生成）"
 | [design-system.md](architecture/design-system.md) | 桥接 docs/design/ 视觉语言与 CrashCenter res/ 实现：Fluent token、共享 UI 组件、域复用规则 |
 | [framework-injection-feasibility.md](architecture/framework-injection-feasibility.md) | 参照 celestailruler 评估 System Framework 注入对 CrashCenter 的价值；结论：不采用为主架构，保留 ADR-007 app 级 + Provider，可选 parseQueries 补丁 |
 | [navigation-ia.md](architecture/navigation-ia.md) | 分阶段导航：Phase 3/4B 无 tab；Phase 4C+ 双底栏（配置 | 观测），观测内 TabLayout（历史 | 统计）；路由表见 ui-routing.md |
-| [overview.md](architecture/overview.md) | Xposed 异常拦截模块的整体架构与数据流；Phase 4 多后端观测层；演进见 architecture-optimization.md |
+| [overview.md](architecture/overview.md) | Xposed 异常拦截模块的整体架构与数据流；4B-α 观测层部分 MVP 已实现；演进见 architecture-optimization.md |
 | [scope-and-prefs.md](architecture/scope-and-prefs.md) | SharedPreferences 键、scope 模式与跨进程同步；legacy tiiehenry.xp.grapcrash 迁移 |
 | [ui-routing.md](architecture/ui-routing.md) | MainShellActivity、ConfigFragment、ObserveHost 与详情 Activity 的路由表、Intent 兼容参数、返回栈与 Phase 4C+ Navigation 图 |
-| [xposed-entry.md](architecture/xposed-entry.md) | XposedEntry 的包过滤、hook 安装与通知展示 |
+| [xposed-entry.md](architecture/xposed-entry.md) | XposedEntry 薄入口：ScopePolicy 过滤、CrashHandler 安装、委托 CrashCapturePipeline |
 
 ---
 
@@ -131,7 +131,7 @@ summary: "docs/ + dev/ 完整导航索引（自动生成）"
 
 | 文档 | 内容 |
 |------|------|
-| [status.md](../dev/progress/status.md) | M7 empty state icons — muted tab/add drawables above empty messages |
+| [status.md](../dev/progress/status.md) | 4B-α 多后端写入 + Provider + retention 已编码；IS-1~6 待 LSPosed 真机 |
 
 ### 设备验收（`dev/verification/`）
 

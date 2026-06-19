@@ -8,3 +8,15 @@ plugins {
 tasks.register('clean', Delete) {
     delete rootProject.layout.buildDirectory
 }
+
+subprojects { sub ->
+    if (sub.name in ['CodeEditorClient', 'ui_common']) {
+        sub.afterEvaluate {
+            sub.extensions.findByName('kotlin')?.with {
+                it.compilerOptions.jvmTarget.set(
+                    org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17,
+                )
+            }
+        }
+    }
+}

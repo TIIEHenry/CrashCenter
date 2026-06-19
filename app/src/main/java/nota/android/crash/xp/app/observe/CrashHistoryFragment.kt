@@ -1,6 +1,5 @@
 package nota.android.crash.xp.app.observe
 
-import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -9,7 +8,6 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import nota.android.crash.ActivityCrashInfo
 import nota.android.crash.xp.app.R
 import nota.android.crash.xp.app.common.ui.EmptyState
 import nota.android.crash.xp.app.common.ui.LoadingState
@@ -66,10 +64,8 @@ class CrashHistoryFragment : Fragment() {
     }
 
     private fun openDetail(crashId: String) {
-        val intent = Intent(requireContext(), ActivityCrashInfo::class.java).apply {
-            putExtra(EXTRA_CRASH_ID, crashId)
-        }
-        startActivity(intent)
+        CrashDetailBottomSheet.newInstance(crashId)
+            .show(parentFragmentManager, CrashDetailBottomSheet.TAG)
     }
 
     private fun renderState(state: CrashHistoryUiState) {

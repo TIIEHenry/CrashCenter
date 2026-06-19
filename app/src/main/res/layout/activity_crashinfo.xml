@@ -60,51 +60,16 @@
 
 
 
-    <androidx.core.widget.NestedScrollView
+    <FrameLayout
+
+        android:id="@+id/viewerContainer"
 
         android:layout_width="match_parent"
 
-        android:layout_height="match_parent"
+        android:layout_height="0dp"
 
-        android:fillViewport="true">
-
-
-
-        <HorizontalScrollView
-
-            android:layout_width="match_parent"
-
-            android:layout_height="wrap_content"
-
-            android:scrollbars="horizontal">
-
-
-
-            <TextView
-
-                android:id="@+id/textv"
-
-                style="@style/AppTheme.CrashTrace"
-
-                android:layout_width="wrap_content"
-
-                android:layout_height="wrap_content"
-
-                android:focusableInTouchMode="true"
-
-                android:padding="@dimen/spacing_lg"
-
-                android:textIsSelectable="true" />
-
-
-
-        </HorizontalScrollView>
-
-
-
-    </androidx.core.widget.NestedScrollView>
+        android:layout_weight="1" />
 
 
 
 </LinearLayout>
-

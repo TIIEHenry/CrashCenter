@@ -153,13 +153,13 @@
 
         <item name="android:textColorHint">@color/textSecondary</item>
 
-        <item name="boxCornerRadiusTopStart">@dimen/fluent_corner_radius_control</item>
+        <item name="boxCornerRadiusTopStart">@dimen/radius_mobile_control</item>
 
-        <item name="boxCornerRadiusTopEnd">@dimen/fluent_corner_radius_control</item>
+        <item name="boxCornerRadiusTopEnd">@dimen/radius_mobile_control</item>
 
-        <item name="boxCornerRadiusBottomStart">@dimen/fluent_corner_radius_control</item>
+        <item name="boxCornerRadiusBottomStart">@dimen/radius_mobile_control</item>
 
-        <item name="boxCornerRadiusBottomEnd">@dimen/fluent_corner_radius_control</item>
+        <item name="boxCornerRadiusBottomEnd">@dimen/radius_mobile_control</item>
 
     </style>
 

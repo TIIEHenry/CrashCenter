@@ -98,7 +98,7 @@ Shell 拥有所有跨 tab chrome：
 
 | 子 tab | Phase | 内容 |
 |--------|-------|------|
-| **历史** | 4C | 时间倒序列表 → 按 `crash_id` 打开详情 |
+| **历史** | 4C | 时间倒序列表 → 按 `crash_id` 打开 **`CrashDetailBottomSheet`**（壳内半屏） |
 | **统计** | 4D | 按包名/异常类 TOP N、日/周摘要；清空、retention — 详见 [crash-stats-ui.md](crash-stats-ui.md) |
 | （Toolbar 菜单） | 4E | SAF 导出、`crash_log_enabled` 等运维项 |
 
@@ -116,7 +116,9 @@ Design System 来自 Phase 3 已落地的 Fluent/AppSnapShotor token，但应从
 | `DenseSearchField` | app 搜索 | 历史搜索 | 可选查找入口仍用 CodeEditor |
 | `AppToggleRow` | per-app Switch | — | — |
 | `CrashEventRow` | 可选角标，不作主行 | 历史 / 单应用列表 | — |
-| `EmptyState` / `LoadingState` | 列表 | 历史 / 统计 | 详情加载 |
+| `CrashDetailBottomSheet` | — | 历史 / 单应用 / 统计下钻 | — |
+| `CrashLogViewerClient` | — | — | 半屏 Sheet **与** 全屏 Activity 共用 |
+| `EmptyState` / `LoadingState` | 列表 | 历史 / 统计 | Sheet / Activity 加载 |
 
 ### 壳层实现
 
@@ -135,7 +137,8 @@ Design System 来自 Phase 3 已落地的 Fluent/AppSnapShotor token，但应从
 
 | 内容 | 推荐载体 | 理由 |
 |------|----------|------|
-| Stack trace 详情 | `ActivityCrashInfo`（`crash_id` / Intent extra） | 深度阅读，单次任务 |
+| Stack trace 详情（壳内） | **`CrashDetailBottomSheet`**（`crash_id`） | 历史 / 单应用 / 统计下钻；半屏 + CodeEditor；复用 [Draggable Half Sheet](../design/components/draggable-half-sheet.md) 规范 |
+| Stack trace 详情（外部） | `ActivityCrashInfo` / `CrashLogDetailActivity`（`crash_id` / `Exception` extra） | 通知 PendingIntent、深链、跨任务栈入口；全屏深度阅读 |
 | About / 使用警告 | Toolbar 对话框 | 低频；AppSnapShotor 同理不进 tab |
 | 测试崩溃 | Toolbar 菜单 | 开发/验收，非用户主路径 |
 | Xposed 管理器跳转 | 状态条点击 | 系统外链 |
@@ -177,7 +180,7 @@ Design System 来自 Phase 3 已落地的 Fluent/AppSnapShotor token，但应从
 | **Phase 3**（当前） | 0 | 单 `ActivityMain` | ADR-005 单屏配置 |
 | **Phase 4B** | 0 | 无 UI 变更 | `CrashLogger` 后台写盘 |
 | **Phase 4C-α** | 0 → **2** | 引入 Shell + Design System + `ConfigFragment` | 不交付统计；观测可先空态 |
-| **Phase 4C-β** | 2 | 观测 tab 接入 **历史** | 历史列表与 `crash_id` 详情 |
+| **Phase 4C-β** | 2 | 观测 tab 接入 **历史** | 历史列表 → `CrashDetailBottomSheet`；通知仍走 Activity |
 | **Phase 4D** | 2 | 观测 tab 内增加 **统计** 子 tab | 不增 top-level tab |
 | **Phase 4E** | 2 | 导出 / retention 挂观测 Toolbar | 仍 2 tab |
 
@@ -193,6 +196,9 @@ Design System 来自 Phase 3 已落地的 Fluent/AppSnapShotor token，但应从
 - [ADR-009: UI Shell 与 Design System 架构](../decisions/009-ui-shell-design-system.md)
 - [ADR-005: 设置信息架构](../decisions/005-settings-information-architecture.md)
 - [ADR-006: Material 3 工具链](../decisions/006-material3-toolchain.md)
+- [crash-history-ui.md](crash-history-ui.md) — 历史列表与半屏详情导航
+- [code-editor-porting.md](code-editor-porting.md) — `CrashLogViewerClient` 与 Sheet/Activity 双载体
+- [design-system.md](design-system.md) — `CrashDetailBottomSheet` 观测域组件
 - [phase4_crash_observability.md](../../dev/roadmap/active/phase4_crash_observability.md)
 - [phase3_ui_redesign.md](../../dev/roadmap/active/phase3_ui_redesign.md)
 - AppSnapShotor 参考：`/home/clarence/Projects/Android/AppSnapShotor/docs/guides/getting-started/ui-shell.md`

@@ -51,5 +51,8 @@
     <color name="chipSelectedBg">@color/fluent_accent_container</color>
     <color name="chipSelectedStroke">@color/fluent_accent</color>
     <color name="systemAppBadge">@color/fluent_text_secondary</color>
-    <color name="sheet_drag_handle">@color/fluent_text_tertiary</color>
+    <color name="sheet_drag_handle">@color/fluent_text_secondary</color>
+
+    <!-- Press overlay (iOS-style surface press) — light: black 8% -->
+    <color name="press_overlay">#14000000</color>
 </resources>

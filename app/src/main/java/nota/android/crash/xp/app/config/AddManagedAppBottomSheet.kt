@@ -80,9 +80,14 @@ class AddManagedAppBottomSheet : BottomSheetDialogFragment() {
             fillColor = ColorStateList.valueOf(
                 ContextCompat.getColor(requireContext(), R.color.surface),
             )
+            setStroke(
+                1.0f,
+                ContextCompat.getColor(requireContext(), R.color.outlineVariant),
+            )
         }
         bottomSheet.background = sheetBackground
         bottomSheet.clipToOutline = true
+        bottomSheet.elevation = resources.getDimension(R.dimen.sheet_elevation)
 
         val behavior = BottomSheetBehavior.from(bottomSheet)
         val displayHeight = resources.displayMetrics.heightPixels
@@ -97,7 +102,7 @@ class AddManagedAppBottomSheet : BottomSheetDialogFragment() {
     }
 
     private fun setupToolbar() {
-        binding.toolbar.setNavigationOnClickListener { dismiss() }
+        binding.btnClose.setOnClickListener { dismiss() }
         binding.btnDone.setOnClickListener { commitSelection() }
     }
 

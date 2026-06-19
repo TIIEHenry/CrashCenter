@@ -4,10 +4,10 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="?attr/selectableItemBackground"
+    android:background="@drawable/shell_press_surface"
     android:minHeight="@dimen/list_item_min_height"
-    android:paddingHorizontal="@dimen/spacing_xs"
-    android:paddingVertical="@dimen/spacing_xs">
+    android:paddingHorizontal="@dimen/content_padding_horizontal"
+    android:paddingVertical="@dimen/spacing_md">
 
     <ImageView
         android:id="@+id/ivIcon"
@@ -30,26 +30,29 @@
         android:textSize="15sp"
         android:textStyle="bold"
         app:layout_constraintBottom_toTopOf="@id/tvSubtitle"
+        android:layout_marginEnd="@dimen/spacing_sm"
         app:layout_constraintEnd_toStartOf="@id/tvSourceBadge"
         app:layout_constraintStart_toEndOf="@id/ivIcon"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_chainStyle="packed"
+        app:layout_goneMarginEnd="0dp"
         tools:text="Example App" />
 
     <TextView
         android:id="@+id/tvSourceBadge"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/spacing_sm"
         android:background="@drawable/bg_system_badge"
         android:paddingHorizontal="@dimen/badge_padding_horizontal"
         android:paddingVertical="@dimen/badge_padding_vertical"
         android:textColor="@color/systemAppBadge"
         android:textSize="10sp"
         android:visibility="gone"
-        app:layout_constraintBottom_toBottomOf="@id/tvAppName"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="@id/tvAppName"
-        tools:text="Uncaught exception"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:text="UEH"
         tools:visibility="visible" />
 
     <TextView
@@ -62,10 +65,12 @@
         android:maxLines="1"
         android:textColor="?android:attr/textColorSecondary"
         android:textSize="12sp"
+        android:layout_marginEnd="@dimen/spacing_sm"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/tvSourceBadge"
         app:layout_constraintStart_toEndOf="@id/ivIcon"
         app:layout_constraintTop_toBottomOf="@id/tvAppName"
-        tools:text="RuntimeException · com.example.app · 3 min ago" />
+        app:layout_goneMarginEnd="0dp"
+        tools:text="NullPointerException · Attempt to invoke… · 3 min ago" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

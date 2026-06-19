@@ -28,29 +28,34 @@ object CrashEventRow {
             DateUtils.MINUTE_IN_MILLIS,
             DateUtils.FORMAT_ABBREV_RELATIVE,
         )
+        val detail = event.message?.takeIf { it.isNotBlank() } ?: event.packageName
+        val subtitle = context.getString(
+            R.string.crash_event_subtitle_format,
+            event.shortExceptionClass,
+            detail,
+            relativeTime,
+        )
         root.contentDescription = context.getString(
-            R.string.crash_event_subtitle_format,
-            event.shortExceptionClass,
-            event.packageName,
-            relativeTime,
+            R.string.legacy_app_row_a11y,
+            label,
+            subtitle,
         )
-        subtitleView.text = context.getString(
-            R.string.crash_event_subtitle_format,
-            event.shortExceptionClass,
-            event.packageName,
-            relativeTime,
-        )
+        subtitleView.text = subtitle
 
         iconView.setImageDrawable(loadIcon(context, event.packageName))
 
         val sourceLabel = formatSource(context, event.source)
         if (sourceLabel != null) {
             sourceBadge.visibility = View.VISIBLE
-            sourceBadge.text = sourceLabel
+            sourceBadge.text = sourceLabel.label
+            sourceBadge.contentDescription = sourceLabel.contentDescription
         } else {
             sourceBadge.visibility = View.GONE
+            sourceBadge.contentDescription = null
         }
     }
+
+    private data class SourceLabel(val label: String, val contentDescription: String)
 
     private fun loadIcon(context: Context, packageName: String) = try {
         context.packageManager.getApplicationIcon(packageName)
@@ -58,10 +63,16 @@ object CrashEventRow {
         ContextCompat.getDrawable(context, R.mipmap.ic_launcher)
     }
 
-    private fun formatSource(context: Context, source: String?): String? = when (source?.lowercase()) {
-        "uncaught" -> context.getString(R.string.crash_source_ueh)
-        "looper" -> context.getString(R.string.crash_source_looper)
+    private fun formatSource(context: Context, source: String?): SourceLabel? = when (source?.lowercase()) {
+        "uncaught" -> SourceLabel(
+            context.getString(R.string.crash_source_ueh),
+            context.getString(R.string.crash_source_ueh_a11y),
+        )
+        "looper" -> SourceLabel(
+            context.getString(R.string.crash_source_looper),
+            context.getString(R.string.crash_source_looper_a11y),
+        )
         null, "" -> null
-        else -> source
+        else -> SourceLabel(source, source)
     }
 }

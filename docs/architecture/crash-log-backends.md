@@ -4,12 +4,12 @@ type: architecture
 status: accepted
 phase: 4
 updated: 2026-06-19
-summary: "CrashLogBackend 抽象、hook 侧 root 优先并行写入、模块侧 root ingest 与管理；canonical JSONL 为 SSOT"
+summary: "CrashLogBackend 抽象、4B-α Phase 2 并行写入已实现；root / ingest defer 4B-β；canonical JSONL 为 SSOT"
 ---
 
 # 崩溃日志多后端存储
 
-> 适用模块：`:app`（Phase 4 待建 `CrashLogger`、`CrashLogCoordinator`、`CrashLogIngest`）
+> 适用模块：`:app`（4B-α：`CrashLogCoordinator`、`CrashLogBackendRegistry`、Phase 2 backends、`CrashLogProvider`）
 > 机制对比与 FAQ 见 [crash-log-ipc.md](crash-log-ipc.md)
 > 存储决策见 [ADR-007](../decisions/007-crash-log-cross-process-storage.md)、[ADR-008](../decisions/008-multi-backend-crash-log-storage.md)
 > Root 实现参考：[root-service-patterns.md](../reference/root-service-patterns.md)（提炼自 AppSnapShotor libsu + RootService）
@@ -22,11 +22,114 @@ summary: "CrashLogBackend 抽象、hook 侧 root 优先并行写入、模块侧 
 2. **hook 侧并行写入** — root 短窗优先，失败后多 IPC 并行
 3. **模块侧 root ingest** — 管理器用 root 读取各 app 私有 relay，合并进 canonical 存储并供 UI 管理
 
+**4B-α 范围**：hook 侧 Phase 2 三后端并行；`RootSuBackend` 与模块侧 `CrashLogIngestCoordinator` **defer 4B-β**。
+
 **不变量**（与 [crash-logging.md](crash-logging.md) 一致）：
 
 - 观测层不改变干预层语义：异步、失败 **silent**、不阻塞 [CrashHandler](crash-handler.md)、不 `System.exit`
 - **Canonical SSOT**：`/data/data/nota.android.crash.xp.app/files/crash_logs/events.jsonl`
-- 配置开关仍走 [XSharedPreferences](../decisions/003-xsharedpreferences-cross-process.md) 只读；**事件体不走 prefs**
+- 配置开关走 [XSharedPreferences](../decisions/003-xsharedpreferences-cross-process.md) 只读；**事件体不走 prefs**
+
+## As-built 4B-α（2026-06-19）
+
+### 写入时序（已实现）
+
+4B-α **跳过 Phase 1**（`RootSuBackend` 未注册）。`CrashLogCoordinator.logAsync` 在单线程 executor 上构建 `CrashEvent` 后直接 `runPhase2Parallel`：
+
+```mermaid
+sequenceDiagram
+    participant Pipe as CrashCapturePipeline
+    participant H as CrashLogCoordinator
+    participant P as ProviderBackend
+    participant D as DirectFsBackend
+    participant T as TargetRelayBackend
+    participant C as canonical JSONL
+
+    Pipe->>H: logAsync(ctx, pkg, t, source)
+    H->>H: CrashEventBuilder.build
+    par Phase 2 parallel (≤2s)
+        H->>P: append
+        P->>C: ContentResolver.insert → Provider
+        H->>D: append
+        D->>C: createPackageContext → CanonicalJsonlWriter
+        H->>T: append
+        T->>T: files/crashcenter_relay/{id}.json
+    end
+    Note over H: 各 backend 独立 Thread；CountDownLatch 等待；全失败 silent
+```
+
+| 常量 | 值 | 源码 |
+|------|-----|------|
+| `PARALLEL_TIMEOUT_MS` | 2000 | `CrashLogCoordinator` |
+| `crashExecutor` | 单线程 | `Executors.newSingleThreadExecutor()` |
+| Phase 1 | **未实现** | defer 4B-β |
+
+### CrashLogBackend 接口（as-built）
+
+```kotlin
+interface CrashLogBackend {
+    val id: BackendId
+    val tier: Int
+    val runsOn: ProcessSlot
+    fun probe(context: Context): BackendAvailability
+    fun append(context: Context, event: CrashEvent, deadlineMs: Long): AppendResult
+}
+```
+
+- **同步** `append`（非 `suspend`）；实现须内部 `catch`，不向外抛
+- `AppendResult`：`Success` | `Failure(reason)`
+- 成功时 stamp `event.withBackendWritten(listOf(id.wireName))` 再写入
+
+### CrashLogBackendRegistry（hook Phase 2）
+
+| BackendId | tier | 类 | 默认启用 pref |
+|-----------|------|-----|---------------|
+| `provider_insert` | 1 | `ProviderBackend` | `crash_log_backend_provider` |
+| `direct_fs` | 2 | `DirectFsBackend` | `crash_log_backend_direct_fs` |
+| `target_relay` | 3 | `TargetRelayBackend` | `crash_log_backend_relay` |
+
+`enabledHookPhase2Backends(context)` 读 `XSharedPreferences` 过滤；`crash_log_enabled == false` 时 Coordinator 短路。
+
+### 路径与 CrashLogContract
+
+| 目标 | 路径 | 写入方 |
+|------|------|--------|
+| Canonical JSONL | `/data/data/nota.android.crash.xp.app/files/crash_logs/events.jsonl` | `DirectFsBackend`、`CrashLogProvider` |
+| Target relay | `/data/user/0/{packageName}/files/crashcenter_relay/{eventId}.json` | `TargetRelayBackend` |
+
+```kotlin
+object CrashLogContract {
+    const val AUTHORITY = "nota.android.crash.xp.app.crashlog"
+    const val PATH_EVENTS = "events"
+    const val COLUMN_PAYLOAD = "payload"
+    const val COLUMN_PACKAGE_NAME = "package_name"
+    val EVENTS_URI = Uri.parse("content://$AUTHORITY/$PATH_EVENTS")
+}
+```
+
+Provider IPC 细节见 [crash-log-ipc.md § As-built](crash-log-ipc.md#as-builtcrashlogprovider4b-α)。
+
+### CanonicalJsonlWriter
+
+模块与 hook 直写路径共用：
+
+- `RandomAccessFile` + `FileLock` append
+- Retention：**500 条或 8 MB 先到者**（`MAX_ENTRIES` / `MAX_BYTES`）；删最旧行
+- 调用点：`DirectFsBackend`、`CrashLogProvider.insert`
+
+### backendWritten 字段
+
+JSONL 每行含 `backendWritten: ["provider_insert", ...]`，记录该次 append 成功的 backend wire name。多后端并行时各 backend 独立 stamp 自身 id（canonical 可能有多行同 `id` — 4B-β ingest dedupe 待建）。
+
+### defer 4B-β
+
+| 组件 | 状态 |
+|------|------|
+| `RootSuBackend`（Phase 1） | 未实现 |
+| `CrashLogIngestCoordinator` | 未实现 |
+| `RootFsBackend` / `RelayMergeBackend` | 未实现 |
+| relay → canonical merge / dedupe | 未实现 |
+| `ingestedFrom` 字段 | 未实现 |
 
 ---
 
@@ -79,8 +182,8 @@ interface CrashLogBackend {
     /** 廉价探测；崩溃路径避免阻塞 IO */
     fun probe(): BackendAvailability
 
-    /** 单次 append；内部 catch，不向外抛 */
-    suspend fun append(event: CrashEvent, deadlineMs: Long): AppendResult
+    /** 单次 append；内部 catch，不向外抛（4B-α：同步，非 suspend） */
+    fun append(context: Context, event: CrashEvent, deadlineMs: Long): AppendResult
 }
 
 enum class BackendAvailability { READY, MAYBE, UNAVAILABLE }
@@ -92,20 +195,20 @@ enum class ProcessSlot { HOOK, MODULE }
 
 | BackendId | tier | 进程 | 说明 |
 |-----------|------|------|------|
-| `root_su` | 0 | HOOK | `su` append canonical JSONL |
+| `root_su` | 0 | HOOK | `su` append canonical JSONL — **defer 4B-β** |
 | `provider_insert` | 1 | HOOK | `ContentResolver.insert` → [CrashLogProvider](crash-log-ipc.md) |
 | `direct_fs` | 2 | HOOK | `createPackageContext(module).filesDir` 直写 |
 | `target_relay` | 3 | HOOK | 写目标 app 私有 relay（同 UID，几乎必成功） |
-| `root_fsm` | 0 | MODULE | libsu RootService 读写 / merge |
-| `local_fs` | 1 | MODULE | 同 UID canonical 读写 |
-| `relay_merge` | 2 | MODULE | 扫描 relay 目录 merge（无 root 时仅扫模块已知路径则 skip） |
+| `root_fsm` | 0 | MODULE | libsu RootService 读写 / merge — **defer 4B-β** |
+| `local_fs` | 1 | MODULE | 同 UID canonical 读写（`FileCrashLogRepository` 读路径 ✅） |
+| `relay_merge` | 2 | MODULE | 扫描 relay 目录 merge — **defer 4B-β** |
 | `logcat` | 9 | HOOK | 调试，不参与 success 判定；分析见 [adb-logcat-analysis.md](adb-logcat-analysis.md) |
 
 ---
 
-## hook 侧：CrashLogCoordinator
+## hook 侧：CrashLogCoordinator（目标 vs as-built）
 
-### 写入时序
+### 写入时序（4B-β 目标）
 
 ```mermaid
 sequenceDiagram
@@ -132,15 +235,15 @@ sequenceDiagram
 
 ### 参数默认值
 
-| 常量 | 默认 | 说明 |
-|------|------|------|
-| `ROOT_FIRST_TIMEOUT_MS` | 1500 | su 冷启动上限 |
-| `PARALLEL_TIMEOUT_MS` | 2000 | Provider AM 冷启动 |
-| `crashExecutor` | 单线程 | 避免多崩溃并发打满 su / Binder |
+| 常量 | 默认 | 4B-α 状态 |
+|------|------|-----------|
+| `ROOT_FIRST_TIMEOUT_MS` | 1500 | defer 4B-β |
+| `PARALLEL_TIMEOUT_MS` | 2000 | ✅ 已实现 |
+| `crashExecutor` | 单线程 | ✅ 已实现 |
 
-### 调用位置
+### 调用位置（as-built）
 
-- [xposed-entry.md](xposed-entry.md) 所述 handler 内、**与 `showNotify` 解耦**
+- `CrashCapturePipeline.onException` → `CrashLogCoordinator.logAsync`（**与 `showNotify` 解耦**）
 - **不得**放入 `try { Toast... } catch { System.exit(0) }` 块
 - `crash_log_enabled == false` 时短路返回
 
@@ -148,7 +251,7 @@ sequenceDiagram
 
 ## 各写入后端
 
-### Tier 0 — RootSuBackend（hook）
+### Tier 0 — RootSuBackend（hook，defer 4B-β）
 
 ```bash
 # 禁止 JSON 直接拼接 shell；使用 base64 或 su 写 temp 再 append
@@ -188,9 +291,9 @@ su -c 'base64 -d >> /data/data/nota.android.crash.xp.app/files/crash_logs/events
 
 ---
 
-## 模块侧：CrashLogIngestCoordinator
+## 模块侧：CrashLogIngestCoordinator（defer 4B-β）
 
-### 职责
+> **4B-α 未实现**。以下为 4B-β 目标规格；4B-α 仅 `FileCrashLogRepository` 读 canonical。
 
 **管理器用 root 读取各 app 私有 relay，合并进 canonical，并供 UI 管理。**
 

@@ -55,6 +55,7 @@
 	<string name="filter_empty">没有符合当前筛选条件的应用</string>
 	<string name="system_app_badge">系统</string>
 	<string name="crash_info_title">崩溃详情</string>
+	<string name="crash_detail_close">关闭崩溃详情</string>
 	<string name="permission_banner_title">应用列表不完整，请授予查看已安装应用权限</string>
 	<string name="permission_banner_title_compact">应用列表不完整 · 点击授权</string>
 	<string name="permission_grant_action">去授权</string>
@@ -70,8 +71,10 @@
 	<string name="crash_history_loading">正在加载崩溃历史…</string>
 	<string name="crash_history_count_format">共 %1$d 条崩溃记录</string>
 	<string name="crash_event_subtitle_format">%1$s · %2$s · %3$s</string>
-	<string name="crash_source_ueh">未捕获异常</string>
-	<string name="crash_source_looper">主线程循环</string>
+	<string name="crash_source_ueh">未捕获</string>
+	<string name="crash_source_looper">循环</string>
+	<string name="crash_source_ueh_a11y">未捕获异常</string>
+	<string name="crash_source_looper_a11y">主线程循环</string>
 	<string name="crash_detail_not_found">未找到崩溃记录：%1$s</string>
 	<string name="observe_menu_filter">筛选</string>
 	<string name="observe_menu_export">导出日志</string>

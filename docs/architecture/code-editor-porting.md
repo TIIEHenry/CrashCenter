@@ -20,7 +20,8 @@ summary: "参照 celestailruler CodeEditor 三模块，在 observe/detail 域替
 - **不必**为日志浏览引入 `CodeEditorAntlr`（Lua 语法）；默认 `TextLanguage` 即可覆盖 stack trace 与 JSONL 行。
 - **不必**使用 celestailruler 的 `CodeEditorClient` 子类（Lua 保存/运行）；那是脚本编辑场景。
 - celestailruler 已在 `CrashInfoActivity` 验证过**与 CrashCenter 同构**的崩溃详情场景。
-- 详情页属于 **observe/detail domain**：可保留 `ActivityCrashInfo` 类名，也可演进为 `CrashLogDetailActivity`；路由契约统一为 `crash_detail`，参数优先 `crash_id`，兼容旧 `Exception` extra。
+- **Hybrid dual-carrier**：壳内观测域用 `CrashDetailBottomSheet`（半屏 + Editor）；外部通知 / 深链仍用全屏 `ActivityCrashInfo` / `CrashLogDetailActivity`。两载体共用 `CrashLogViewerClient`。
+- 详情属于 **observe/detail domain**：Activity 路由契约为 `crash_detail`；壳内 Sheet 路由为 `crash_detail_sheet`；参数优先 `crash_id`，兼容旧 `Exception` extra。
 
 ---
 
@@ -98,11 +99,17 @@ client.quickFloatLayout.downView.setOnClickListener { finish() }
 - **数据**：`Intent.getStringExtra("Exception")`（`Log.getStackTraceString` 全文）
 - **模式**：只读浏览 + 查找；隐藏保存浮动钮
 
-### 场景 B — 历史单条详情（Phase 4C）
+### 场景 B — 历史单条详情（Phase 4C，壳内）
 
-- **载体**：`CrashLogDetailActivity` / 兼容扩展后的 `ActivityCrashInfo`
-- **数据**：`CrashEvent.stackTrace` 或 `Gson` 美化后的整段 JSON
-- **入口**：`CrashHistoryFragment` / `PerAppCrashActivity` item 点击；以 `crash_id` 从 `events.jsonl` 加载而非 Intent 塞全文（避免 Binder 限制，见 [crash-logging.md](crash-logging.md)）
+- **载体**：`CrashDetailBottomSheet`（Draggable Half Sheet）
+- **数据**：`CrashEvent.stackTrace`；以 `crash_id` 从 `events.jsonl` 加载（避免 Binder 限制，见 [crash-logging.md](crash-logging.md)）
+- **入口**：`CrashHistoryFragment` / `PerAppCrashActivity` / 统计下钻 item 点击
+
+### 场景 B′ — 历史 / 通知详情（Phase 4C+，外部 Activity）
+
+- **载体**：`CrashLogDetailActivity` / 兼容扩展后的 `ActivityCrashInfo`（全屏）
+- **数据**：同场景 B；或通知直传 `Exception` extra
+- **入口**：通知 PendingIntent、深链、logcat 导入详情（Phase 4F）
 
 ### 场景 C — JSONL 文件抽查（Phase 4D+，可选）
 
@@ -174,11 +181,35 @@ implementation project(':CodeEditorClient')
 | 元素 | 建议包 | 说明 |
 |------|--------|------|
 | `CrashLogViewerClient` | `nota.android.crash.xp.app.view` | Design System 与 CodeEditor 的适配层，只读日志浏览 |
-| `CrashLogDetailActivity` / `ActivityCrashInfo` | `nota.android.crash` | L3 任务页，manifest 显式 Component 兼容通知 |
-| `CrashHistoryFragment` | `nota.android.crash.xp.app.observe` | 传 `crash_id` 打开详情 |
-| `PerAppCrashActivity` | `nota.android.crash.xp.app.observe` | 单应用列表，复用 `CrashEventRow` 与详情路由 |
+| `CrashDetailBottomSheet` | `nota.android.crash.xp.app.observe` | 壳内半屏详情；inflate `CrashLogViewerClient` |
+| `CrashLogDetailActivity` / `ActivityCrashInfo` | `nota.android.crash` | **外部** L3 任务页，manifest 显式 Component 兼容通知 |
+| `CrashHistoryFragment` | `nota.android.crash.xp.app.observe` | 传 `crash_id` → `CrashDetailBottomSheet` |
+| `PerAppCrashActivity` | `nota.android.crash.xp.app.observe` | 单应用列表，复用 `CrashEventRow` 与 Sheet 详情路由 |
 
-`CrashLogViewerClient` 不持有历史列表状态；它只接收已经解析出的文本并展示。
+`CrashLogViewerClient` 不持有历史列表状态；它只接收已经解析出的文本并展示。由 **Sheet 或 Activity 宿主** 负责加载 `CrashEvent` 并调用 `showStackTrace()`。
+
+### Sheet vs Activity 双载体
+
+| 维度 | `CrashDetailBottomSheet`（壳内） | `ActivityCrashInfo` / `CrashLogDetailActivity`（外部） |
+|------|----------------------------------|--------------------------------------------------------|
+| 触发 | 历史 / 单应用 / 统计下钻列表点击 | 通知 PendingIntent、深链、logcat 导入 |
+| 布局 | Draggable Half Sheet：DragHandle + 可选 title + Editor 内容区 | 全屏：Toolbar + Editor 内容区 |
+| Sheet 规范 | 28dp 顶圆角、`peekHeight` 50%、DragHandle-only 拖曳；对齐 `AddManagedAppBottomSheet` | N/A |
+| 关闭 | scrim tap / ✕ / DragHandle 拖至 dismiss | Toolbar navigate up / 浮动 `downView`（Activity 模式） |
+| 禁止模式 | **不** 用 settings-card-detail-sheet（metadata 16dp 装饰把手） | — |
+
+**`CrashLogViewerClient` Sheet 适配**（相对 Activity 默认行为）：
+
+| 控件 / 行为 | Activity 模式 | Sheet 模式 |
+|-------------|---------------|------------|
+| `quickFloatLayout.upView`（保存） | `GONE` | `GONE` |
+| `quickFloatLayout.downView`（退出） | `finish()` Activity | **隐藏**；由 Sheet chrome ✕ / dismiss 关闭 |
+| `quick_input_layout` | `GONE` | `GONE` |
+| Find / Replace | 保留（Toolbar 或 Editor 内入口） | 保留 |
+| `isEditable` | `false` | `false` |
+| 宿主回调 | `(hostContext as? Activity)?.finish()` | 可选 `onDismissRequest` lambda 供 Sheet 调用 |
+
+Sheet 宿主在 `onViewCreated` 中创建 `CrashLogViewerClient`，将 `client.layout` 加入 Sheet 内容容器；参数 `crash_id` 经 arguments 传入，ViewModel / Repository 异步加载 stack 后 `showStackTrace()`。
 
 ### 1. `CrashLogViewerClient`（建议新建）
 
@@ -186,14 +217,23 @@ implementation project(':CodeEditorClient')
 
 ```kotlin
 // nota.android.crash.xp.app.view.CrashLogViewerClient（示意）
-class CrashLogViewerClient(...) : BaseCodeEditorClient(...) {
+class CrashLogViewerClient(
+    ...,
+    private val onDismiss: (() -> Unit)? = null,  // Sheet 模式传入；Activity 可 null 并用 finish()
+) : BaseCodeEditorClient(...) {
     override fun initView() {
         codeEditor.language = TextLanguage.getInstance()
         super.initView()
-        codeEditor.isEditable = false          // EditorField
-        quickFloatLayout.upView.visibility = View.GONE  // 无保存
-        quickFloatLayout.downView.setOnClickListener { (hostContext as? Activity)?.finish() }
-        layout.findViewById<View>(R.id.quick_input_layout).visibility = View.GONE // 可选
+        codeEditor.isEditable = false
+        quickFloatLayout.upView.visibility = View.GONE
+        if (onDismiss != null) {
+            quickFloatLayout.downView.visibility = View.GONE
+        } else {
+            quickFloatLayout.downView.setOnClickListener {
+                (hostContext as? Activity)?.finish()
+            }
+        }
+        layout.findViewById<View>(R.id.quick_input_layout)?.visibility = View.GONE
     }
 
     fun showStackTrace(text: String?) {
@@ -202,20 +242,29 @@ class CrashLogViewerClient(...) : BaseCodeEditorClient(...) {
 }
 ```
 
-### 2. 改造 `ActivityCrashInfo` / `CrashLogDetailActivity`
+### 2. 外部 Activity：`ActivityCrashInfo` / `CrashLogDetailActivity`
 
 - 保留 Toolbar + `SystemBars`（与 [configuration-ui.md](configuration-ui.md) 一致）
 - 内容区：`FrameLayout` 承载 `client.layout`（替代 `TextView`）
 - `onCreate` 参数优先级：`crash_id` → Repository 加载 `CrashEvent.stackTrace`；否则 `Exception` → 直接展示旧通知 stack
-- 若类名保留为 `ActivityCrashInfo`，manifest 与通知 Component 可不变；若新增 `CrashLogDetailActivity`，旧 Component 需保留 wrapper 兼容
+- `onCreate` 参数优先级：`crash_id` → Repository 加载 `CrashEvent.stackTrace`；否则 `Exception` → 直接展示旧通知 stack
+- 若类名保留为 `ActivityCrashInfo`，manifest 与通知 Component 可不变
 
-### 3. Phase 4C 历史详情
+### 3. 壳内 Sheet：`CrashDetailBottomSheet`
 
-- 列表 → 传 `crash_id`
+- 继承 `BottomSheetDialogFragment`；`BottomSheetBehavior`：`peekHeight` = 50% 屏高、`isDraggable = true`、**仅 DragHandle 命中拖曳**（对齐 [AddManagedAppBottomSheet](app-management-ui.md) / M5 实现）
+- arguments：`crash_id` 或预览用 `Exception`
+- 内容区：`FrameLayout` + `CrashLogViewerClient(..., onDismiss = { dismiss() })`
+- 顶栏：DragHandle（必填）+ 可选居中 title（应用名 / 异常类）+ ✕ 关闭
+- **不** 使用 settings-card-detail-sheet 布局或 16dp metadata 顶缘
+
+### 4. Phase 4C 历史详情
+
+- 列表 → `CrashDetailBottomSheet.show()` + `crash_id`
 - ViewModel / Repository 从 `events.jsonl` 读单行 → `showStackTrace(event.stackTrace)`
-- 与 [navigation-ia.md](navigation-ia.md) 观测 tab 和 [ui-routing.md](ui-routing.md) `crash_detail` 路由共用 `CrashLogViewerClient`
+- 与 [navigation-ia.md](navigation-ia.md) 观测 tab 和 [ui-routing.md](ui-routing.md) `crash_detail_sheet` 路由一致；通知仍走 `crash_detail` Activity
 
-### 4. 主题与资源
+### 5. 主题与资源
 
 `BaseCodeEditorClient` 使用 `CodeEditorClient` 模块内颜色（`main_content_background_color` 等），与 CrashCenter Fluent 色板可能不一致。
 
@@ -235,13 +284,18 @@ flowchart LR
     end
     subgraph module [CrashCenter 模块进程]
         A[ActivityCrashInfo / CrashLogDetailActivity]
+        S[CrashDetailBottomSheet]
         C[CrashLogViewerClient]
         E[CodeIEditor + TextLanguage]
-        J[Phase 4: JSONL → CrashEvent]
+        J[JSONL → CrashEvent]
+        H[CrashHistoryFragment]
     end
-    N -->|extra Exception| A
+    N -->|extra Exception / crash_id| A
+    H -->|crash_id| S
     J -->|crash_id → stackTrace| A
+    J -->|crash_id → stackTrace| S
     A --> C
+    S --> C
     C --> E
 ```
 
@@ -254,7 +308,8 @@ flowchart LR
 | **P0** | Gradle include `CodeEditor` + `CodeEditorClient`；删 `android-base` 依赖 | 编译通过 |
 | **P1** | `CrashLogViewerClient` + 改造 `ActivityCrashInfo` | 通知详情可查找/滚动 |
 | **P2** | 主题色对齐、只读 UX 打磨（隐藏无关控件） | 与配置页视觉一致 |
-| **P3** | Phase 4C 历史详情复用同一 Client | 观测 tab 详情 |
+| **P3** | `CrashDetailBottomSheet` + 历史 / 单应用列表接入 | 壳内半屏详情 |
+| **P3b** | Sheet 模式 Client 适配（隐藏 downView、onDismiss） | 与 AddManagedAppBottomSheet 一致 |
 | **P4**（可选） | `JsonLanguage` 或 Antlr 美化 JSON 行 | 历史 JSON 高亮 |
 
 **不在 MVP**：Lua `CodeEditorClient`、自动补全、`CodeEditorAntlr` 全量引入。
@@ -287,7 +342,10 @@ flowchart LR
 ## 相关文档
 
 - [navigation-ia.md](navigation-ia.md) — Phase 4C 观测详情入口
-- [ui-routing.md](ui-routing.md) — `crash_detail` / `per_app_crash` 路由；`crash_id` 与 `Exception` 参数兼容
+- [ui-routing.md](ui-routing.md) — `crash_detail` / `crash_detail_sheet` / `per_app_crash` 路由
+- [crash-history-ui.md](crash-history-ui.md) — 历史列表 → `CrashDetailBottomSheet`
+- [design-system.md](design-system.md) — `CrashDetailBottomSheet` 观测域组件
+- [app-management-ui.md](app-management-ui.md) — `AddManagedAppBottomSheet` Half Sheet 参考实现
 - [ADR-009](../decisions/009-ui-shell-design-system.md) — observe/detail 域与 Design System 边界
 - [glossary.md](../glossary.md) — CrashEvent、events.jsonl
 - celestailruler `dev/DEV_GUIDE.md` — 上游模块地图

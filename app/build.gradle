@@ -71,4 +71,7 @@ dependencies {
     implementation libs.androidx.lifecycle.livedata.ktx
 
     compileOnly libs.xposed.api
+
+    implementation project(':CodeEditor')
+    implementation project(':CodeEditorClient')
 }

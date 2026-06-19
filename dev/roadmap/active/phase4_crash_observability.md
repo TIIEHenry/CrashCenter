@@ -4,7 +4,7 @@ type: roadmap
 status: draft
 phase: 4
 updated: 2026-06-19
-summary: "4C-α Shell + 4C-β 历史 scaffolding 已编码；4B 写入与 CodeEditor 详情待实施"
+summary: "4B-α 多后端写入已编码；4C-β 半屏详情 + CodeEditor 已编码；4D 统计待实施"
 ---
 
 # Phase 4: 崩溃可观测性
@@ -33,18 +33,18 @@ summary: "4C-α Shell + 4C-β 历史 scaffolding 已编码；4B 写入与 CodeEd
 
 ## 4B — MVP：CrashLogCoordinator（无 UI）
 
-> **2026-06-19 scaffold**：`CrashLogCoordinator` + `DirectFsCrashLogWriter` 单后端直写 canonical `events.jsonl`；多后端 / Provider / retention 仍待 4B-α。
+> **2026-06-19 4B-α**：`CrashLogBackend` + Phase 2 并行（Provider + DirectFs + TargetRelay）；`CrashLogProvider`；retention 500/8MB。RootSu + ingest 仍待 4B-β。
 
 ### 4B-α — 基础后端 + 并行
 
-- [ ] `CrashLogBackend` 接口 + 注册表
-- [~] `CrashLogCoordinator`：scaffold 仅 DirectFs；Phase 2 并行（Provider + DirectFs + TargetRelay）待建
-- [x] `CrashEvent` 结构化 + UUID（`backendWritten` 待多后端）
+- [x] `CrashLogBackend` 接口 + 注册表
+- [x] `CrashLogCoordinator`：Phase 2 并行（Provider + DirectFs + TargetRelay）
+- [x] `CrashEvent` 结构化 + UUID + `backendWritten` 多后端追踪
 - [x] hook 回调内、`showNotify` **之外**调用 Coordinator
 - [x] 采集：timestamp、package、进程/线程、异常类、完整 stack、`source`（`CrashHandler` 区分 looper/uncaught）
-- [ ] 默认 retention：500 条或 8MB 轮转
+- [x] 默认 retention：500 条或 8MB 轮转
 - [x] 写入失败 silent；不与 Toast/通知同 try
-- [ ] `CrashLogProvider`：`exported="true"`，无 signature permission
+- [x] `CrashLogProvider`：`exported="true"`，无 signature permission
 - [ ] **独立启动矩阵** IS-1~IS-6
 
 ### 4B-β — root 优先 + ingest
@@ -91,9 +91,11 @@ Provider / DirectFs / Relay 作为 `CrashLogBackend` 实现，不再单独 Phase
 - [x] `ObserveHostFragment`：观测 tab 宿主；4C 先仅「历史」子页（4D 再加「统计」内层 TabLayout）
 - [x] `CrashHistoryFragment`：时间倒序历史列表（scaffolding + `FileCrashLogRepository` 读 `events.jsonl`）
 - [x] 列表：时间、包名、异常类、应用名（`CrashEventRow`）
-- [~] 详情页：`ActivityCrashInfo` 已支持 `crash_id` 从 Repository 加载；`CrashLogViewerClient` / CodeEditor 待后续
-- [ ] Gradle 引入 `CodeEditor` + `CodeEditorClient`（不含 Antlr MVP）
-- [x] 按 `crash_id` 打开详情，兼容旧 `Exception` extra（为 P3 通知改造预留）
+- [x] 详情页：`CrashDetailBottomSheet`（壳内半屏）+ `ActivityCrashInfo`（通知全屏）；共用 `CrashLogViewerClient` / CodeEditor
+- [x] **`CrashDetailBottomSheet`**：Draggable Half Sheet（28dp、50% peek、DragHandle）；历史列表 → Sheet
+- [x] `CrashLogViewerClient`：只读 CodeEditor；Sheet 隐藏 float `upView`/`downView`
+- [x] Gradle 引入 `CodeEditor` + `CodeEditorClient` + `CodeEditorAntlr` + `ui_common`（sibling CelestailRuler）
+- [x] 按 `crash_id` 打开详情，兼容旧 `Exception` extra（壳内 Sheet + 外部 Activity 双载体；通知仍走 Activity）
 - [x] 空状态与加载态
 
 ## 4D — P2：统计
@@ -167,8 +169,10 @@ python3 scripts/check-docs-health.py
 ## 相关文档
 
 - [architecture-optimization.md](../../../docs/architecture/architecture-optimization.md) — 包结构、分层与 Phase 映射
-- [navigation-ia.md](../../../docs/architecture/navigation-ia.md)
-- [ui-routing.md](../../../docs/architecture/ui-routing.md)
+- [navigation-ia.md](../../../docs/architecture/navigation-ia.md) — 壳内 Sheet vs 外部 Activity
+- [ui-routing.md](../../../docs/architecture/ui-routing.md) — `crash_detail_sheet` / `crash_detail`
+- [code-editor-porting.md](../../../docs/architecture/code-editor-porting.md) — Sheet vs Activity 双载体
+- [crash-history-ui.md](../../../docs/architecture/crash-history-ui.md) — 历史 → `CrashDetailBottomSheet`
 - [ADR-009](../../../docs/decisions/009-ui-shell-design-system.md)
 - [crash-logging.md](../../../docs/architecture/crash-logging.md)
 - [ADR-007](../../../docs/decisions/007-crash-log-cross-process-storage.md)

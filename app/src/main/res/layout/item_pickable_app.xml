@@ -4,10 +4,10 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="?attr/selectableItemBackground"
+    android:background="@drawable/shell_press_surface"
     android:minHeight="@dimen/list_item_min_height"
-    android:paddingHorizontal="@dimen/spacing_sm"
-    android:paddingVertical="@dimen/spacing_sm">
+    android:paddingHorizontal="@dimen/content_padding_horizontal"
+    android:paddingVertical="@dimen/spacing_md">
 
     <com.google.android.material.checkbox.MaterialCheckBox
         android:id="@+id/checkbox"

@@ -11,9 +11,11 @@ import nota.android.crash.xp.app.common.ui.ToolbarHeaderInsets;
 import nota.android.crash.xp.app.data.CrashDetailLoader;
 import nota.android.crash.xp.app.databinding.ActivityCrashinfoBinding;
 import nota.android.crash.xp.app.observe.CrashHistoryFragment;
+import nota.android.crash.xp.app.view.CrashLogViewerClient;
 
 public class ActivityCrashInfo extends AppCompatActivity {
     private ActivityCrashinfoBinding binding;
+    private CrashLogViewerClient viewer;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -29,9 +31,11 @@ public class ActivityCrashInfo extends AppCompatActivity {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         }
 
+        viewer = CrashLogViewerClient.attach(this, binding.viewerContainer);
+
         Intent intent = getIntent();
         String stackTrace = resolveStackTrace(intent);
-        binding.textv.setText(stackTrace != null ? stackTrace : "");
+        viewer.showStackTrace(stackTrace != null ? stackTrace : "");
     }
 
     private String resolveStackTrace(Intent intent) {

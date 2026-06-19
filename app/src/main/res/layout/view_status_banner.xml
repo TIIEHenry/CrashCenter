@@ -7,7 +7,7 @@
     android:background="@drawable/bg_status_inactive"
     android:clickable="true"
     android:focusable="true"
-    android:foreground="?attr/selectableItemBackground"
+    android:foreground="@drawable/shell_press_surface_rounded"
     android:gravity="center_vertical"
     android:minHeight="@dimen/status_banner_height"
     android:orientation="horizontal"

@@ -12,7 +12,10 @@ data class CrashEvent(
     val message: String?,
     val stackTrace: String,
     val source: String?,
+    val backendWritten: List<String> = emptyList(),
 ) {
+    fun withBackendWritten(backends: List<String>): CrashEvent =
+        copy(backendWritten = backends.distinct())
     val shortExceptionClass: String
         get() = exceptionClass.substringAfterLast('.')
 
@@ -27,6 +30,9 @@ data class CrashEvent(
         message?.let { json.put("message", it) }
         json.put("stackTrace", stackTrace)
         source?.let { json.put("source", it) }
+        if (backendWritten.isNotEmpty()) {
+            json.put("backendWritten", org.json.JSONArray(backendWritten))
+        }
         return json.toString()
     }
 
@@ -45,9 +51,19 @@ data class CrashEvent(
                 message = json.optString("message").takeIf { it.isNotEmpty() },
                 stackTrace = json.optString("stackTrace", ""),
                 source = json.optString("source").takeIf { it.isNotEmpty() },
+                backendWritten = parseBackendWritten(json),
             )
         } catch (_: Exception) {
             null
+        }
+
+        private fun parseBackendWritten(json: JSONObject): List<String> {
+            val array = json.optJSONArray("backendWritten") ?: return emptyList()
+            return buildList {
+                for (i in 0 until array.length()) {
+                    array.optString(i).takeIf { it.isNotEmpty() }?.let(::add)
+                }
+            }
         }
     }
 }

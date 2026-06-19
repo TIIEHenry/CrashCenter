@@ -1,4 +1,7 @@
 pluginManagement {
+    plugins {
+        id 'org.jetbrains.kotlin.android' version '2.3.0'
+    }
     repositories {
         google {
             content {
@@ -24,3 +27,16 @@ dependencyResolutionManagement {
 
 rootProject.name = "CrashCenter"
 include ':app'
+
+def celestialEditorRoot = file('../CelestailRuler')
+include ':CodeEditor', ':CodeEditorAntlr', ':CodeEditorClient', ':ui_common'
+project(':CodeEditor').projectDir = new File(celestialEditorRoot, 'CodeEditor')
+project(':CodeEditorAntlr').projectDir = new File(celestialEditorRoot, 'CodeEditorAntlr')
+project(':CodeEditorClient').projectDir = new File(celestialEditorRoot, 'CodeEditorClient')
+project(':ui_common').projectDir = new File(celestialEditorRoot, 'ui_common')
+
+gradle.beforeProject { project ->
+    if (project.name in ['CodeEditorClient', 'ui_common']) {
+        project.pluginManager.apply('org.jetbrains.kotlin.android')
+    }
+}

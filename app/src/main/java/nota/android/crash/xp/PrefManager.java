@@ -12,6 +12,9 @@ public class PrefManager {
     public static final String PREF_MANAGED_MODEL_MIGRATED = "managed_model_migrated";
     public static final String PREF_XPOSED_DIALOG_DISMISSED = "xposed_dialog_dismissed";
     public static final String PREF_CRASH_LOG_ENABLED = "crash_log_enabled";
+    public static final String PREF_CRASH_LOG_BACKEND_PROVIDER = "crash_log_backend_provider";
+    public static final String PREF_CRASH_LOG_BACKEND_DIRECT_FS = "crash_log_backend_direct_fs";
+    public static final String PREF_CRASH_LOG_BACKEND_RELAY = "crash_log_backend_relay";
     public static final String TAG = "ActivityMain";
     public static final String ITSELF = PACKAGE_NAME;
 }

@@ -4,11 +4,11 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="?attr/selectableItemBackground"
+    android:background="@drawable/shell_press_surface"
     android:descendantFocusability="blocksDescendants"
     android:minHeight="@dimen/list_item_min_height"
-    android:paddingHorizontal="@dimen/spacing_xs"
-    android:paddingVertical="@dimen/spacing_xs">
+    android:paddingHorizontal="@dimen/content_padding_horizontal"
+    android:paddingVertical="@dimen/spacing_md">
 
     <ImageView
         android:id="@+id/ivIcon"
