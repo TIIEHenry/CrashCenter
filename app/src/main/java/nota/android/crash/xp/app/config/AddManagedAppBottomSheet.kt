@@ -1,14 +1,16 @@
 package nota.android.crash.xp.app.config
 
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import nota.android.crash.xp.app.R
 import nota.android.crash.xp.app.common.ui.DenseSearchField
 import nota.android.crash.xp.app.common.ui.EmptyState
@@ -86,19 +88,19 @@ class AddManagedAppBottomSheet : BottomSheetDialogFragment() {
         binding.recyclerPickable.visibility = View.GONE
         binding.emptyState.root.visibility = View.GONE
 
-        Thread {
-            val loaded = try {
-                repository.loadPickableApps()
-            } catch (_: Exception) {
-                emptyList()
+        lifecycleScope.launch {
+            val loaded = withContext(Dispatchers.IO) {
+                try {
+                    repository.loadPickableApps()
+                } catch (_: Exception) {
+                    emptyList()
+                }
             }
-            Handler(Looper.getMainLooper()).post {
-                if (_binding == null) return@post
-                allApps = loaded
-                binding.loadingPanel.root.visibility = View.GONE
-                applyFilter()
-            }
-        }.start()
+            if (_binding == null) return@launch
+            allApps = loaded
+            binding.loadingPanel.root.visibility = View.GONE
+            applyFilter()
+        }
     }
 
     private fun applyFilter() {

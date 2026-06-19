@@ -1,12 +1,14 @@
 package nota.android.crash.xp.app.observe
 
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.lifecycle.lifecycleScope
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import nota.android.crash.xp.app.R
 import nota.android.crash.xp.app.common.ui.configureBottomSheetAppearance
 import nota.android.crash.xp.app.data.CrashDetailLoader
@@ -67,19 +69,21 @@ class CrashDetailBottomSheet : BottomSheetDialogFragment() {
         }
 
         binding.tvTitle.text = getString(R.string.crash_history_loading)
-        Thread {
-            val event = FileCrashLogRepository(requireContext()).getById(crashId)
-            val stackTrace = CrashDetailLoader.loadStackTraceById(requireContext(), crashId)
-                ?: getString(R.string.crash_detail_not_found, crashId)
+        lifecycleScope.launch {
+            val event = withContext(Dispatchers.IO) {
+                FileCrashLogRepository(requireContext()).getById(crashId)
+            }
+            val stackTrace = withContext(Dispatchers.IO) {
+                CrashDetailLoader.loadStackTraceById(requireContext(), crashId)
+                    ?: getString(R.string.crash_detail_not_found, crashId)
+            }
             val title = event?.shortExceptionClass
                 ?: titleFromStackTrace(stackTrace)
                 ?: getString(R.string.crash_info_title)
-            Handler(Looper.getMainLooper()).post {
-                if (_binding == null) return@post
-                binding.tvTitle.text = title
-                viewer?.showStackTrace(stackTrace)
-            }
-        }.start()
+            if (_binding == null) return@launch
+            binding.tvTitle.text = title
+            viewer?.showStackTrace(stackTrace)
+        }
     }
 
     private fun titleFromStackTrace(stackTrace: String): String? {
