@@ -44,7 +44,7 @@ object PrefMigrator {
         val importHadData = snapshot != null && snapshot.hasData()
         if (importHadData) {
             val editor = dest.edit()
-            snapshot!!.booleans.forEach { (key, value) -> editor.putBoolean(key, value) }
+            snapshot.booleans.forEach { (key, value) -> editor.putBoolean(key, value) }
             snapshot.stringSets.forEach { (key, value) ->
                 editor.putStringSet(key, HashSet(value))
             }

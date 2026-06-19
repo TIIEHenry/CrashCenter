@@ -68,4 +68,6 @@ dependencies {
 
     implementation project(':CodeEditor')
     implementation project(':CodeEditorClient')
+
+    testImplementation 'junit:junit:4.13.2'
 }

@@ -98,6 +98,7 @@ object CrashFeedbackFacade {
             )
             Notification.Builder(application, CHANNEL_ID)
         } else {
+            @Suppress("DEPRECATION")
             Notification.Builder(application)
         }
             .setContentTitle(title)

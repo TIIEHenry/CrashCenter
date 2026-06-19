@@ -35,11 +35,11 @@ class ViewHolder<T : Any>(val rootView: View) : RecyclerView.ViewHolder(rootView
 
 
     override fun onClick(rootView: View) {
-        onItemClickListener.invoke(rootView, data, adapterPosition)
+        onItemClickListener.invoke(rootView, data, bindingAdapterPosition)
     }
 
     override fun onLongClick(rootView: View): Boolean {
-        return onItemLongClickListener.invoke(rootView, data, adapterPosition)
+        return onItemLongClickListener.invoke(rootView, data, bindingAdapterPosition)
     }
 
 

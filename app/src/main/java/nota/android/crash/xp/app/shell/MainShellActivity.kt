@@ -138,24 +138,24 @@ class MainShellActivity : AppCompatActivity() {
             setReorderingAllowed(true)
             if (config == null) {
                 config = ConfigFragment.newInstance()
-                add(R.id.fragmentContainer, config!!, ConfigFragment.TAG)
+                add(R.id.fragmentContainer, config, ConfigFragment.TAG)
             }
             if (observe == null) {
                 observe = ObserveHostFragment.newInstance()
-                add(R.id.fragmentContainer, observe!!, ObserveHostFragment.TAG)
+                add(R.id.fragmentContainer, observe, ObserveHostFragment.TAG)
             }
             when (tab) {
                 ShellTab.CONFIG -> {
-                    show(config!!)
-                    setMaxLifecycle(config!!, Lifecycle.State.RESUMED)
-                    hide(observe!!)
-                    setMaxLifecycle(observe!!, Lifecycle.State.STARTED)
+                    show(config)
+                    setMaxLifecycle(config, Lifecycle.State.RESUMED)
+                    hide(observe)
+                    setMaxLifecycle(observe, Lifecycle.State.STARTED)
                 }
                 ShellTab.OBSERVE -> {
-                    hide(config!!)
-                    setMaxLifecycle(config!!, Lifecycle.State.STARTED)
-                    show(observe!!)
-                    setMaxLifecycle(observe!!, Lifecycle.State.RESUMED)
+                    hide(config)
+                    setMaxLifecycle(config, Lifecycle.State.STARTED)
+                    show(observe)
+                    setMaxLifecycle(observe, Lifecycle.State.RESUMED)
                 }
             }
         }
