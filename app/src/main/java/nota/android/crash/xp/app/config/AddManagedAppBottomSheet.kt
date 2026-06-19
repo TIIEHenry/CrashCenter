@@ -22,14 +22,14 @@ class AddManagedAppBottomSheet : BottomSheetDialogFragment() {
     private var _binding: BottomSheetAddManagedAppBinding? = null
     private val binding get() = _binding!!
 
-    private lateinit var repository: ManagedAppRepository
+    private lateinit var repository: AppRepository
     private lateinit var adapter: PickableAppAdapter
     private var allApps: List<PickableApp> = emptyList()
     private var query: String = ""
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        repository = ManagedAppRepository(requireContext())
+        repository = AppRepository(requireContext())
     }
 
     override fun onCreateView(
@@ -72,9 +72,9 @@ class AddManagedAppBottomSheet : BottomSheetDialogFragment() {
     }
 
     private fun setupList() {
-        adapter = PickableAppAdapter(mutableListOf())
-        adapter.onItemClick { _, data, _ ->
-            adapter.toggleSelection(data)
+        adapter = PickableAppAdapter()
+        adapter.onItemClick { app ->
+            adapter.toggleSelection(app)
         }
         binding.recyclerPickable.layoutManager = LinearLayoutManager(requireContext())
         binding.recyclerPickable.adapter = adapter
@@ -108,7 +108,7 @@ class AddManagedAppBottomSheet : BottomSheetDialogFragment() {
             app.label.lowercase(Locale.getDefault()).contains(normalized) ||
                 app.packageName.lowercase(Locale.getDefault()).contains(normalized)
         }
-        adapter.dataList = visible.toMutableList()
+        adapter.submitList(visible)
 
         val empty = visible.isEmpty() && binding.loadingPanel.root.visibility != View.VISIBLE
         if (empty) {

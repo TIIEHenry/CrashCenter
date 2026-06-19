@@ -8,7 +8,7 @@ import android.util.Xml
 import nota.android.crash.xp.app.config.AppInterventionProfile
 import nota.android.crash.xp.app.config.InterventionRule
 import nota.android.crash.xp.app.config.InterventionRulesCodec
-import nota.android.crash.xp.app.config.ManagedAppRepository
+import nota.android.crash.xp.app.config.AppRepository
 import org.xmlpull.v1.XmlPullParser
 import java.io.StringReader
 
@@ -126,7 +126,7 @@ object PrefMigrator {
         val scopeMode = prefs.getBoolean(PrefManager.PREF_SCOPE_MODE, false)
         val handleSystem = prefs.getBoolean(PrefManager.PREF_HANDLE_SYSTEM, false)
         val disabled = prefs.getStringSet(PrefManager.PREF_PACKAGE_LIST, emptySet()) ?: emptySet()
-        val installed = ManagedAppRepository.enumerateInstalledPackageNames(context)
+        val installed = AppRepository.enumerateInstalledPackageNames(context)
 
         val managed = installed.filter { packageName ->
             packageName !in disabled
@@ -134,8 +134,8 @@ object PrefMigrator {
             if (!scopeMode) {
                 true
             } else {
-                val isSystem = ManagedAppRepository.isSystemPackage(context, packageName)
-                ManagedAppRepository.passesSystemFilter(isSystem, handleSystem)
+                val isSystem = AppRepository.isSystemPackage(context, packageName)
+                AppRepository.passesSystemFilter(isSystem, handleSystem)
             }
         }.toSet()
 

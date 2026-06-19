@@ -11,8 +11,7 @@ import kotlinx.coroutines.withContext
 import java.util.Locale
 
 class ConfigViewModel(
-    private val legacyRepository: AppListRepository,
-    private val managedRepository: ManagedAppRepository,
+    private val repository: AppRepository,
 ) : ViewModel() {
 
     private val _uiState = MutableLiveData(ConfigUiState())
@@ -21,13 +20,13 @@ class ConfigViewModel(
     private var appsLoadGeneration = 0
 
     init {
-        val legacyMode = managedRepository.isLegacyMode()
+        val legacyMode = repository.isLegacyMode()
         emitState {
             copy(
-                scopeMode = managedRepository.readScopeMode(),
-                handleSystem = managedRepository.readHandleSystem(),
-                showSystemUi = managedRepository.readShowSystemUi(),
-                packageVisibility = managedRepository.detectPackageVisibility(),
+                scopeMode = repository.readScopeMode(),
+                handleSystem = repository.readHandleSystem(),
+                showSystemUi = repository.readShowSystemUi(),
+                packageVisibility = repository.detectPackageVisibility(),
                 isLegacyMode = legacyMode,
             )
         }
@@ -47,10 +46,10 @@ class ConfigViewModel(
             try {
                 if (current.isLegacyMode) {
                     val loadedApps = withContext(Dispatchers.IO) {
-                        legacyRepository.loadInstalledApps()
+                        repository.loadInstalledApps()
                     }
                     val visibility = withContext(Dispatchers.IO) {
-                        legacyRepository.detectPackageVisibilityAfterLoad(loadedApps.size)
+                        repository.detectPackageVisibilityAfterLoad(loadedApps.size)
                     }
                     if (loadGeneration != appsLoadGeneration) return@launch
                     emitState {
@@ -63,13 +62,13 @@ class ConfigViewModel(
                     applyLegacyFiltersAndSort(preserveSort = false)
                 } else {
                     withContext(Dispatchers.IO) {
-                        managedRepository.pruneUninstalled()
+                        repository.pruneUninstalled()
                     }
                     val managedApps = withContext(Dispatchers.IO) {
-                        managedRepository.loadManagedApps()
+                        repository.loadManagedApps()
                     }
                     val visibility = withContext(Dispatchers.IO) {
-                        managedRepository.detectPackageVisibility()
+                        repository.detectPackageVisibility()
                     }
                     if (loadGeneration != appsLoadGeneration) return@launch
                     emitState {
@@ -104,17 +103,17 @@ class ConfigViewModel(
     }
 
     fun setScopeMode(enabled: Boolean) {
-        managedRepository.setScopeMode(enabled)
+        repository.setScopeMode(enabled)
         emitState { copy(scopeMode = enabled) }
     }
 
     fun setHandleSystem(enabled: Boolean) {
-        managedRepository.setHandleSystem(enabled)
+        repository.setHandleSystem(enabled)
         emitState { copy(handleSystem = enabled) }
     }
 
     fun setShowSystemUi(enabled: Boolean) {
-        managedRepository.setShowSystemUi(enabled)
+        repository.setShowSystemUi(enabled)
         emitState { copy(showSystemUi = enabled) }
         applyCurrentFilters(preserveSort = true)
     }
@@ -130,7 +129,7 @@ class ConfigViewModel(
                 }
             }
             emitState { copy(allApps = updated) }
-            legacyRepository.persistHookStates(updated)
+            repository.persistHookStates(updated)
             applyLegacyFiltersAndSort(preserveSort = true)
         }
     }
@@ -139,7 +138,7 @@ class ConfigViewModel(
         val current = _uiState.value ?: return
         if (current.isLegacyMode) return
 
-        managedRepository.setInterventionEnabled(packageName, enabled)
+        repository.setInterventionEnabled(packageName, enabled)
         val updated = current.managedApps.map { app ->
             if (app.packageName == packageName) {
                 reloadManagedApp(app.packageName) ?: app.copy(
@@ -161,7 +160,7 @@ class ConfigViewModel(
 
     fun addManagedPackages(packages: Collection<String>) {
         if (packages.isEmpty()) return
-        managedRepository.addManagedPackages(packages)
+        repository.addManagedPackages(packages)
         loadApps(forceReload = true)
     }
 
@@ -170,7 +169,7 @@ class ConfigViewModel(
         if (!current.isLegacyMode) return
         val updated = current.allApps.map { it.copy(hookEnabled = enabled) }
         emitState { copy(allApps = updated) }
-        legacyRepository.persistHookStates(updated)
+        repository.persistHookStates(updated)
         applyLegacyFiltersAndSort(preserveSort = true)
     }
 
@@ -180,7 +179,7 @@ class ConfigViewModel(
     }
 
     private fun reloadManagedApp(packageName: String): ManagedApp? =
-        managedRepository.loadManagedApps().firstOrNull { it.packageName == packageName }
+        repository.loadManagedApps().firstOrNull { it.packageName == packageName }
 
     private fun applyCurrentFilters(preserveSort: Boolean) {
         val current = _uiState.value ?: return
@@ -276,12 +275,11 @@ class ConfigViewModel(
     }
 
     class Factory(
-        private val legacyRepository: AppListRepository,
-        private val managedRepository: ManagedAppRepository,
+        private val repository: AppRepository,
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
-            return ConfigViewModel(legacyRepository, managedRepository) as T
+            return ConfigViewModel(repository) as T
         }
     }
 

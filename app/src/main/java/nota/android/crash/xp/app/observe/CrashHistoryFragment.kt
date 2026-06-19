@@ -53,7 +53,7 @@ class CrashHistoryFragment : Fragment() {
     }
 
     private fun setupList() {
-        adapter = CrashHistoryAdapter(mutableListOf())
+        adapter = CrashHistoryAdapter()
         adapter.onItemClick { _, event, _ ->
             openDetail(event.id)
         }
@@ -80,7 +80,7 @@ class CrashHistoryFragment : Fragment() {
 
         if (hasEvents) {
             binding.eventCount.text = getString(R.string.crash_history_count_format, state.eventCount)
-            adapter.dataList = state.events.toMutableList()
+            adapter.setData(state.events)
         }
 
         val empty = !state.isLoading && state.events.isEmpty()

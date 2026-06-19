@@ -36,8 +36,7 @@ class ConfigFragment : Fragment() {
     private val viewModel: ConfigViewModel by viewModels {
         val context = requireContext()
         ConfigViewModel.Factory(
-            AppListRepository(context),
-            ManagedAppRepository(context),
+            AppRepository(context),
         )
     }
 
@@ -166,12 +165,12 @@ class ConfigFragment : Fragment() {
     }
 
     private fun setupList() {
-        legacyAdapter = AppToggleAdapter(mutableListOf())
+        legacyAdapter = AppToggleAdapter()
         legacyAdapter.onItemClick { _, data, _ ->
             viewModel.toggleApp(data.packageName)
         }
 
-        managedAdapter = ManagedAppAdapter(mutableListOf())
+        managedAdapter = ManagedAppAdapter()
         managedAdapter.onSwitchChanged = { app, enabled ->
             viewModel.setManagedSwitch(app.packageName, enabled)
         }
@@ -255,7 +254,7 @@ class ConfigFragment : Fragment() {
         val listCount: Int
         if (state.isLegacyMode) {
             binding.recyclerv.adapter = legacyAdapter
-            legacyAdapter.dataList = state.visibleApps.toMutableList()
+            legacyAdapter.setData(state.visibleApps)
             listCount = state.visibleApps.size
             FilterChipRow.setCountLabel(
                 binding.hookFilterChipRow.root,
@@ -263,7 +262,7 @@ class ConfigFragment : Fragment() {
             )
         } else {
             binding.recyclerv.adapter = managedAdapter
-            managedAdapter.dataList = state.visibleManagedApps.toMutableList()
+            managedAdapter.setData(state.visibleManagedApps)
             listCount = state.visibleManagedApps.size
             FilterChipRow.setCountLabel(
                 binding.managedFilterChipRow.root,

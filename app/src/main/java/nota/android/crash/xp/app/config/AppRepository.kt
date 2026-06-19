@@ -8,21 +8,21 @@ import nota.android.crash.xp.PrefManager.PREF_HANDLE_SYSTEM
 import nota.android.crash.xp.PrefManager.PREF_INTERVENTION_RULES
 import nota.android.crash.xp.PrefManager.PREF_MANAGED_PACKAGES
 import nota.android.crash.xp.PrefManager.PREF_NAME
+import nota.android.crash.xp.PrefManager.PREF_PACKAGE_LIST
 import nota.android.crash.xp.PrefManager.PREF_SCOPE_MODE
 import nota.android.crash.xp.PrefManager.PREF_SHOW_SYSTEM_UI
 import nota.android.crash.xp.app.PackageVisibilityHelper
 
-class ManagedAppRepository(context: Context) {
+class AppRepository(context: Context) {
 
     private val appContext = context.applicationContext
     private val prefs = appContext.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
 
+    // ─── Mode detection ───
+
     fun isLegacyMode(): Boolean = !prefs.contains(PREF_MANAGED_PACKAGES)
 
-    fun readManagedPackageNames(): Set<String>? {
-        if (isLegacyMode()) return null
-        return HashSet(prefs.getStringSet(PREF_MANAGED_PACKAGES, emptySet()) ?: emptySet())
-    }
+    // ─── Shared preferences (scope / system UI) ───
 
     fun readScopeMode(): Boolean = prefs.getBoolean(PREF_SCOPE_MODE, false)
 
@@ -42,11 +42,72 @@ class ManagedAppRepository(context: Context) {
         prefs.edit().putBoolean(PREF_SHOW_SYSTEM_UI, enabled).apply()
     }
 
+    // ─── Package visibility ───
+
     fun detectPackageVisibility(): PackageVisibilityHelper.Status =
         PackageVisibilityHelper.check(appContext)
 
     fun detectPackageVisibilityAfterLoad(loadedCount: Int): PackageVisibilityHelper.Status =
         PackageVisibilityHelper.checkAfterLoad(appContext, loadedCount)
+
+    // ─── Legacy: installed apps with hook states ───
+
+    fun loadInstalledApps(): List<AppItem> {
+        if (!isLegacyMode()) {
+            pruneUninstalled()
+            return loadManagedApps().map { managed ->
+                AppItem(
+                    name = managed.label,
+                    icon = managed.icon,
+                    hookEnabled = managed.switchChecked,
+                    packageName = managed.packageName,
+                    isSystemApp = managed.isSystem,
+                    updateTime = managed.updateTime,
+                    installTime = managed.installTime,
+                )
+            }
+        }
+
+        val prefWhiteList = prefs.getStringSet(PREF_PACKAGE_LIST, null)
+        val packageManager = appContext.packageManager
+        val installedPackages = PackageVisibilityHelper.getInstalledPackagesCompat(packageManager)
+        return installedPackages.map { packageInfo ->
+            val appInfo = packageInfo.applicationInfo ?: return@map null
+            AppItem(
+                name = appInfo.loadLabel(packageManager).toString(),
+                icon = appInfo.loadIcon(packageManager),
+                hookEnabled = prefWhiteList == null || !prefWhiteList.contains(packageInfo.packageName),
+                packageName = packageInfo.packageName,
+                isSystemApp = appInfo.flags and ApplicationInfo.FLAG_SYSTEM != 0,
+                updateTime = packageInfo.lastUpdateTime,
+                installTime = packageInfo.firstInstallTime,
+            )
+        }.filterNotNull().filter { app -> app.packageName != ITSELF }
+    }
+
+    fun persistHookStates(apps: List<AppItem>) {
+        if (!isLegacyMode()) {
+            for (app in apps) {
+                setInterventionEnabled(app.packageName, app.hookEnabled)
+            }
+            return
+        }
+
+        val disabled = HashSet<String>()
+        for (app in apps) {
+            if (!app.hookEnabled) {
+                disabled.add(app.packageName)
+            }
+        }
+        prefs.edit().putStringSet(PREF_PACKAGE_LIST, disabled).apply()
+    }
+
+    // ─── Managed mode: managed apps ───
+
+    fun readManagedPackageNames(): Set<String>? {
+        if (isLegacyMode()) return null
+        return HashSet(prefs.getStringSet(PREF_MANAGED_PACKAGES, emptySet()) ?: emptySet())
+    }
 
     fun loadManagedApps(): List<ManagedApp> {
         val managedPackages = readManagedPackageNames() ?: return emptyList()
@@ -137,29 +198,6 @@ class ManagedAppRepository(context: Context) {
         writeProfiles(profiles)
     }
 
-    fun getProfile(packageName: String): AppInterventionProfile =
-        readAllProfiles()[packageName] ?: AppInterventionProfile.EMPTY
-
-    fun saveProfile(packageName: String, profile: AppInterventionProfile) {
-        val profiles = readAllProfiles().toMutableMap()
-        if (profile.rules.isEmpty()) {
-            profiles.remove(packageName)
-        } else {
-            profiles[packageName] = profile.copy(updatedAt = System.currentTimeMillis())
-        }
-        writeProfiles(profiles)
-    }
-
-    fun setInterventionEnabled(packageName: String, enabled: Boolean) {
-        val profile = getProfile(packageName)
-        val updated = if (enabled) {
-            enableIntervention(profile)
-        } else {
-            disableIntervention(profile)
-        }
-        saveProfile(packageName, updated)
-    }
-
     fun pruneUninstalled(): Int {
         val managedPackages = readManagedPackageNames()?.toMutableSet() ?: return 0
         if (managedPackages.isEmpty()) return 0
@@ -186,6 +224,33 @@ class ManagedAppRepository(context: Context) {
         writeProfiles(profiles)
         return prunedCount
     }
+
+    // ─── Intervention profiles / rules ───
+
+    fun getProfile(packageName: String): AppInterventionProfile =
+        readAllProfiles()[packageName] ?: AppInterventionProfile.EMPTY
+
+    fun saveProfile(packageName: String, profile: AppInterventionProfile) {
+        val profiles = readAllProfiles().toMutableMap()
+        if (profile.rules.isEmpty()) {
+            profiles.remove(packageName)
+        } else {
+            profiles[packageName] = profile.copy(updatedAt = System.currentTimeMillis())
+        }
+        writeProfiles(profiles)
+    }
+
+    fun setInterventionEnabled(packageName: String, enabled: Boolean) {
+        val profile = getProfile(packageName)
+        val updated = if (enabled) {
+            enableIntervention(profile)
+        } else {
+            disableIntervention(profile)
+        }
+        saveProfile(packageName, updated)
+    }
+
+    // ─── Private helpers ───
 
     private fun enableIntervention(profile: AppInterventionProfile): AppInterventionProfile {
         if (profile.rules.isEmpty()) {

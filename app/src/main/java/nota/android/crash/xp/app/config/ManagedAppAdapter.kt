@@ -1,25 +1,113 @@
 package nota.android.crash.xp.app.config
 
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
+import androidx.recyclerview.widget.DiffUtil
+import androidx.recyclerview.widget.ListAdapter
+import androidx.recyclerview.widget.RecyclerView
 import nota.android.crash.xp.app.R
-import nota.android.crash.xp.app.common.ui.ManagedAppRow
-import nota.android.crash.xp.app.recyclerhelper.RecyclerAdapter
-import nota.android.crash.xp.app.recyclerhelper.ViewHolder
+import nota.android.crash.xp.app.common.ui.themeColor
+import nota.android.crash.xp.app.databinding.ViewManagedAppRowBinding
 
-class ManagedAppAdapter(
-    dataList: MutableList<ManagedApp>,
-) : RecyclerAdapter<ManagedApp>(dataList) {
+class ManagedAppAdapter : ListAdapter<ManagedApp, ManagedAppAdapter.VH>(DiffCallback()) {
 
     var onSwitchChanged: ((ManagedApp, Boolean) -> Unit)? = null
 
-    override fun onCreateViewHolder(parent: ViewGroup, pos: Int): ViewHolder<ManagedApp> {
-        val view = LayoutInflater.from(parent.context)
-            .inflate(R.layout.view_managed_app_row, parent, false)
-        return ViewHolder(view)
+    private var onItemClickListener: ((View, ManagedApp, Int) -> Unit)? = null
+    private var onItemLongClickListener: ((View, ManagedApp, Int) -> Boolean)? = null
+
+    fun onItemClick(f: (rootView: View, data: ManagedApp, pos: Int) -> Unit) {
+        onItemClickListener = f
     }
 
-    override fun bindData(holder: ViewHolder<ManagedApp>, data: ManagedApp, pos: Int) {
-        ManagedAppRow.bind(holder.rootView, data, holder.rootView.context, onSwitchChanged)
+    fun onItemLongClick(f: (rootView: View, data: ManagedApp, pos: Int) -> Boolean) {
+        onItemLongClickListener = f
+    }
+
+    fun setData(list: List<ManagedApp>) {
+        submitList(list)
+    }
+
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
+        val binding = ViewManagedAppRowBinding.inflate(
+            LayoutInflater.from(parent.context), parent, false
+        )
+        return VH(binding)
+    }
+
+    override fun onBindViewHolder(holder: VH, position: Int) {
+        holder.bind(getItem(position))
+    }
+
+    inner class VH(private val binding: ViewManagedAppRowBinding) :
+        RecyclerView.ViewHolder(binding.root) {
+
+        init {
+            binding.root.setOnClickListener {
+                val pos = bindingAdapterPosition
+                if (pos != RecyclerView.NO_POSITION) {
+                    onItemClickListener?.invoke(binding.root, getItem(pos), pos)
+                }
+            }
+            binding.root.setOnLongClickListener {
+                val pos = bindingAdapterPosition
+                if (pos != RecyclerView.NO_POSITION) {
+                    onItemLongClickListener?.invoke(binding.root, getItem(pos), pos) ?: false
+                } else {
+                    false
+                }
+            }
+        }
+
+        fun bind(app: ManagedApp) {
+            val context = binding.root.context
+            binding.root.contentDescription = context.getString(
+                R.string.legacy_app_row_a11y,
+                app.label,
+                app.packageName,
+            )
+            binding.ivIcon.setImageDrawable(app.icon)
+            binding.tvName.text = app.label
+            binding.tvSubtitle.text = app.packageName
+
+            when (app.interventionStatus) {
+                InterventionStatus.ENABLED -> {
+                    binding.tvStatusBadge.visibility = View.VISIBLE
+                    binding.tvStatusBadge.setBackgroundResource(R.drawable.bg_status_enabled_badge)
+                    binding.tvStatusBadge.setTextColor(context.themeColor(R.attr.statusBannerActiveTextColor))
+                    binding.tvStatusBadge.text = context.getString(R.string.managed_status_enabled)
+                }
+                InterventionStatus.PENDING -> {
+                    binding.tvStatusBadge.visibility = View.VISIBLE
+                    binding.tvStatusBadge.setBackgroundResource(R.drawable.bg_status_pending_badge)
+                    binding.tvStatusBadge.setTextColor(context.themeColor(R.attr.statusBannerInactiveTextColor))
+                    binding.tvStatusBadge.text = context.getString(R.string.managed_status_pending)
+                }
+            }
+
+            binding.sw.contentDescription = context.getString(
+                if (app.switchChecked) {
+                    R.string.switch_disable_intervention
+                } else {
+                    R.string.switch_enable_intervention
+                },
+            )
+            binding.sw.setOnCheckedChangeListener(null)
+            binding.sw.isChecked = app.switchChecked
+            binding.sw.setOnCheckedChangeListener { _, isChecked ->
+                onSwitchChanged?.invoke(app, isChecked)
+            }
+        }
+    }
+
+    class DiffCallback : DiffUtil.ItemCallback<ManagedApp>() {
+        override fun areItemsTheSame(oldItem: ManagedApp, newItem: ManagedApp): Boolean {
+            return oldItem.packageName == newItem.packageName
+        }
+
+        override fun areContentsTheSame(oldItem: ManagedApp, newItem: ManagedApp): Boolean {
+            return oldItem == newItem
+        }
     }
 }

@@ -14,7 +14,7 @@ import nota.android.crash.xp.app.databinding.ActivityAppInterventionEditBinding
 class AppInterventionEditActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityAppInterventionEditBinding
-    private lateinit var repository: ManagedAppRepository
+    private lateinit var repository: AppRepository
     private lateinit var packageName: String
 
     private var profile: AppInterventionProfile = AppInterventionProfile.EMPTY
@@ -29,7 +29,7 @@ class AppInterventionEditActivity : AppCompatActivity() {
                 return
             }
 
-        repository = ManagedAppRepository(this)
+        repository = AppRepository(this)
         binding = ActivityAppInterventionEditBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
