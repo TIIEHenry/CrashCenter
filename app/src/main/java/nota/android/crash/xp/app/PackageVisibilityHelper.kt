@@ -64,7 +64,7 @@ object PackageVisibilityHelper {
         )
     }
 
-    /** Secondary check after [ActivityMain] loads apps (user-facing count excludes self). */
+    /** Secondary check after app list loads (user-facing count excludes self). */
     fun checkAfterLoad(context: Context, loadedAppCount: Int): Status {
         val base = check(context)
         if (base.needsUserAction || base.hasFullVisibility) {

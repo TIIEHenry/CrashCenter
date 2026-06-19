@@ -10,8 +10,6 @@ import nota.android.crash.xp.PrefManager.PREF_NAME
 import nota.android.crash.xp.PrefManager.PREF_PACKAGE_LIST
 import nota.android.crash.xp.PrefManager.PREF_SCOPE_MODE
 import nota.android.crash.xp.PrefManager.PREF_SHOW_SYSTEM_UI
-import nota.android.crash.xp.app.ArrayUtil.filter
-import nota.android.crash.xp.app.ArrayUtil.map
 import nota.android.crash.xp.app.PackageVisibilityHelper
 
 class AppListRepository(context: Context) {
@@ -69,7 +67,7 @@ class AppListRepository(context: Context) {
         } else {
             packageManager.getInstalledPackages(PackageManager.GET_META_DATA)
         }
-        return filter(map(installedPackages) { packageInfo ->
+        return installedPackages.map { packageInfo ->
             val appInfo = packageInfo.applicationInfo ?: return@map null
             AppItem(
                 name = appInfo.loadLabel(packageManager).toString(),
@@ -80,7 +78,7 @@ class AppListRepository(context: Context) {
                 updateTime = packageInfo.lastUpdateTime,
                 installTime = packageInfo.firstInstallTime,
             )
-        }.filterNotNull()) { app -> app.packageName != ITSELF }
+        }.filterNotNull().filter { app -> app.packageName != ITSELF }
     }
 
     fun persistHookStates(apps: List<AppItem>) {

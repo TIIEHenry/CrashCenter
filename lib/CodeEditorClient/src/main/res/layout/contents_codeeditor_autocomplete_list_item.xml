@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:tools="http://schemas.android.com/tools"
+	android:layout_width="match_parent"
+	android:layout_height="@dimen/codeeditor_autocomplete_list_item_H"
+	android:background="@drawable/cr_ripple_row_overlay"
+	android:tag="@string/view_tag">
+	
+	<ImageView
+		android:id="@+id/iv_autocomplete_type"
+		android:layout_width="@dimen/codeeditor_autocomplete_list_item_H"
+		android:layout_height="@dimen/codeeditor_autocomplete_list_item_H"
+		android:padding="10dp"
+		android:tag="@string/view_tag"
+		android:scaleType="fitCenter" />
+	
+	<TextView
+		android:id="@+id/tv_autocomplete_text"
+		android:layout_width="match_parent"
+		android:layout_height="match_parent"
+		android:layout_marginEnd="5dp"
+		android:gravity="center_vertical"
+		android:tag="@string/view_tag"
+		android:textColor="@color/main_content_foreground_color"
+		android:textSize="15sp"
+		android:typeface="monospace"
+		tools:text="@string/app_name" />
+</LinearLayout>

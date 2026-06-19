@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<string name="contents_codeeditor_label">代码编辑器</string>
+	<string name="contents_codeeditor_description">TaoKDao代码编辑器</string>
+	<string name="contents_codeeditor_findreplace_matchcase">匹配区分大小写：</string>
+	<string name="contents_codeeditor_findreplace_matchregex">匹配使用正则：</string>
+	<string name="contents_codeeditor_findreplace_notfound">没有找到，寻找下一个</string>
+	<string name="contents_codeeditor_findreplace_find_text">搜索内容</string>
+	<string name="contents_codeeditor_findreplace_replace_text">替换内容</string>
+	<string name="contents_codeeditor_findreplace_replace">替换</string>
+	<string name="contents_codeeditor_findreplace_replace_all">替换全部</string>
+	<string name="view_tag" translatable="false">code_editor</string>
+</resources>

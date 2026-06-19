@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<string name="contents_codeeditor_label">CodeEditor</string>
+	<string name="contents_codeeditor_description">Code editor for TaoKDao</string>
+	<string name="contents_codeeditor_findreplace_matchcase">Match case sensitivity :</string>
+	<string name="contents_codeeditor_findreplace_matchregex">Match using regularization :</string>
+	<string name="contents_codeeditor_findreplace_notfound">Not found, find next</string>	<string name="contents_codeeditor_findreplace_find_text">Search text</string>
+	<string name="contents_codeeditor_findreplace_replace_text">Replace text</string>
+	<string name="contents_codeeditor_findreplace_replace">Replace</string>
+	<string name="contents_codeeditor_findreplace_replace_all">Replace all</string>
+</resources>

@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	
+	<style name="Main.Bottom.Text" parent="Widget.AppCompat.TextView">
+		<item name="android:textColor">@color/main_bottom_foreground_color</item>
+		<item name="android:textColorHint">@color/main_bottom_foreground_color_hint</item>
+		<item name="android:textColorHighlight">@color/main_bottom_foreground_color_accent</item>
+	</style>
+	
+	<style name="Main.Bottom.Text.CodeEditor_FindReplace_EditText">
+		<item name="android:padding">10dp</item>
+		<item name="android:background">@drawable/cr_ripple_shape</item>
+		<item name="android:textSize">15sp</item>
+		<item name="android:lines">1</item>
+		<item name="android:gravity">center_vertical</item>
+		<item name="android:inputType">text</item>
+	</style>
+	<style name="Main.Bottom.Image.Button.Round" parent="Main.Bottom.Button.Round"></style>
+	
+	<style name="Main.Bottom.Image.Button.Rectangle" parent="Main.Bottom.Button.Rectangle"></style>
+	
+	<style name="Main.Bottom.Text.Button.Round" parent="Main.Bottom.Button.Round"></style>
+	
+	<style name="Main.Bottom.Text.Button.Rectangle" parent="Main.Bottom.Button.Rectangle"></style>
+	
+	<style name="Main.Bottom.Button.Round" parent="Main.Bottom.Clickable.Round"></style>
+	
+	<style name="Main.Bottom.Button.Rectangle" parent="Main.Bottom.Clickable.Rectangle"></style>
+	
+	<style name="Main.Bottom.Clickable.Round" parent="CrWidget.RoundRipple" />
+	
+	<style name="Main.Bottom.Clickable.Rectangle" parent="CrWidget.ShapePress" />
+	
+	<style name="Main.Bottom.Clickable" parent="Clickable" />
+	
+	<style name="Clickable">
+		<item name="android:clickable">true</item>
+	</style>
+	<style name="Main.Bottom.Image.Button.Round.CodeEditor_FindReplace">
+		<item name="android:padding">12dp</item>
+	</style>
+
+	<style name="Main.Bottom.Image.Button.Round.CodeEditor_FindReplace.Toggle"
+		parent="Main.Bottom.Image.Button.Round.CodeEditor_FindReplace">
+		<item name="android:background">@drawable/codeeditor_toolbar_toggle_round</item>
+	</style>
+	
+	<style name="Main.Bottom.Text.Button.Rectangle.CodeEditor_FindReplace">
+		<item name="android:gravity">center</item>
+		<item name="android:textSize">15sp</item>
+		<item name="android:lines">1</item>
+		<item name="android:padding">5dp</item>
+	</style>
+
+</resources>

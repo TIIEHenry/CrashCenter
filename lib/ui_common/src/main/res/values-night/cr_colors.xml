@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Clarence semantic colors — dark (SSOT: ui-design-language.md §3) -->
+    <color name="cr_accent">#479EF5</color>
+    <color name="cr_accent_container">#0A2E4A</color>
+    <color name="cr_canvas">#202020</color>
+    <color name="cr_layer">#2D2D2D</color>
+    <color name="cr_text_primary">#FFFFFF</color>
+    <color name="cr_text_secondary">#A0A0A0</color>
+    <color name="cr_text_disabled">#757575</color>
+    <color name="cr_stroke">#3D3D3D</color>
+    <color name="cr_error">#FF99A4</color>
+    <color name="cr_success">#6CCB5F</color>
+    <color name="cr_warning">#FCE100</color>
+
+    <!-- Press paradigms (ui-design-language.md §4) -->
+    <color name="cr_press_overlay">#1FFFFFFF</color>
+    <color name="cr_press_shape_fill">#12FFFFFF</color>
+    <color name="cr_press_shape_selected">#33479EF5</color>
+    <color name="cr_press_ripple">#29A0A0A0</color>
+</resources>

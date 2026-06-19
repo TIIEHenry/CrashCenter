@@ -15,12 +15,6 @@ android {
         versionName "0.1.0"
     }
 
-    sourceSets {
-        main {
-            java.srcDirs = ['src/main/java', 'src/main/kotlin']
-        }
-    }
-
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17

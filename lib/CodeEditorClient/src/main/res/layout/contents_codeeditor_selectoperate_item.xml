@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	android:layout_width="wrap_content"
+	android:layout_height="wrap_content"
+	android:tag="@string/view_tag">
+	
+	<ImageButton
+		android:id="@+id/ibtn_button"
+		style="@style/Main.Float.Image.Button.Rectangle.CodeEditor_SelectOperate"
+		android:layout_width="40dp"
+		android:tag="@string/view_tag"
+		android:layout_height="match_parent" />
+</FrameLayout>

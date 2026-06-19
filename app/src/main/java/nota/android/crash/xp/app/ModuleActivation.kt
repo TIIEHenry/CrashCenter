@@ -8,8 +8,4 @@ object ModuleActivation {
 
     @JvmStatic
     fun isModuleActive(): Boolean = false
-
-    /** Backward-compat alias for legacy self-hook target on [ActivityMain]. */
-    @JvmStatic
-    fun isModuleActived(): Boolean = isModuleActive()
 }

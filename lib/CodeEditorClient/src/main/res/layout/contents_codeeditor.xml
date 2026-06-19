@@ -1,0 +1,232 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:app="http://schemas.android.com/apk/res-auto"
+	xmlns:tools="http://schemas.android.com/tools"
+	android:layout_width="match_parent"
+	android:layout_height="match_parent">
+	
+	
+	<taokdao.codeeditor.CodeIEditor
+		android:id="@+id/code_ieditor_editor"
+		android:layout_width="match_parent"
+		android:layout_height="0dp"
+		android:background="@color/main_content_background_color"
+		app:layout_constraintBottom_toTopOf="@+id/quick_input_layout"
+		app:layout_constraintEnd_toEndOf="parent"
+		app:layout_constraintStart_toStartOf="parent"
+		app:layout_constraintTop_toTopOf="parent" />
+	
+	
+	<ImageButton
+		android:id="@+id/quick_edit_float_save"
+		android:layout_width="@dimen/quick_edit_float_W"
+		android:layout_height="@dimen/quick_edit_float_H"
+		android:layout_marginBottom="10dp"
+		android:background="@drawable/codeeditor_quickedit_float_selector"
+		android:elevation="2dp"
+		android:paddingVertical="@dimen/quick_edit_float_padding_other"
+		android:paddingStart="@dimen/quick_edit_float_padding_start"
+		android:paddingEnd="@dimen/quick_edit_float_padding_other"
+		android:scaleType="fitCenter"
+		android:src="@drawable/codeeditor_quickedit_edit_save"
+		app:layout_constraintBottom_toTopOf="@+id/quick_edit_float_exit"
+		app:layout_constraintStart_toStartOf="parent" />
+	
+	<ImageButton
+		android:id="@+id/quick_edit_float_exit"
+		android:layout_width="@dimen/quick_edit_float_W"
+		android:layout_height="@dimen/quick_edit_float_H"
+		android:layout_marginBottom="10dp"
+		android:background="@drawable/codeeditor_quickedit_float_selector"
+		android:elevation="2dp"
+		android:paddingVertical="@dimen/quick_edit_float_padding_other"
+		android:paddingStart="@dimen/quick_edit_float_padding_start"
+		android:paddingEnd="@dimen/quick_edit_float_padding_other"
+		android:scaleType="fitCenter"
+		android:src="@drawable/codeeditor_quickedit_edit_exit"
+		app:layout_constraintBottom_toTopOf="@+id/select_operate_layout"
+		app:layout_constraintStart_toStartOf="parent" />
+	
+	
+	<ImageView
+		android:id="@+id/quick_control_left"
+		android:layout_width="@dimen/quick_control_btn_W"
+		android:layout_height="@dimen/quick_control_btn_H"
+		android:layout_marginBottom="17dp"
+		android:background="@drawable/codeeditor_quickcontrol_left_selector"
+		android:elevation="2dp"
+		android:paddingVertical="@dimen/quick_edit_float_padding_other"
+		android:paddingStart="@dimen/quick_edit_float_padding_start"
+		android:paddingEnd="@dimen/quick_edit_float_padding_other"
+		android:scaleType="fitCenter"
+		android:src="@drawable/codeeditor_quickcontrol_undo"
+		app:layout_constraintBottom_toTopOf="@id/select_operate_layout"
+		app:layout_constraintEnd_toStartOf="@id/quick_control_right" />
+	
+	<ImageView
+		android:id="@+id/quick_control_right"
+		android:layout_width="@dimen/quick_control_btn_W"
+		android:layout_height="@dimen/quick_control_btn_H"
+		android:layout_marginEnd="17dp"
+		android:layout_marginBottom="17dp"
+		android:background="@drawable/codeeditor_quickcontrol_right_selector"
+		android:elevation="2dp"
+		android:paddingVertical="@dimen/quick_edit_float_padding_other"
+		android:paddingStart="@dimen/quick_edit_float_padding_other"
+		android:paddingEnd="@dimen/quick_edit_float_padding_start"
+		android:scaleType="fitCenter"
+		android:src="@drawable/codeeditor_quickcontrol_redo"
+		app:layout_constraintBottom_toTopOf="@id/select_operate_layout"
+		app:layout_constraintEnd_toEndOf="parent" />
+	
+	<androidx.recyclerview.widget.RecyclerView
+		android:id="@+id/select_operate_layout"
+		android:layout_width="match_parent"
+		android:layout_height="40dp"
+		android:background="@color/main_float_background_color"
+		android:elevation="2dp"
+		android:visibility="gone"
+		app:layout_constraintBottom_toTopOf="@id/quick_input_layout"
+		app:layout_constraintEnd_toEndOf="parent"
+		app:layout_constraintStart_toEndOf="parent"
+		tools:visibility="visible" />
+	
+	
+	<LinearLayout
+		android:id="@+id/quick_input_layout"
+		android:layout_width="match_parent"
+		android:layout_height="@dimen/quick_input_layout_H"
+		android:background="@color/main_bottom_background_color"
+		android:elevation="2dp"
+		android:orientation="horizontal"
+		app:layout_constraintBottom_toTopOf="@+id/find_layout"
+		app:layout_constraintEnd_toEndOf="parent"
+		app:layout_constraintStart_toStartOf="parent">
+		
+		<ImageView
+			android:id="@+id/quick_input_ibtn_indent"
+			android:layout_width="@dimen/quick_input_layout_H"
+			android:layout_height="match_parent"
+			android:background="@drawable/cr_ripple_shape"
+			android:padding="8dp"
+			android:scaleType="fitCenter"
+			android:src="@drawable/codeeditor_quickinput_indent" />
+		
+		
+		<androidx.recyclerview.widget.RecyclerView
+			android:id="@+id/quick_input_rv"
+			android:layout_width="0dp"
+			android:layout_height="match_parent"
+			android:layout_weight="1" />
+		
+		<ImageView
+			android:id="@+id/quick_input_ibtn_tabtool"
+			android:layout_width="@dimen/quick_input_layout_H"
+			android:layout_height="match_parent"
+			android:background="@drawable/cr_ripple_shape"
+			android:padding="8dp"
+			android:scaleType="fitCenter"
+			android:src="@drawable/codeeditor_quickinput_tabtool" />
+	</LinearLayout>
+	
+	
+	<LinearLayout
+		android:id="@+id/find_layout"
+		android:layout_width="match_parent"
+		android:layout_height="@dimen/toolbar_menu_layout_H"
+		android:background="@color/main_bottom_background_color"
+		android:elevation="2dp"
+		android:visibility="gone"
+		app:layout_constraintBottom_toTopOf="@+id/replace_layout"
+		app:layout_constraintEnd_toEndOf="parent"
+		app:layout_constraintStart_toStartOf="parent"
+		tools:visibility="visible">
+		
+		<EditText
+			android:id="@+id/find_edit_input"
+			style="@style/Main.Bottom.Text.CodeEditor_FindReplace_EditText"
+			android:layout_width="0dp"
+			android:layout_height="match_parent"
+			android:layout_weight="1"
+			android:hint="@string/contents_codeeditor_findreplace_find_text"
+			android:importantForAutofill="no"
+			android:textColor="@color/main_bottom_foreground_color"
+			android:textColorHint="@color/main_bottom_foreground_color_hint" />
+		
+		<ImageButton
+			android:id="@+id/find_ibtn_prior"
+			style="@style/Main.Bottom.Image.Button.Round.CodeEditor_FindReplace"
+			android:layout_width="@dimen/toolbar_menu_layout_H"
+			android:layout_height="@dimen/toolbar_menu_layout_H"
+			android:src="@drawable/codeeditor_findreplace_prior" />
+		
+		<ImageButton
+			android:id="@+id/find_ibtn_next"
+			style="@style/Main.Bottom.Image.Button.Round.CodeEditor_FindReplace"
+			android:layout_width="@dimen/toolbar_menu_layout_H"
+			android:layout_height="@dimen/toolbar_menu_layout_H"
+			android:src="@drawable/codeeditor_findreplace_next" />
+		
+		<ImageButton
+			android:id="@+id/find_ibtn_case"
+			style="@style/Main.Bottom.Image.Button.Round.CodeEditor_FindReplace.Toggle"
+			android:layout_width="@dimen/toolbar_menu_layout_H"
+			android:layout_height="@dimen/toolbar_menu_layout_H"
+			android:src="@drawable/codeeditor_findreplace_case"/>
+		
+		<ImageButton
+			android:id="@+id/find_ibtn_regex"
+			style="@style/Main.Bottom.Image.Button.Round.CodeEditor_FindReplace.Toggle"
+			android:layout_width="@dimen/toolbar_menu_layout_H"
+			android:layout_height="@dimen/toolbar_menu_layout_H"
+			android:src="@drawable/codeeditor_findreplace_regex"/>
+		
+		<ImageButton
+			android:id="@+id/find_ibtn_close"
+			style="@style/Main.Bottom.Image.Button.Round.CodeEditor_FindReplace"
+			android:layout_width="@dimen/toolbar_menu_layout_H"
+			android:layout_height="@dimen/toolbar_menu_layout_H"
+			android:src="@drawable/codeeditor_findreplace_close"/>
+	</LinearLayout>
+	
+	<LinearLayout
+		android:id="@+id/replace_layout"
+		android:layout_width="match_parent"
+		android:layout_height="@dimen/toolbar_menu_layout_H"
+		android:background="@color/main_bottom_background_color"
+		android:elevation="2dp"
+		android:visibility="gone"
+		app:layout_constraintBottom_toBottomOf="parent"
+		app:layout_constraintEnd_toEndOf="parent"
+		app:layout_constraintStart_toStartOf="parent"
+		tools:visibility="visible">
+		
+		<EditText
+			android:id="@+id/replace_edit_input"
+			style="@style/Main.Bottom.Text.CodeEditor_FindReplace_EditText"
+			android:layout_width="0dp"
+			android:layout_height="match_parent"
+			android:layout_weight="1"
+			android:hint="@string/contents_codeeditor_findreplace_replace_text"
+			android:importantForAutofill="no"
+			android:textColor="@color/main_bottom_foreground_color"
+			android:textColorHint="@color/main_bottom_foreground_color_hint"
+			tools:targetApi="o" />
+		
+		<Button
+			android:id="@+id/replace_replace_one"
+			style="@style/Main.Bottom.Text.Button.Rectangle.CodeEditor_FindReplace"
+			android:layout_width="wrap_content"
+			android:layout_height="match_parent"
+			android:text="@string/contents_codeeditor_findreplace_replace"
+			android:textColor="@color/main_bottom_foreground_color" />
+		
+		<Button
+			android:id="@+id/replace_replace_all"
+			style="@style/Main.Bottom.Text.Button.Rectangle.CodeEditor_FindReplace"
+			android:layout_width="wrap_content"
+			android:layout_height="match_parent"
+			android:text="@string/contents_codeeditor_findreplace_replace_all"
+			android:textColor="@color/main_bottom_foreground_color" />
+	</LinearLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>

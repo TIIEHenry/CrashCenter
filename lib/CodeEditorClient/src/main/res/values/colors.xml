@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<color name="main_appbar_background_color_hint">@color/blueGrey_400</color>
+	<color name="main_appbar_background_color">@color/blueGrey_500</color>
+	<color name="main_appbar_background_color_accent">@color/blueGrey_600</color>
+	<color name="main_appbar_foreground_color_hint">@color/grey_400</color>
+	<color name="main_appbar_foreground_color">@color/grey_100</color>
+	<color name="main_appbar_foreground_color_accent">@color/grey_1100</color>
+</resources>

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	
+	
+	<style name="CodeEditor_AutoComplete_PopupAnimation" mce_bogus="1" parent="android:Animation">
+		<item name="android:windowEnterAnimation">@anim/editor_autocomplete_popup_enter</item>
+		<item name="android:windowExitAnimation">@anim/editor_autocomplete_popup_exit</item>
+	</style>
+
+</resources>

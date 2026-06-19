@@ -11,8 +11,6 @@ import nota.android.crash.xp.PrefManager.PREF_MANAGED_PACKAGES
 import nota.android.crash.xp.PrefManager.PREF_NAME
 import nota.android.crash.xp.PrefManager.PREF_SCOPE_MODE
 import nota.android.crash.xp.PrefManager.PREF_SHOW_SYSTEM_UI
-import nota.android.crash.xp.app.ArrayUtil.filter
-import nota.android.crash.xp.app.ArrayUtil.map
 import nota.android.crash.xp.app.PackageVisibilityHelper
 
 class ManagedAppRepository(context: Context) {
@@ -259,9 +257,9 @@ class ManagedAppRepository(context: Context) {
             } else {
                 packageManager.getInstalledPackages(PackageManager.GET_META_DATA)
             }
-            return filter(map(installedPackages) { it.packageName }) { packageName ->
-                packageName != ITSELF
-            }.toSet()
+            return installedPackages.map { it.packageName }
+                .filter { packageName -> packageName != ITSELF }
+                .toSet()
         }
 
         internal fun passesSystemFilter(isSystemApp: Boolean, handleSystem: Boolean): Boolean =

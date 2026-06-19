@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Clarence press paradigms (ui-design-language.md §4) -->
+
+    <style name="CrWidget" />
+
+    <style name="CrWidget.RowOverlay">
+        <item name="android:background">@drawable/cr_ripple_row_overlay</item>
+    </style>
+
+    <style name="CrWidget.RoundRipple">
+        <item name="android:background">@drawable/cr_ripple_round</item>
+    </style>
+
+    <style name="CrWidget.ShapePress">
+        <item name="android:background">@drawable/cr_ripple_shape</item>
+    </style>
+</resources>

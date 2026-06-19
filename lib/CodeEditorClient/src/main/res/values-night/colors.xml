@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+	<color name="main_appbar_background_color_hint">#424242</color>
+	<color name="main_appbar_background_color">#2c2e2d</color>
+	<color name="main_appbar_background_color_accent">#202121</color>
+	<color name="main_appbar_foreground_color_hint">#bbbbbb</color>
+	<color name="main_appbar_foreground_color">#dddddd</color>
+	<color name="main_appbar_foreground_color_accent">#eeffffff</color>
+
+</resources>

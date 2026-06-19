@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	
+	<style name="Main.Float.Clickable" parent="Clickable"></style>
+	
+	<style name="Main.Float.Clickable.Rectangle" parent="CrWidget.ShapePress" />
+	
+	
+	<style name="Main.Float.Button.Rectangle" parent="Main.Float.Clickable.Rectangle"></style>
+	
+	<style name="Main.Float.Image.Button.Rectangle" parent="Main.Float.Button.Rectangle"></style>
+	
+	<style name="Main.Float.Image.Button.Rectangle.CodeEditor_SelectOperate">
+		<item name="android:padding">8dp</item>
+	</style>
+</resources>

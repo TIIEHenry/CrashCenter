@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	android:layout_width="34dp"
+	android:layout_height="match_parent"
+	android:background="@drawable/cr_ripple_shape"
+	android:orientation="vertical"
+	android:tag="@string/view_tag">
+	
+	<TextView
+		android:id="@+id/tv_quickinput_text"
+		android:layout_width="match_parent"
+		android:layout_height="match_parent"
+		android:gravity="center"
+		android:tag="@string/view_tag"
+		android:textColor="@color/main_bottom_foreground_color"
+		android:textSize="16sp" />
+</LinearLayout>

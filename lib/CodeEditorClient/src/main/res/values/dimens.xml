@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	
+	<dimen name="codeeditor_autocomplete_list_item_H">42dp</dimen>
+	
+	<dimen name="quick_control_btn_H">36dp</dimen>
+	<dimen name="quick_control_btn_W">44dp</dimen>
+	<dimen name="quick_control_btn_radius">18dp</dimen>
+	<dimen name="quick_edit_float_H">36dp</dimen>
+	<dimen name="quick_edit_float_W">40dp</dimen>
+	<dimen name="quick_edit_float_padding_other">5dp</dimen>
+	<dimen name="quick_edit_float_padding_start">12dp</dimen>
+	<dimen name="quick_edit_float_radius">18dp</dimen>
+	<dimen name="quick_input_layout_H">38dp</dimen>
+	
+	<dimen name="toolbar_menu_layout_H">44dp</dimen>
+</resources>

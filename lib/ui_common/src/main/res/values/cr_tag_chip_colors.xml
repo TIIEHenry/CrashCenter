@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="cr_tag_chip_overlay_fill">@color/cr_layer</color>
+    <color name="cr_tag_chip_overlay_text">@color/cr_text_primary</color>
+    <color name="cr_tag_chip_overlay_stroke">@color/cr_stroke</color>
+    <color name="cr_tag_chip_overlay_stroke_checked">@color/cr_text_primary</color>
+</resources>

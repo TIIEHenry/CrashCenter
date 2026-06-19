@@ -28,12 +28,12 @@ dependencyResolutionManagement {
 rootProject.name = "CrashCenter"
 include ':app'
 
-def celestialEditorRoot = file('../CelestailRuler')
+def libRoot = file('lib')
 include ':CodeEditor', ':CodeEditorAntlr', ':CodeEditorClient', ':ui_common'
-project(':CodeEditor').projectDir = new File(celestialEditorRoot, 'CodeEditor')
-project(':CodeEditorAntlr').projectDir = new File(celestialEditorRoot, 'CodeEditorAntlr')
-project(':CodeEditorClient').projectDir = new File(celestialEditorRoot, 'CodeEditorClient')
-project(':ui_common').projectDir = new File(celestialEditorRoot, 'ui_common')
+project(':CodeEditor').projectDir = new File(libRoot, 'CodeEditor')
+project(':CodeEditorAntlr').projectDir = new File(libRoot, 'CodeEditorAntlr')
+project(':CodeEditorClient').projectDir = new File(libRoot, 'CodeEditorClient')
+project(':ui_common').projectDir = new File(libRoot, 'ui_common')
 
 gradle.beforeProject { project ->
     if (project.name in ['CodeEditorClient', 'ui_common']) {

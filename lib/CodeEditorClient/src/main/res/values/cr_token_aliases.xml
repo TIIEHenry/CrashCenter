@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Clarence token aliases — backward-compat for legacy shell palette names (P0/P6) -->
+
+    <!-- main_content_* — editor surface & popup chrome -->
+    <color name="main_content_background_color">@color/cr_layer</color>
+    <color name="main_content_background_color_hint">@color/cr_canvas</color>
+    <color name="main_content_background_color_accent">@color/cr_press_overlay</color>
+    <color name="main_content_foreground_color">@color/cr_text_primary</color>
+    <color name="main_content_foreground_color_hint">@color/cr_text_secondary</color>
+    <color name="main_content_foreground_color_accent">@color/cr_text_primary</color>
+
+    <!-- main_bottom_* — toolbar / find-replace / quick-input shell -->
+    <color name="main_bottom_background_color">@color/cr_layer</color>
+    <color name="main_bottom_background_color_hint">@color/cr_canvas</color>
+    <color name="main_bottom_background_color_accent">@color/cr_press_overlay</color>
+    <color name="main_bottom_foreground_color">@color/cr_text_primary</color>
+    <color name="main_bottom_foreground_color_hint">@color/cr_text_secondary</color>
+    <color name="main_bottom_foreground_color_accent">@color/cr_text_primary</color>
+
+    <!-- main_float_* — selection operate bar -->
+    <color name="main_float_background_color">@color/cr_layer</color>
+    <color name="main_float_background_color_hint">@color/cr_canvas</color>
+    <color name="main_float_background_color_accent">@color/cr_press_overlay</color>
+    <color name="main_float_foreground_color">@color/cr_text_primary</color>
+    <color name="main_float_foreground_color_hint">@color/cr_text_secondary</color>
+    <color name="main_float_foreground_color_accent">@color/cr_text_primary</color>
+
+    <!-- Press paradigm aliases (ui_common SSOT) -->
+    <item name="main_bottom_round_selector" type="drawable">@drawable/cr_ripple_round</item>
+    <item name="main_bottom_rectangle_selector" type="drawable">@drawable/cr_ripple_shape</item>
+    <item name="main_float_rectangle_selector" type="drawable">@drawable/cr_ripple_shape</item>
+    <item name="main_content_rectangle_selector" type="drawable">@drawable/cr_ripple_row_overlay</item>
+</resources>
