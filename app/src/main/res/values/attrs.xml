@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <attr name="statusBannerActiveBackground" format="color" />
+    <attr name="statusBannerInactiveBackground" format="color" />
+    <attr name="statusBannerActiveTextColor" format="color" />
+    <attr name="statusBannerInactiveTextColor" format="color" />
+</resources>

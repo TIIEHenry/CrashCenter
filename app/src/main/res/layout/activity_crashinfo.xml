@@ -38,7 +38,7 @@
 
             android:layout_height="@dimen/toolbar_height"
 
-            app:navigationIconTint="@color/textPrimary"
+            app:navigationIconTint="?android:attr/textColorPrimary"
 
             app:titleTextAppearance="@style/TextAppearance.App.ToolbarTitle"
 

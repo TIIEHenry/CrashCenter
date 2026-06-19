@@ -31,11 +31,11 @@ public class ArrayUtil {
     }
 
 
-    interface Filter<T> {
+    public interface Filter<T> {
         boolean filter(T t);
     }
 
-    interface Map<T, R> {
+    public interface Map<T, R> {
         R map(T t);
     }
 }

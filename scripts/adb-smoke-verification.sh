@@ -6,7 +6,7 @@ set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 PACKAGE="nota.android.crash.xp.app"
-ACTIVITY="${PACKAGE}/.ActivityMain"
+ACTIVITY="${PACKAGE}/.shell.MainShellActivity"
 LOCK_FILE="$REPO_ROOT/dev/verification/.adb-test.lock"
 ADB_SERIAL=""
 SKIP_BUILD=0
@@ -28,7 +28,7 @@ CrashCenter adb smoke verification
   2. 检查 adb 设备
   3. assembleDebug（可跳过）
   4. adb install -r
-  5. 启动 ActivityMain
+  5. 启动 MainShellActivity（LAUNCHER）
   6. 抓取 logcat 关键字（10s）
 
 手动后续:

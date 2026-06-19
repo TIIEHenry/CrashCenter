@@ -4,7 +4,7 @@ type: progress
 status: active
 phase: N/A
 updated: 2026-06-19
-summary: "文档系统审计修复；Phase 3 收尾、Phase 2 近完成"
+summary: "Phase 3/4 UI marathon 已提交：Shell、3G、暗色、4B scaffold、验收报告"
 ---
 
 # 项目进度状态
@@ -13,110 +13,43 @@ summary: "文档系统审计修复；Phase 3 收尾、Phase 2 近完成"
 
 | 项 | 状态 |
 |---|------|
-| 活跃 Phase | [Phase 3 — 配置 UI 重设计](../roadmap/active/phase3_ui_redesign.md) 🔄 |
+| 活跃 Phase | [Phase 3 — 配置 UI 重设计](../roadmap/active/phase3_ui_redesign.md) 🔄（Shell/受管/暗色 **已提交**） |
 | Phase 2 | [文档工具与验收](../roadmap/active/phase2_documentation_tooling.md) — 近完成（待 LSPosed 真机报告） |
-| 下一 Phase | [Phase 4 — 崩溃可观测性](../roadmap/active/phase4_crash_observability.md) 📋 backlog |
-| 阻塞 | LSPosed 手动 UI 项（Test 崩溃拦截、状态条激活色）待验 |
-| 验证基线 | `assembleDebug` 通过；adb smoke 自动化（安装+启动）通过 |
+| 下一 Phase | [Phase 4 — 崩溃可观测性](../roadmap/active/phase4_crash_observability.md) 🔄 **4B scaffold** 已编码；CodeEditor 详情待建 |
+| 阻塞 | LSPosed 手动项（Test 拦截、Switch→hook、激活状态条绿/无弹窗） |
+| 验证基线 | `461QYGDD2226C` **2026-06-19**：consolidated smoke **PASS**；dark mode QA **PASS**（Meizu；AOSP defer） |
 
 ### 已完成
 
-- Phase 1 归档：docs/dev 骨架、架构文档、ADR、索引脚本
-- Phase 2 近完成：verification 指南、验收模板、adb-smoke 脚本、Cursor 规则（剩真机报告一项）
-- 配置 UI Material 重构（ActivityMain / ActivityCrashInfo + 主题资源）
-- Phase 3D 结构清理：ViewBinding、内联加载指示器、删 pref_general、过滤空状态
-- **Phase 3 Fluent 视觉对齐**：色板/Toolbar/Chip/搜索/列表对齐 AppSnapShotor；ADR-006 M3 defer
-- **Phase 3 单屏密度优化**：紧凑状态条、FilterChip 全局设置、扁平列表项；ADR-005 修订为单屏 IA
-- **包可见性手动授权**：`PackageVisibilityHelper` + 授权条 + 设置跳转 + `onResume` 重载列表
-- **包名迁移**：`nota.android.crash.*` 分包；prefs `crash`；`PrefMigrator` 一次性从 `tiiehenry.xp.grapcrash` 导入
-- **应用更名**：显示名 CrashCenter / 崩溃中心；APK `CrashCenter_v*`；文档与字符串中英双语
+- Phase 1 归档；Phase 2 近完成（verification 工具链）
+- Material v1 + 3D 结构清理 + Fluent 对齐 + 单屏密度 IA + 包可见性/迁移/更名
+- **UI Shell 文档**：ADR-009；配置域 `ConfigFragment` / `ConfigUiState`；Phase 4C 2-tab Shell 边界
+- **Phase 3G**：方案定稿 + 3G-α 数据层 + **3G-β 受管列表 UI**（Switch / Half Sheet / Edit）
+- **Phase 4C-α Shell**：`MainShellActivity` / `ConfigFragment` / Design System 组件类化；adb smoke PASS
+- **Phase 4C-β scaffolding**：`CrashHistoryFragment` + `FileCrashLogRepository` + `CrashEventRow`；Observe 空态
+- **Phase 4B 写入 scaffold**：`CrashLogCoordinator` + `DirectFsCrashLogWriter`；hook 异步 append `events.jsonl`；UUID + `source`；`crash_log_enabled` pref
+- **暗色 DayNight A–D**：`values-night/` + `ThemeColors` + Material 对话框；Meizu Phase D QA PASS
+- **M2** permission banner compact；**M5** Add sheet 28dp 圆角 + DragHandle + peekHeight 50%
+- **Legacy backlog**：删 `activity_main`、OnBackPressed、sheet EmptyState、i18n/a11y/tint、ScopePolicy 澄清
+- **P0/P1 修复**：`ModuleActivation`、BNV StackOverflow、`PrefMigrator` fresh install、Observe 空态 copy、`ArrayUtil` 可见性
 
 ### 待办
 
-- LSPosed 环境完成手动 smoke（Test 拦截、Switch/prefs、状态条）
-- 真机报告补全 `dev/verification/smoke_20260619.md` 手动项
-- Phase 2 完成后归档
-- Phase 4：按 [phase4_crash_observability.md](../roadmap/active/phase4_crash_observability.md) 实施（[crash-log-backends.md](../../docs/architecture/crash-log-backends.md) + ADR-008 方案已就绪）
-- Phase 4 导航 IA：Phase 3/4B **0 tab**；4C+ **2 bottom tab**（配置 \| 观测），观测内 TabLayout（历史 \| 统计）— [navigation-ia.md](../../docs/architecture/navigation-ia.md)
+- **3A**：LSPosed 手动 smoke → 补全 `dev/verification/smoke_20260619.md`
+- **4C-β 收尾**：Gradle CodeEditor + 详情页；**4B scaffold** 已编码 — 真机验历史行（IS-1/2、跨包直写）
+- **暗色**：AOSP 模拟器 API 30/34/36；Permission banner compact 稳定复现；CrashEventRow（待 4B 真机数据）
+- Phase 2 归档；Phase 4B-α 多后端 / Provider / retention 待建
 
 ---
 
 ## Recent Sessions
 
-### 2026-06-19 — 架构优化设计文档
+### 2026-06-19 — 提交：Phase 3/4 UI marathon + 文档
 
-- 新建 [architecture-optimization.md](../../docs/architecture/architecture-optimization.md)：现状 as-is / 目标 to-be 分层、包结构、8 项关键优化、Phase 4 落地映射
-- 更新 overview、phase4 roadmap 交叉链接
-
-### 2026-06-19 — 文档系统审计修复
-
-- CRLF→LF（docs/dev）；`generate-docs-index.sh` 剥离 `\r`；INDEX summary 不再为 `---`
-- `scope-and-prefs` 修正 legacy 包 `tiiehenry.xp.grapcrash`；`check-docs-health.py` CRLF / status 行数告警
-- 旧会话迁入 [archive/status-sessions-2026-06.md](archive/status-sessions-2026-06.md)；phase3 `in_progress`；phase2 标注近完成
-
-### 2026-06-19 — Gradle 配置同步 AppSnapShotor
-
-- Gradle wrapper 9.2.1；`gradle/libs.versions.toml` version catalog；`gradle.properties` 优化项对齐
-- `settings.gradle` 仓库配置简化（google content filter + mavenCentral + jitpack）
-- Material 1.13.0（AppSnapShotor 1.14.0 需 minSdk 23，CrashCenter 保留 21 故用 1.13.0）；显式 `kotlin-android` 插件；保留 Java 17 / minSdk 21 / CrashCenter APK 命名
-- 新增 Xposed Maven 仓库 `https://api.xposed.info/`（替代原 aliyun/jcenter 镜像解析）
-
-### 2026-06-19 — 自动化构建发布（移植 AppSnapShotor）
-
-- 新增 `.github/workflows/build.yml`（main/PR `assembleDebug`）、`release.yml`（`v*` tag → Release APK）
-- 新增 `CHANGELOG.md`、`scripts/extract-changelog.sh`、`.github/prompts/release.md`、`docs/guides/release.md`
-- `app/build.gradle`：`versionCode`/`versionName` 改为显式 semver（`0.1.0`），替代日期自动版本
-- 更新 build-and-install、AGENTS、DEV_GUIDE、DOCUMENTATION
-
-### 2026-06-19 — 界面路由设计
-
-- 新建 [ui-routing.md](../../docs/architecture/ui-routing.md)：L0–L3 分层、路由表、NavGraph、launchMode、分阶段演进
-- 更新 navigation-ia、overview、crash-stats-ui、code-editor-porting 交叉链接
-
-### 2026-06-19 — ADB / logcat 崩溃分析需求
-
-- 新建 [adb-logcat-analysis.md](../../docs/architecture/adb-logcat-analysis.md)：PC 脚本、导入/root 扫描、解析规范、与 JSONL 分工
-- 更新 crash-logging、verification README、phase4 4F checklist
-
-### 2026-06-19 — 崩溃统计 UI 需求
-
-- 新建 [crash-stats-ui.md](../../docs/architecture/crash-stats-ui.md)：全局统计页、单应用观测页、指标、导航与验收
-- 更新 navigation-ia、crash-logging、phase4 4D checklist
-
-### 2026-06-19 — CodeEditor 移植方案（celestailruler）
-
-- 新建 [code-editor-porting.md](../../docs/architecture/code-editor-porting.md)：模块分层、CrashInfoActivity 对照、Gradle include、Phase 4C 复用
-- 更新 configuration-ui / overview / phase4 roadmap
-
-### 2026-06-19 — 崩溃通知流程文档
-
-- 新建 [crash-notification.md](../../docs/architecture/crash-notification.md)：showNotify、线程/进程边界、PendingIntent、stack 差异
-- 更新 xposed-entry / crash-handler / overview / glossary 交叉链接
-
-### 2026-06-19 — 应用更名 CrashCenter
-
-- 显示名：英文 CrashCenter、中文崩溃中心（`values` / `values-zh`）
-- APK 输出 `CrashCenter_v*`；`settings.gradle` → CrashCenter；README 双语简介
-- 文档 bulk 更新 NeverCrash → CrashCenter；relay 目录 `crashcenter_relay`
-
-### 2026-06-19 — 包名迁移与 prefs 导入
-
-- applicationId → `nota.android.crash.xp.app`；源码分包 `crash` / `crash.xp` / `crash.xp.app`
-- prefs 文件名 `grapcrash` → `crash`；`PrefMigrator` 首次启动从 `tiiehenry.xp.grapcrash` / `grapcrash.xml` 导入后标记完成
-- 更新 AGENTS.md、scope-and-prefs、ADR-003、glossary
-
-### 2026-06-19 — 多后端崩溃日志方案
-
-- 新增 [crash-log-backends.md](../../docs/architecture/crash-log-backends.md)：CrashLogBackend 抽象、hook root 优先并行、模块 root ingest
-- 新增 [ADR-008](../../docs/decisions/008-multi-backend-crash-log-storage.md)；ADR-007 标注演进关系
-- 用户问答归档：IPC 稳定性、XSharedPreferences、公开 FS、framework 注入、Tab IA、LSPosed 作用域
-- [crash-log-ipc.md](../../docs/architecture/crash-log-ipc.md) § 方案取舍与常见疑问；迭代 [ipc-design-qa-2026-06-20.md](../iterations/crash-observability/ipc-design-qa-2026-06-20.md)
-
-### 2026-06-19 — Framework 注入可行性评估
-
-- 参照 celestailruler：framework 侧主要为 `parseQueries`；`XServiceManager` 未接线；IPC 走独立 server APK + Provider
-- **结论**：不采用 framework 注入为主架构；保留 ADR-007 app 级 + Provider；可选 `parseQueries` 补丁仅当 Primary A 因包可见性失败
-- 新建 [framework-injection-feasibility.md](../../docs/architecture/framework-injection-feasibility.md)；更新 [crash-log-ipc.md](../../docs/architecture/crash-log-ipc.md)
+- **方案 commit**：ADR-009~015、架构文档（Shell/受管/暗色/崩溃观测）、roadmap 更新
+- **实施 commit**：`MainShellActivity` 2-tab Shell、`ConfigFragment`/3G 受管模型、`CrashHistoryFragment`、DayNight A–D、4B `CrashLogCoordinator` scaffold、Design System 组件、M2/M5/M7 polish
+- **验收**：[dark_mode_qa_20260619.md](../verification/dark_mode_qa_20260619.md)；consolidated smoke PASS；4B 读路径 PASS / 写路径待 LSPosed
+- **仍 open**：LSPosed 手动项、AOSP dark QA、CodeEditor 详情、4B-α 多后端
 
 ---
 

@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Fluent Design palette — dark (visual-language SSOT) -->
+    <color name="fluent_canvas">#FF202020</color>
+    <color name="fluent_layer">#FF2D2D2D</color>
+    <color name="fluent_stroke">#FF3D3D3D</color>
+    <color name="fluent_stroke_subtle">#FF353535</color>
+    <color name="fluent_text_primary">#FFFFFFFF</color>
+    <color name="fluent_text_secondary">#FFA0A0A0</color>
+    <color name="fluent_text_tertiary">#FF8A8A8A</color>
+    <color name="fluent_fill_subtle">#FF383838</color>
+
+    <color name="fluent_accent">#FF479EF5</color>
+    <color name="fluent_accent_hover">#FF2899F5</color>
+    <color name="fluent_accent_container">#FF0A2E4A</color>
+    <color name="fluent_accent_container_subtle">#FF0D3A5C</color>
+
+    <!-- Theme aliases -->
+    <color name="colorPrimary">@color/fluent_accent</color>
+    <color name="colorPrimaryDark">#FF2899F5</color>
+    <color name="colorPrimaryVariant">@color/fluent_accent_hover</color>
+    <color name="colorAccent">@color/fluent_accent</color>
+
+    <color name="background">@color/fluent_canvas</color>
+    <color name="surface">@color/fluent_layer</color>
+    <color name="surfaceCard">@color/fluent_layer</color>
+    <color name="surfaceVariant">@color/fluent_fill_subtle</color>
+    <color name="textPrimary">@color/fluent_text_primary</color>
+    <color name="textSecondary">@color/fluent_text_secondary</color>
+    <color name="textTertiary">@color/fluent_text_tertiary</color>
+    <color name="divider">@color/fluent_stroke</color>
+    <color name="outline">@color/fluent_stroke</color>
+    <color name="outlineVariant">@color/fluent_stroke_subtle</color>
+    <color name="toolbarDivider">@color/fluent_stroke</color>
+
+    <color name="primaryContainer">@color/fluent_accent_container</color>
+    <color name="chipSelectedText">@color/fluent_accent</color>
+    <color name="chipSelectedBg">@color/fluent_accent_container</color>
+    <color name="chipSelectedStroke">@color/fluent_accent</color>
+    <color name="systemAppBadge">@color/fluent_text_secondary</color>
+
+    <!-- Status pairs — dark-tuned bg + fg (not light tints) -->
+    <color name="status_success">#FF6CCB5F</color>
+    <color name="status_warning">#FFFCE100</color>
+    <color name="statusActiveBg">#FF0D3A5C</color>
+    <color name="statusActiveText">@color/status_success</color>
+    <color name="statusInactiveBg">#FF3D3500</color>
+    <color name="statusInactiveText">@color/status_warning</color>
+</resources>

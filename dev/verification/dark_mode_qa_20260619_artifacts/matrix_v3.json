@@ -1,0 +1,38 @@
+{
+  "light": {
+    "config_tab": "PASS",
+    "canvas": "PASS",
+    "canvas_luma": 250.0,
+    "status_banner": "PASS",
+    "permission_banner": "N/A",
+    "chips": "PASS",
+    "search": "PASS",
+    "managed_row": "PASS",
+    "bottom_nav": "PASS",
+    "empty_states": "N/A (managed row present)",
+    "observe_tab": "PASS",
+    "observe_empty": "PASS",
+    "add_sheet": "PASS",
+    "dialogs_scope": "FAIL",
+    "dialogs_xposed": "PASS",
+    "no_fatal": "PASS"
+  },
+  "dark": {
+    "config_tab": "PASS",
+    "canvas": "PASS",
+    "canvas_luma": 32.0,
+    "status_banner": "PASS",
+    "permission_banner": "N/A",
+    "chips": "PASS",
+    "search": "PASS",
+    "managed_row": "PASS",
+    "bottom_nav": "PASS",
+    "empty_states": "N/A (managed row present)",
+    "observe_tab": "PASS",
+    "observe_empty": "PASS",
+    "add_sheet": "PASS",
+    "dialogs_scope": "FAIL",
+    "dialogs_xposed": "PASS",
+    "no_fatal": "PASS"
+  }
+}

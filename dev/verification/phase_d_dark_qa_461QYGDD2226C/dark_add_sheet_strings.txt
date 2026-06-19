@@ -1,0 +1,18 @@
+UI hierchary dumped to: /sdcard/uidump.xml
+text="搜索应用名或包名"
+text="添加应用"
+text="完成"
+text="AIUnit-LLM-Common"
+text="AIUnit-LLM-Genie"
+text="AIUnit-MNN"
+text="AIUnit-QNN-LIB"
+text="flyme.ai.dynamic.algorithm.llm.common"
+text="flyme.ai.dynamic.algorithm.llm.common.genie"
+text="flyme.ai.dynamic.algorithm.llm.common.test"
+text="flyme.ai.dynamic.library.mnn"
+text="flyme.ai.dynamic.library.qnn"
+text="flyme.ai.llm.chat"
+text="LLM-Common-Test"
+text="LLM-Test"
+top_rgb: rgb(69, 69, 69)26433, rgb(13, 13, 13)10838, rgb(18, 18, 18)4592, rgb(20, 17, 0)1681, rgb(55, 55, 55)1461
+dominant_luma: 69.0

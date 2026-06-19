@@ -1,85 +1,85 @@
-<?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:background="?attr/selectableItemBackground"
-    android:descendantFocusability="blocksDescendants"
-    android:minHeight="@dimen/list_item_min_height"
-    android:paddingHorizontal="5dp"
-    android:paddingVertical="5dp">
-
-    <ImageView
-        android:id="@+id/ivIcon"
-        android:layout_width="@dimen/app_icon_size_compact"
-        android:layout_height="@dimen/app_icon_size_compact"
-        android:contentDescription="@null"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        tools:src="@mipmap/ic_launcher" />
-
-    <TextView
-        android:id="@+id/tvName"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="@dimen/spacing_md"
-        android:ellipsize="end"
-        android:maxLines="1"
-        android:textColor="?android:attr/textColorPrimary"
-        android:textSize="15sp"
-        android:textStyle="bold"
-        app:layout_constraintBottom_toTopOf="@id/tvPackageName"
-        app:layout_constraintEnd_toStartOf="@id/sw"
-        app:layout_constraintStart_toEndOf="@id/ivIcon"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_chainStyle="packed"
-        tools:text="Example App" />
-
-    <TextView
-        android:id="@+id/tvSystemBadge"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="@dimen/spacing_md"
-        android:background="@drawable/bg_system_badge"
-        android:paddingHorizontal="4dp"
-        android:paddingVertical="0dp"
-        android:text="@string/system_app_badge"
-        android:textColor="@color/systemAppBadge"
-        android:textSize="10sp"
-        android:visibility="gone"
-        app:layout_constraintBottom_toBottomOf="@id/tvPackageName"
-        app:layout_constraintStart_toEndOf="@id/ivIcon"
-        app:layout_constraintTop_toTopOf="@id/tvPackageName"
-        tools:visibility="visible" />
-
-    <TextView
-        android:id="@+id/tvPackageName"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="@dimen/spacing_xs"
-        android:layout_marginTop="2dp"
-        android:ellipsize="middle"
-        android:maxLines="1"
-        android:textColor="?android:attr/textColorSecondary"
-        android:textSize="12sp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toStartOf="@id/sw"
-        app:layout_constraintStart_toEndOf="@id/tvSystemBadge"
-        app:layout_constraintTop_toBottomOf="@id/tvName"
-        app:layout_goneMarginStart="@dimen/spacing_md"
-        tools:text="com.example.app" />
-
-    <com.google.android.material.switchmaterial.SwitchMaterial
-        android:id="@+id/sw"
-        style="@style/AppTheme.Switch"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:clickable="false"
-        android:focusable="false"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-</androidx.constraintlayout.widget.ConstraintLayout>
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="?attr/selectableItemBackground"
+    android:descendantFocusability="blocksDescendants"
+    android:minHeight="@dimen/list_item_min_height"
+    android:paddingHorizontal="@dimen/spacing_xs"
+    android:paddingVertical="@dimen/spacing_xs">
+
+    <ImageView
+        android:id="@+id/ivIcon"
+        android:layout_width="@dimen/app_icon_size_compact"
+        android:layout_height="@dimen/app_icon_size_compact"
+        android:contentDescription="@null"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:src="@mipmap/ic_launcher" />
+
+    <TextView
+        android:id="@+id/tvName"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/spacing_md"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:textColor="?android:attr/textColorPrimary"
+        android:textSize="15sp"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toTopOf="@id/tvPackageName"
+        app:layout_constraintEnd_toStartOf="@id/sw"
+        app:layout_constraintStart_toEndOf="@id/ivIcon"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_chainStyle="packed"
+        tools:text="Example App" />
+
+    <TextView
+        android:id="@+id/tvSystemBadge"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/spacing_md"
+        android:background="@drawable/bg_system_badge"
+        android:paddingHorizontal="@dimen/badge_padding_horizontal"
+        android:paddingVertical="@dimen/badge_padding_vertical"
+        android:text="@string/system_app_badge"
+        android:textColor="@color/systemAppBadge"
+        android:textSize="10sp"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="@id/tvPackageName"
+        app:layout_constraintStart_toEndOf="@id/ivIcon"
+        app:layout_constraintTop_toTopOf="@id/tvPackageName"
+        tools:visibility="visible" />
+
+    <TextView
+        android:id="@+id/tvPackageName"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/spacing_xs"
+        android:layout_marginTop="2dp"
+        android:ellipsize="middle"
+        android:maxLines="1"
+        android:textColor="?android:attr/textColorSecondary"
+        android:textSize="12sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/sw"
+        app:layout_constraintStart_toEndOf="@id/tvSystemBadge"
+        app:layout_constraintTop_toBottomOf="@id/tvName"
+        app:layout_goneMarginStart="@dimen/spacing_md"
+        tools:text="com.example.app" />
+
+    <com.google.android.material.switchmaterial.SwitchMaterial
+        android:id="@+id/sw"
+        style="@style/AppTheme.Switch"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:clickable="false"
+        android:focusable="false"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

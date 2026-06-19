@@ -1,6 +1,7 @@
 package nota.android.crash.xp.app
 
 import android.content.res.Configuration
+import android.os.Build
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
@@ -18,6 +19,9 @@ object SystemBars {
         val isLightTheme = (activity.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) !=
             Configuration.UI_MODE_NIGHT_YES
         controller.isAppearanceLightStatusBars = isLightTheme
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            controller.isAppearanceLightNavigationBars = isLightTheme
+        }
     }
 
     @JvmStatic

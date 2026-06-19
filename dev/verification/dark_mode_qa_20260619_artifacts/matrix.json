@@ -1,0 +1,34 @@
+{
+  "light": {
+    "canvas_luma": 167.3,
+    "canvas": "WARN",
+    "status_banner": "FAIL",
+    "permission_banner": "N/A (QUERY_ALL_PACKAGES granted)",
+    "chips": "FAIL",
+    "search": "FAIL",
+    "bottom_nav": "FAIL",
+    "managed_row": "FAIL",
+    "observe_tab": "FAIL",
+    "observe_empty": "WARN",
+    "add_sheet": "PASS",
+    "scope_dialog": "WARN",
+    "xposed_dialog": "PASS",
+    "no_fatal": "PASS"
+  },
+  "dark": {
+    "canvas_luma": 29.7,
+    "canvas": "PASS",
+    "status_banner": "FAIL",
+    "permission_banner": "N/A (QUERY_ALL_PACKAGES granted)",
+    "chips": "FAIL",
+    "search": "FAIL",
+    "bottom_nav": "FAIL",
+    "managed_row": "FAIL",
+    "observe_tab": "FAIL",
+    "observe_empty": "WARN",
+    "add_sheet": "PASS",
+    "scope_dialog": "WARN",
+    "xposed_dialog": "WARN",
+    "no_fatal": "PASS"
+  }
+}

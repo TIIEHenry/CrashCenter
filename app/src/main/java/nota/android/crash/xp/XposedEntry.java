@@ -16,9 +16,7 @@ import android.os.Handler;
 import android.util.Log;
 import android.widget.Toast;
 
-import java.util.HashSet;
 import java.util.Random;
-import java.util.Set;
 
 import de.robv.android.xposed.IXposedHookLoadPackage;
 import de.robv.android.xposed.XC_MethodHook;
@@ -28,7 +26,8 @@ import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
 import nota.android.crash.CrashHandler;
-import nota.android.crash.xp.app.ActivityMain;
+import nota.android.crash.log.CrashLogCoordinator;
+import nota.android.crash.xp.app.ModuleActivation;
 import nota.android.crash.xp.app.R;
 
 
@@ -36,43 +35,24 @@ public class XposedEntry implements IXposedHookLoadPackage {
     private static final String PACKAGE_NAME = PrefManager.PACKAGE_NAME;
     private static final String CRASH_INFO_CLASS = "nota.android.crash.ActivityCrashInfo";
     private static XSharedPreferences sXSharedPreferences = null;
-    private static boolean showNotify = false;
 
-    private boolean shouldHandlePackage(XC_LoadPackage.LoadPackageParam lpparam) {
+    private ScopeDecision evaluatePackage(XC_LoadPackage.LoadPackageParam lpparam) {
         if (selfCheck(lpparam)) {
-            return true;
+            return new ScopeDecision(true, true, true);
         }
 
         if (sXSharedPreferences == null) {
             sXSharedPreferences = new XSharedPreferences(PACKAGE_NAME, PrefManager.PREF_NAME);
         }
         sXSharedPreferences.reload();
-        boolean scopeMode = sXSharedPreferences.getBoolean(PrefManager.PREF_SCOPE_MODE, false);
-        Set<String> packagesDisabled = sXSharedPreferences.getStringSet(PrefManager.PREF_PACKAGE_LIST, new HashSet<>());
-        boolean disabled = packagesDisabled.contains(lpparam.packageName);
-        boolean ignore = lpparam.packageName.equals("android");
-        boolean isXposedInstaller = lpparam.packageName.equals("de.robv.android.xposed.installer") || lpparam.packageName.equals("org.meowcat.edxposed.manager")|| lpparam.packageName.equals("org.lsposed.manager");
-        if (lpparam.appInfo == null) {
-            return false;
-        }
-        boolean isSystemApp = (lpparam.appInfo.flags & ApplicationInfo.FLAG_SYSTEM) != 0;
-        boolean handleSystemApp = sXSharedPreferences.getBoolean(PrefManager.PREF_HANDLE_SYSTEM, false);
-        if (scopeMode) {
-            showNotify = true;
-            return (!isSystemApp || handleSystemApp) && !(ignore ||isXposedInstaller ||disabled);
-        } else {
-            showNotify = !disabled;
-            return true;
-        }
+        return ScopePolicy.evaluate(sXSharedPreferences, lpparam);
     }
 
     @Override
     public void handleLoadPackage(XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
-        if (selfCheck(lpparam)) {
-            showNotify = true;
-        } else {
-            if (!shouldHandlePackage(lpparam))
-                return;
+        ScopeDecision decision = evaluatePackage(lpparam);
+        if (!decision.getShouldHook()) {
+            return;
         }
 
         XposedBridge.log("catch package: " + lpparam.packageName);
@@ -81,19 +61,34 @@ public class XposedEntry implements IXposedHookLoadPackage {
             protected void afterHookedMethod(final MethodHookParam param) throws Throwable {
                 super.afterHookedMethod(param);
                 XposedBridge.log("onCreate");
-                hookToGrabCrash(lpparam, param);
+                hookToGrabCrash(lpparam, param, decision);
             }
         });
 
 
     }
 
-    private void hookToGrabCrash(XC_LoadPackage.LoadPackageParam lpparam, XC_MethodHook.MethodHookParam param) {
+    private void hookToGrabCrash(
+            XC_LoadPackage.LoadPackageParam lpparam,
+            XC_MethodHook.MethodHookParam param,
+            ScopeDecision decision) {
         Application currentApplicationContext = (Application) param.thisObject;
-        CrashHandler.insert(throwable -> new Handler(currentApplicationContext.getMainLooper()).post(() -> {
+        CrashHandler.insert((throwable, source) -> {
+            String appLabel = null;
+            try {
+                appLabel = lpparam.appInfo.loadLabel(currentApplicationContext.getPackageManager()).toString();
+            } catch (Throwable ignored) {
+            }
+            CrashLogCoordinator.logAsync(
+                    currentApplicationContext,
+                    lpparam.packageName,
+                    appLabel,
+                    throwable,
+                    source);
+            new Handler(currentApplicationContext.getMainLooper()).post(() -> {
             try {
                 XposedBridge.log(throwable);
-                if (showNotify) {
+                if (decision.getShowNotify()) {
                     Toast.makeText(currentApplicationContext, getCrashTip(lpparam.packageName) + lpparam.appInfo.loadLabel(currentApplicationContext.getPackageManager()) + " " + throwable.getLocalizedMessage(), Toast.LENGTH_LONG).show();
                     showNotification(lpparam.packageName, currentApplicationContext, currentApplicationContext, lpparam.appInfo, throwable);
                 }
@@ -102,7 +97,8 @@ public class XposedEntry implements IXposedHookLoadPackage {
                 //                e.printStackTrace();
                 XposedBridge.log(e.toString());
             }
-        }));
+        });
+        });
     }
 
     private void showNotification(String pkgName, Context c, Application application, ApplicationInfo applicationInfo, Throwable throwable) {
@@ -193,8 +189,11 @@ public class XposedEntry implements IXposedHookLoadPackage {
         if (lpparam.packageName.equals(PACKAGE_NAME)) {
             Log.e("XposedEntry", "selfCheck:pkg: " + lpparam.packageName);
             try {
-                //不能hook静态了
-                XposedHelpers.findAndHookMethod(ActivityMain.class.getName(), lpparam.classLoader, "isModuleActived", XC_MethodReplacement.returnConstant(true));
+                XposedHelpers.findAndHookMethod(
+                        ModuleActivation.class.getName(),
+                        lpparam.classLoader,
+                        "isModuleActive",
+                        XC_MethodReplacement.returnConstant(true));
             } catch (Exception e) {
                 Log.e("XposedEntry", "selfCheckException: " + e.getMessage());
 //                e.printStackTrace();

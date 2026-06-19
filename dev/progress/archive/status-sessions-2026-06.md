@@ -4,7 +4,7 @@ type: progress
 status: archived
 phase: N/A
 updated: 2026-06-19
-summary: "自 status.md 迁出的 2026-06 较早会话记录"
+summary: "自 status.md 迁出的 2026-06 会话；含 Phase 3/4 UI marathon 粒度压缩"
 ---
 
 # Status Recent Sessions 归档（2026-06）
@@ -89,6 +89,46 @@ summary: "自 status.md 迁出的 2026-06 较早会话记录"
 
 - 参考 Singular 建立 docs/dev 分层
 - 编写架构文档、ADR、指南、AGENTS.md、索引脚本
+
+---
+
+## Phase 3/4 UI marathon（granular）
+
+> 2026-06-19 同日 40+ 条会话自 `status.md` 合并为单条汇总；下列为按主题压缩的粒度记录。
+
+### Shell / 4C-α / Design System
+
+- `MainShellActivity` / `ShellViewModel` / `ConfigFragment` / `ConfigViewModel`；Launcher 迁 Shell；`ActivityMain` wrapper
+- Design System：`StatusBanner`、`PermissionBanner`、`FilterChipRow`、`DenseSearchField`、`EmptyState`、`LoadingState`
+- BNV：`commitNow` + `isSyncingNav` guard；`FrameLayout` 容器；`SavedStateHandle` tab 持久化
+- adb smoke PASS（461QYGDD2226C）；ArrayUtil public 修 `IllegalAccessError`
+
+### 3G-β 受管应用 UI
+
+- `ManagedAppAdapter` / `ManagedAppRow` / `PickableAppAdapter`；过滤 Chip；`AddManagedAppBottomSheet`；`AppInterventionEditActivity`
+- M5：28dp 顶圆角 + DragHandle + peekHeight 50%；M2：permission banner compact
+
+### 4C-β 历史 scaffolding
+
+- `CrashHistoryFragment` / `CrashHistoryViewModel`；`FileCrashLogRepository`；`CrashEventRow`；Observe 空态 copy 修复
+
+### 暗色 DayNight A–D
+
+- Phase A：values-night、DayNight 父主题、BottomNav tint、SystemBars nav bar API 26+
+- Phase B：布局 `?attr/textColor*`、drawable tint、configuration-ui light/dark 表
+- Phase C：`ThemeColors.kt`、StatusBanner/ManagedAppRow attr、MaterialAlertDialogBuilder
+- Phase D：Meizu QA PASS（dark_mode_qa_20260619.md）；AOSP 模拟器 defer
+
+### Legacy backlog / 审计
+
+- 删 activity_main.xml；OnBackPressedCallback；Observe menu_observe_stub；sheet EmptyState；crash_source i18n；FilterChipRow dead code；ToolbarHeaderInsets；图标 tint；ScopePolicy 澄清
+- PrefMigrator P1×2；ModuleActivation P0；UI 美观性 round 1–2；功能缺陷审计 round 2
+
+### 真机验收摘要
+
+- consolidated smoke：PrefMigrator clear、tab/night/add PASS
+- dark mode：Config/Observe/Add sheet/dialogs PASS；Permission banner compact 未稳定复现
+- 阻塞项：LSPosed 环境缺失 → Test/Switch/active 绿条未验
 
 ---
 

@@ -8,9 +8,12 @@ import de.robv.android.xposed.XposedHelpers;
 public class CrashHandler {
 
 
+    public static final String SOURCE_LOOPER = "looper";
+    public static final String SOURCE_UNCAUGHT = "uncaught";
+
     public interface ExceptionHandler {
 
-        void handlerException(Throwable throwable);
+        void handlerException(Throwable throwable, String source);
     }
 
     private CrashHandler() {
@@ -40,7 +43,7 @@ public class CrashHandler {
                         return;
                     }*/
                     if (sExceptionHandler != null) {
-                        sExceptionHandler.handlerException(e);
+                        sExceptionHandler.handlerException(e, SOURCE_LOOPER);
                     }
                 }
             }
@@ -51,7 +54,7 @@ public class CrashHandler {
         //原来的不给他处理哦
         XposedHelpers.callStaticMethod(Thread.class, "setDefaultUncaughtExceptionHandler", (Thread.UncaughtExceptionHandler) (t, e) -> {
             if (sExceptionHandler != null) {
-                sExceptionHandler.handlerException(e);
+                sExceptionHandler.handlerException(e, SOURCE_UNCAUGHT);
             }
         });
 

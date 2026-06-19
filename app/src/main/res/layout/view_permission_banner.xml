@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/permissionBanner"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/bg_status_permission"
+    android:clickable="true"
+    android:focusable="true"
+    android:foreground="?attr/selectableItemBackground"
+    android:gravity="center_vertical"
+    android:minHeight="@dimen/status_banner_height"
+    android:orientation="horizontal"
+    android:paddingHorizontal="@dimen/spacing_sm"
+    android:paddingVertical="@dimen/spacing_xs"
+    android:visibility="gone"
+    tools:visibility="visible">
+
+    <ImageView
+        android:id="@+id/permissionBannerIcon"
+        android:layout_width="@dimen/status_icon_size"
+        android:layout_height="@dimen/status_icon_size"
+        android:contentDescription="@string/permission_banner_title"
+        android:src="@drawable/ic_app_visibility"
+        app:tint="?attr/colorPrimary" />
+
+    <TextView
+        android:id="@+id/permissionBannerTitle"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/spacing_sm"
+        android:layout_weight="1"
+        android:ellipsize="end"
+        android:maxLines="2"
+        android:text="@string/permission_banner_title"
+        android:textColor="?attr/colorPrimary"
+        android:textSize="13sp"
+        android:textStyle="bold" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/permissionGrantButton"
+        style="@style/Widget.MaterialComponents.Button.TextButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:minWidth="0dp"
+        android:minHeight="@dimen/list_item_min_height"
+        android:paddingHorizontal="@dimen/spacing_xs"
+        android:paddingVertical="0dp"
+        android:text="@string/permission_grant_action"
+        android:textAllCaps="false"
+        android:textColor="?attr/colorPrimary"
+        android:textSize="12sp"
+        android:textStyle="bold" />
+
+</LinearLayout>

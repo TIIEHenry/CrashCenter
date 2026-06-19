@@ -7,7 +7,10 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import nota.android.crash.xp.app.SystemBars;
+import nota.android.crash.xp.app.common.ui.ToolbarHeaderInsets;
+import nota.android.crash.xp.app.data.CrashDetailLoader;
 import nota.android.crash.xp.app.databinding.ActivityCrashinfoBinding;
+import nota.android.crash.xp.app.observe.CrashHistoryFragment;
 
 public class ActivityCrashInfo extends AppCompatActivity {
     private ActivityCrashinfoBinding binding;
@@ -19,7 +22,7 @@ public class ActivityCrashInfo extends AppCompatActivity {
         setContentView(binding.getRoot());
 
         SystemBars.setup(this);
-        SystemBars.applyToolbarHeaderInsets(binding.toolbarHeader);
+        ToolbarHeaderInsets.apply(binding.toolbarHeader);
 
         setSupportActionBar(binding.toolbar);
         if (getSupportActionBar() != null) {
@@ -27,8 +30,20 @@ public class ActivityCrashInfo extends AppCompatActivity {
         }
 
         Intent intent = getIntent();
-        String stackTrace = intent.getStringExtra("Exception");
+        String stackTrace = resolveStackTrace(intent);
         binding.textv.setText(stackTrace != null ? stackTrace : "");
+    }
+
+    private String resolveStackTrace(Intent intent) {
+        String crashId = intent.getStringExtra(CrashHistoryFragment.EXTRA_CRASH_ID);
+        if (crashId != null && !crashId.isEmpty()) {
+            String fromLog = CrashDetailLoader.loadStackTraceById(this, crashId);
+            if (fromLog != null) {
+                return fromLog;
+            }
+            return getString(nota.android.crash.xp.app.R.string.crash_detail_not_found, crashId);
+        }
+        return intent.getStringExtra("Exception");
     }
 
     @Override

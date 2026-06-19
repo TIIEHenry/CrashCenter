@@ -56,11 +56,58 @@
     <string name="crash_info_title">Crash details</string>
 
     <string name="permission_banner_title">App list incomplete — grant package visibility</string>
+    <string name="permission_banner_title_compact">Incomplete app list — tap to grant</string>
     <string name="permission_grant_action">Grant</string>
     <string name="permission_rationale_title">Package visibility required</string>
     <string name="permission_rationale_message">CrashCenter needs to see all installed apps so you can choose which ones to hook.\n\nOn Android 11 and later, enable \"Query all packages\" (or reinstall the app if the permission was never granted):\n\n1. Tap Open settings below\n2. Open Permissions\n3. Allow query all packages\n4. Return here — the list will refresh automatically</string>
     <string name="permission_open_settings">Open settings</string>
     <string name="permission_settings_failed">Could not open app settings</string>
     <string name="permission_list_partial_hint">Showing %1$d visible apps. Grant permission for the full list.</string>
+    <string name="permission_list_partial_hint_compact">%1$d apps visible — tap to grant</string>
+
+    <string name="tab_config">Config</string>
+    <string name="tab_observe">Observe</string>
+    <string name="crash_history_empty">No crash records yet. Intercepted crashes will appear here once crash logging is enabled.</string>
+    <string name="crash_history_loading">Loading crash history…</string>
+    <string name="crash_history_count_format">%1$d crash records</string>
+    <string name="crash_event_subtitle_format">%1$s · %2$s · %3$s</string>
+    <string name="crash_source_ueh">Uncaught exception</string>
+    <string name="crash_source_looper">Main thread loop</string>
+    <string name="observe_menu_filter">Filter</string>
+    <string name="observe_menu_export">Export logs</string>
+    <string name="observe_menu_stats">Statistics</string>
+    <string name="crash_detail_not_found">Crash record not found: %1$s</string>
+    <string name="legacy_app_row_a11y">%1$s, %2$s</string>
+
+    <!-- Managed apps (Phase 3G) -->
+    <string name="managed_filter_enabled">Enabled</string>
+    <string name="managed_filter_pending">Pending</string>
+    <string name="managed_status_enabled">Enabled</string>
+    <string name="managed_status_pending">Pending setup</string>
+    <string name="managed_empty_message">No managed apps yet. Add apps to configure crash interception.</string>
+    <string name="managed_filter_empty">No apps match the current filters</string>
+    <string name="add_managed_app">Add app</string>
+    <string name="add_managed_done">Done</string>
+    <string name="add_managed_picker_empty">No installable apps available to add</string>
+    <string name="add_managed_success">Added %1$d app(s)</string>
+    <string name="switch_enable_intervention">Enable crash interception</string>
+    <string name="switch_disable_intervention">Disable crash interception</string>
+    <string name="intervention_rules_section">Intervention rules</string>
+    <string name="rule_catch_all_title">Intercept uncaught exceptions</string>
+    <string name="rule_notify_label">Crash notification</string>
+    <string name="notify_tri_state_inherit">Inherit</string>
+    <string name="notify_tri_state_on">On</string>
+    <string name="notify_tri_state_off">Off</string>
+    <string name="rules_empty_title">No rules yet</string>
+    <string name="rules_empty_message">Add a rule to start intercepting crashes for this app.</string>
+    <string name="add_rule">Add rule</string>
+    <string name="delete_rule">Delete rule</string>
+    <string name="remove_managed_app">Remove app</string>
+    <string name="remove_managed_app_confirm_title">Remove managed app?</string>
+    <string name="remove_managed_app_confirm_message">Crash interception and all configured rules for this app will be removed.</string>
+    <string name="remove_managed_app_success">App removed from managed list</string>
+    <string name="intervention_status_enabled_format">%1$d rule(s) enabled</string>
+    <string name="intervention_status_pending">Pending setup</string>
+    <string name="rule_saved">Rule saved</string>
 
 </resources>

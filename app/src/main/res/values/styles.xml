@@ -2,7 +2,7 @@
 
 
 
-    <style name="AppTheme" parent="Theme.MaterialComponents.Light.NoActionBar">
+    <style name="AppTheme" parent="Theme.MaterialComponents.DayNight.NoActionBar">
 
         <item name="colorPrimary">@color/colorPrimary</item>
 
@@ -20,11 +20,22 @@
 
         <item name="android:statusBarColor">@android:color/transparent</item>
 
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+
         <item name="android:textColorPrimary">@color/textPrimary</item>
 
         <item name="android:textColorSecondary">@color/textSecondary</item>
 
+        <item name="colorControlNormal">?android:attr/textColorPrimary</item>
+
         <item name="switchStyle">@style/AppTheme.Switch</item>
+
+        <item name="bottomNavigationStyle">@style/AppTheme.BottomNavigation</item>
+
+        <item name="statusBannerActiveBackground">@color/statusActiveBg</item>
+        <item name="statusBannerInactiveBackground">@color/statusInactiveBg</item>
+        <item name="statusBannerActiveTextColor">@color/statusActiveText</item>
+        <item name="statusBannerInactiveTextColor">@color/statusInactiveText</item>
 
     </style>
 
@@ -45,6 +56,8 @@
         <item name="subtitleTextColor">@color/textSecondary</item>
 
         <item name="android:minHeight">@dimen/toolbar_height</item>
+
+        <item name="actionMenuTextColor">?android:attr/textColorPrimary</item>
 
     </style>
 
@@ -136,6 +149,8 @@
 
         <item name="hintTextColor">@color/textSecondary</item>
 
+        <item name="startIconTint">?android:attr/textColorSecondary</item>
+
         <item name="android:textColorHint">@color/textSecondary</item>
 
         <item name="boxCornerRadiusTopStart">@dimen/fluent_corner_radius_control</item>
@@ -181,6 +196,18 @@
         <item name="android:lineSpacingMultiplier">1.2</item>
 
         <item name="android:textIsSelectable">true</item>
+
+    </style>
+
+
+
+    <style name="AppTheme.BottomNavigation" parent="Widget.MaterialComponents.BottomNavigationView">
+
+        <item name="itemIconTint">@color/bottom_nav_item_color</item>
+
+        <item name="itemTextColor">@color/bottom_nav_item_color</item>
+
+        <item name="android:background">@color/surface</item>
 
     </style>
 
