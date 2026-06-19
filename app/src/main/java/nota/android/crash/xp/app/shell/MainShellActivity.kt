@@ -7,10 +7,6 @@ import android.view.MenuItem
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.doOnLayout
-import androidx.fragment.app.commitNow
-import androidx.lifecycle.Lifecycle
-import com.google.android.material.navigation.NavigationBarMenuView
 import nota.android.crash.xp.PrefMigrator
 import nota.android.crash.xp.XposedManagerLauncher
 import nota.android.crash.xp.app.ModuleActivation
@@ -26,8 +22,7 @@ class MainShellActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainShellBinding
     private val shellViewModel: ShellViewModel by viewModels()
-    private var bottomNavClicksAttached = false
-    private var isSyncingNav = false
+    private lateinit var navigator: ShellNavigator
 
     override fun onCreate(savedInstanceState: Bundle?) {
         val legacyPrefState = PrefMigrator.migrateIfNeeded(applicationContext)
@@ -44,11 +39,14 @@ class MainShellActivity : AppCompatActivity() {
         setupBottomNav()
         setupBackNavigation()
 
+        navigator = ShellNavigator(supportFragmentManager, R.id.fragmentContainer)
+
         shellViewModel.uiState.observe(this) { state ->
             updateXposedStatusBanner(state.xposedActive)
         }
 
-        showTab(shellViewModel.uiState.value?.selectedTab ?: ShellTab.CONFIG)
+        val initialTab = shellViewModel.uiState.value?.selectedTab ?: ShellTab.CONFIG
+        selectTab(initialTab, fromUser = false)
 
         shellViewModel.refreshXposedStatus(isModuleActive())
     }
@@ -70,7 +68,7 @@ class MainShellActivity : AppCompatActivity() {
     override fun onPrepareOptionsMenu(menu: Menu): Boolean {
         when (shellViewModel.uiState.value?.selectedTab) {
             ShellTab.CONFIG -> {
-                (supportFragmentManager.findFragmentByTag(ConfigFragment.TAG) as? ConfigFragment)
+                (navigator.findFragment(ShellTab.CONFIG) as? ConfigFragment)
                     ?.prepareOptionsMenu(menu)
             }
             ShellTab.OBSERVE -> {
@@ -84,98 +82,49 @@ class MainShellActivity : AppCompatActivity() {
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        val configFragment = supportFragmentManager.findFragmentByTag(ConfigFragment.TAG) as? ConfigFragment
+        val configFragment = navigator.findFragment(ShellTab.CONFIG) as? ConfigFragment
         return configFragment?.handleOptionsItem(item) == true || super.onOptionsItemSelected(item)
     }
 
     private fun setupBottomNav() {
         binding.bottomNav.setOnItemSelectedListener { item ->
-            if (isSyncingNav) return@setOnItemSelectedListener true
             when (item.itemId) {
                 R.id.nav_config -> {
-                    showTab(ShellTab.CONFIG)
+                    selectTab(ShellTab.CONFIG, fromUser = true)
                     true
                 }
                 R.id.nav_observe -> {
-                    showTab(ShellTab.OBSERVE)
+                    selectTab(ShellTab.OBSERVE, fromUser = true)
                     true
                 }
                 else -> false
             }
         }
-        binding.bottomNav.doOnLayout { attachBottomNavItemClicks() }
     }
 
-    private fun attachBottomNavItemClicks() {
-        if (bottomNavClicksAttached) return
-        val menuView = binding.bottomNav.getChildAt(0) as? NavigationBarMenuView ?: return
-        bottomNavClicksAttached = true
-        for (index in 0 until menuView.childCount) {
-            val itemView = menuView.getChildAt(index)
-            val tab = when (itemView.id) {
-                R.id.nav_config -> ShellTab.CONFIG
-                R.id.nav_observe -> ShellTab.OBSERVE
-                else -> continue
-            }
-            itemView.setOnClickListener { showTab(tab) }
-        }
-    }
-
-    private fun showTab(tab: ShellTab) {
-        val fm = supportFragmentManager
-        val fragmentsReady = fm.findFragmentByTag(ConfigFragment.TAG) != null &&
-            fm.findFragmentByTag(ObserveHostFragment.TAG) != null
-        if (fragmentsReady && shellViewModel.uiState.value?.selectedTab == tab) {
-            syncBottomNavSelection(tab)
+    private fun selectTab(tab: ShellTab, fromUser: Boolean) {
+        val currentTab = shellViewModel.uiState.value?.selectedTab
+        if (currentTab == tab && navigator.findFragment(tab) != null) {
+            syncBottomNav(tab)
             return
         }
 
-        shellViewModel.setSelectedTab(tab)
-        var config = fm.findFragmentByTag(ConfigFragment.TAG)
-        var observe = fm.findFragmentByTag(ObserveHostFragment.TAG)
-
-        fm.commitNow {
-            setReorderingAllowed(true)
-            if (config == null) {
-                config = ConfigFragment.newInstance()
-                add(R.id.fragmentContainer, config, ConfigFragment.TAG)
-            }
-            if (observe == null) {
-                observe = ObserveHostFragment.newInstance()
-                add(R.id.fragmentContainer, observe, ObserveHostFragment.TAG)
-            }
-            when (tab) {
-                ShellTab.CONFIG -> {
-                    show(config)
-                    setMaxLifecycle(config, Lifecycle.State.RESUMED)
-                    hide(observe)
-                    setMaxLifecycle(observe, Lifecycle.State.STARTED)
-                }
-                ShellTab.OBSERVE -> {
-                    hide(config)
-                    setMaxLifecycle(config, Lifecycle.State.STARTED)
-                    show(observe)
-                    setMaxLifecycle(observe, Lifecycle.State.RESUMED)
-                }
-            }
+        if (fromUser) {
+            shellViewModel.setSelectedTab(tab)
         }
 
-        syncBottomNavSelection(tab)
+        navigator.select(tab)
+        syncBottomNav(tab)
         invalidateOptionsMenu()
     }
 
-    private fun syncBottomNavSelection(tab: ShellTab) {
+    private fun syncBottomNav(tab: ShellTab) {
         val menuItemId = when (tab) {
             ShellTab.CONFIG -> R.id.nav_config
             ShellTab.OBSERVE -> R.id.nav_observe
         }
         if (binding.bottomNav.selectedItemId != menuItemId) {
-            isSyncingNav = true
-            try {
-                binding.bottomNav.selectedItemId = menuItemId
-            } finally {
-                isSyncingNav = false
-            }
+            binding.bottomNav.selectedItemId = menuItemId
         }
     }
 
@@ -202,7 +151,7 @@ class MainShellActivity : AppCompatActivity() {
             object : OnBackPressedCallback(true) {
                 override fun handleOnBackPressed() {
                     if (shellViewModel.uiState.value?.selectedTab == ShellTab.OBSERVE) {
-                        showTab(ShellTab.CONFIG)
+                        selectTab(ShellTab.CONFIG, fromUser = true)
                         return
                     }
                     isEnabled = false
