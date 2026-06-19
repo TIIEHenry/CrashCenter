@@ -34,9 +34,3 @@ project(':CodeEditor').projectDir = new File(libRoot, 'CodeEditor')
 project(':CodeEditorAntlr').projectDir = new File(libRoot, 'CodeEditorAntlr')
 project(':CodeEditorClient').projectDir = new File(libRoot, 'CodeEditorClient')
 project(':ui_common').projectDir = new File(libRoot, 'ui_common')
-
-gradle.beforeProject { project ->
-    if (project.name in ['CodeEditorClient', 'ui_common']) {
-        project.pluginManager.apply('org.jetbrains.kotlin.android')
-    }
-}

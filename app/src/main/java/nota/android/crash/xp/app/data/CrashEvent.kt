@@ -37,24 +37,26 @@ data class CrashEvent(
     }
 
     companion object {
-        fun fromJson(line: String): CrashEvent? = try {
-            val json = JSONObject(line)
-            val id = json.optString("id", "")
-            if (id.isEmpty()) return null
-            CrashEvent(
-                id = id,
-                timestampMs = json.optLong("timestampMs", 0L),
-                packageName = json.optString("packageName", ""),
-                appLabel = json.optString("appLabel").takeIf { it.isNotEmpty() },
-                processName = json.optString("processName").takeIf { it.isNotEmpty() },
-                exceptionClass = json.optString("exceptionClass", "Unknown"),
-                message = json.optString("message").takeIf { it.isNotEmpty() },
-                stackTrace = json.optString("stackTrace", ""),
-                source = json.optString("source").takeIf { it.isNotEmpty() },
-                backendWritten = parseBackendWritten(json),
-            )
-        } catch (_: Exception) {
-            null
+        fun fromJson(line: String): CrashEvent? {
+            return try {
+                val json = JSONObject(line)
+                val id = json.optString("id", "")
+                if (id.isEmpty()) return null
+                CrashEvent(
+                    id = id,
+                    timestampMs = json.optLong("timestampMs", 0L),
+                    packageName = json.optString("packageName", ""),
+                    appLabel = json.optString("appLabel").takeIf { it.isNotEmpty() },
+                    processName = json.optString("processName").takeIf { it.isNotEmpty() },
+                    exceptionClass = json.optString("exceptionClass", "Unknown"),
+                    message = json.optString("message").takeIf { it.isNotEmpty() },
+                    stackTrace = json.optString("stackTrace", ""),
+                    source = json.optString("source").takeIf { it.isNotEmpty() },
+                    backendWritten = parseBackendWritten(json),
+                )
+            } catch (_: Exception) {
+                null
+            }
         }
 
         private fun parseBackendWritten(json: JSONObject): List<String> {
