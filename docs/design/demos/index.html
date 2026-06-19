@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Clarence 公共组件 Demo</title>
+  <link rel="stylesheet" href="assets/tokens.css">
+  <link rel="stylesheet" href="assets/base.css">
+</head>
+<body>
+  <header class="demo-site-header">
+    <h1>Clarence 公共组件 Demo</h1>
+    <div class="demo-controls">
+      <button type="button" id="theme-toggle">深色</button>
+    </div>
+  </header>
+
+  <main class="demo-page">
+    <p class="lead">每个公共 UI 组件对应一个可交互网页 demo，token 与 spec 对齐 <code>docs/design/components/</code>。</p>
+    <p class="hint" style="color:var(--text-secondary);font-size:0.875rem;margin:-12px 0 24px">
+      本地预览：<code>cd docs/design/demos && python3 -m http.server 8765</code> → <a href="http://localhost:8765">localhost:8765</a>
+    </p>
+
+    <div class="catalog-grid">
+      <a class="catalog-card" href="shared-dividers.html">
+        <h2>Item 对齐分割线</h2>
+        <p>全宽线 vs item 对齐线；Popup section gap。</p>
+        <span class="tag">shared-dividers</span>
+      </a>
+      <a class="catalog-card" href="toolbar-list-chrome.html">
+        <h2>Toolbar / 扁平列表</h2>
+        <p>48dp 共面 Toolbar、无底线、行 ① iOS 按压。</p>
+        <span class="tag">toolbar-list-chrome</span>
+      </a>
+      <a class="catalog-card" href="settings-card-detail-sheet.html">
+        <h2>设置 Card / 详情 Sheet</h2>
+        <p>实色 layer、metadata pill、BottomSheet。</p>
+        <span class="tag">settings-card-detail-sheet</span>
+      </a>
+      <a class="catalog-card" href="draggable-half-sheet.html">
+        <h2>可拖曳半屏 Sheet</h2>
+        <p>28dp 顶缘、chrome 内把手、半屏拖曳展开/关闭。</p>
+        <span class="tag">draggable-half-sheet</span>
+      </a>
+      <a class="catalog-card" href="popup-filter-menu.html">
+        <h2>筛选 Popup / 菜单</h2>
+        <p>Master 行、按住滑动选单 Press-Drag-Release。</p>
+        <span class="tag">popup-filter-menu</span>
+      </a>
+      <a class="catalog-card" href="floating-chrome.html">
+        <h2>悬浮 Toolbar</h2>
+        <p>Unified / Split / IconNav、Scrim、滑动 pill。</p>
+        <span class="tag">floating-chrome</span>
+      </a>
+      <a class="catalog-card" href="selection-bubble.html">
+        <h2>选区悬浮气泡</h2>
+        <p>文本选择 / 长按锚定；AI 动作 + inline 输入。</p>
+        <span class="tag">selection-bubble</span>
+      </a>
+      <a class="catalog-card" href="form-controls.html">
+        <h2>Chip / 搜索 / Switch</h2>
+        <p>FilterChip、Switch 行、Outlined 搜索框。</p>
+        <span class="tag">form-controls</span>
+      </a>
+    </div>
+  </main>
+
+  <script type="module">
+    import { initThemeToggle } from './assets/press.js';
+    initThemeToggle();
+  </script>
+</body>
+</html>

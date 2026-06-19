@@ -1,0 +1,190 @@
+<resources>
+
+
+
+    <style name="AppTheme" parent="Theme.MaterialComponents.Light.NoActionBar">
+
+        <item name="colorPrimary">@color/colorPrimary</item>
+
+        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+
+        <item name="colorPrimaryVariant">@color/colorPrimaryVariant</item>
+
+        <item name="colorAccent">@color/colorAccent</item>
+
+        <item name="colorOnPrimary">@color/colorOnPrimary</item>
+
+        <item name="android:colorBackground">@color/background</item>
+
+        <item name="android:windowBackground">@color/background</item>
+
+        <item name="android:statusBarColor">@android:color/transparent</item>
+
+        <item name="android:textColorPrimary">@color/textPrimary</item>
+
+        <item name="android:textColorSecondary">@color/textSecondary</item>
+
+        <item name="switchStyle">@style/AppTheme.Switch</item>
+
+    </style>
+
+
+
+    <style name="AppTheme.Toolbar" parent="Widget.MaterialComponents.Toolbar">
+
+        <item name="android:background">@color/surface</item>
+
+        <item name="backgroundTint">@null</item>
+
+        <item name="android:elevation">@dimen/toolbar_elevation</item>
+
+        <item name="elevation">@dimen/toolbar_elevation</item>
+
+        <item name="titleTextColor">@color/textPrimary</item>
+
+        <item name="subtitleTextColor">@color/textSecondary</item>
+
+        <item name="android:minHeight">@dimen/toolbar_height</item>
+
+    </style>
+
+
+
+    <style name="TextAppearance.App.ToolbarTitle" parent="TextAppearance.MaterialComponents.Subtitle1">
+
+        <item name="android:textColor">@color/textPrimary</item>
+
+        <item name="android:textSize">17sp</item>
+
+        <item name="android:fontFamily">sans-serif-medium</item>
+
+    </style>
+
+
+
+    <style name="AppTheme.Card" parent="Widget.MaterialComponents.CardView">
+
+        <item name="cardCornerRadius">@dimen/fluent_corner_radius_overlay</item>
+
+        <item name="cardElevation">@dimen/card_elevation</item>
+
+        <item name="cardBackgroundColor">@color/surfaceCard</item>
+
+        <item name="contentPadding">@dimen/spacing_lg</item>
+
+    </style>
+
+
+
+    <style name="AppTheme.SettingSwitch" parent="Widget.MaterialComponents.CompoundButton.Switch">
+
+        <item name="android:textAppearance">?attr/textAppearanceBody1</item>
+
+        <item name="android:textColor">@color/textPrimary</item>
+
+    </style>
+
+
+
+    <style name="AppTheme.Chip" parent="Widget.MaterialComponents.Chip.Choice">
+
+        <item name="chipBackgroundColor">@color/chip_background_color</item>
+
+        <item name="chipStrokeColor">@color/chip_stroke_color</item>
+
+        <item name="chipStrokeWidth">1dp</item>
+
+        <item name="chipMinHeight">@dimen/chip_min_height_compact</item>
+
+        <item name="checkedIconVisible">false</item>
+
+        <item name="android:textColor">@color/chip_text_color</item>
+
+        <item name="android:textSize">13sp</item>
+
+        <item name="shapeAppearanceOverlay">@style/ShapeAppearance.App.Corner.Control</item>
+
+    </style>
+
+
+
+    <style name="AppTheme.Chip.Setting" parent="Widget.MaterialComponents.Chip.Filter">
+
+        <item name="chipBackgroundColor">@color/chip_background_color</item>
+
+        <item name="chipStrokeColor">@color/chip_stroke_color</item>
+
+        <item name="chipStrokeWidth">1dp</item>
+
+        <item name="chipMinHeight">@dimen/chip_min_height_compact</item>
+
+        <item name="checkedIconVisible">false</item>
+
+        <item name="android:textColor">@color/chip_text_color</item>
+
+        <item name="android:textSize">13sp</item>
+
+        <item name="shapeAppearanceOverlay">@style/ShapeAppearance.App.Corner.Control</item>
+
+    </style>
+
+
+
+    <style name="AppTheme.SearchField" parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox.Dense">
+
+        <item name="boxStrokeColor">@color/outline</item>
+
+        <item name="hintTextColor">@color/textSecondary</item>
+
+        <item name="android:textColorHint">@color/textSecondary</item>
+
+        <item name="boxCornerRadiusTopStart">@dimen/fluent_corner_radius_control</item>
+
+        <item name="boxCornerRadiusTopEnd">@dimen/fluent_corner_radius_control</item>
+
+        <item name="boxCornerRadiusBottomStart">@dimen/fluent_corner_radius_control</item>
+
+        <item name="boxCornerRadiusBottomEnd">@dimen/fluent_corner_radius_control</item>
+
+    </style>
+
+
+
+    <style name="AppTheme.SearchField.EditText" parent="Widget.MaterialComponents.TextInputEditText.OutlinedBox">
+
+        <item name="android:textColor">@color/textPrimary</item>
+
+        <item name="android:textSize">14sp</item>
+
+    </style>
+
+
+
+    <style name="AppTheme.Switch" parent="Widget.MaterialComponents.CompoundButton.Switch">
+
+        <item name="thumbTint">@color/switch_thumb_color</item>
+
+        <item name="trackTint">@color/switch_track_color</item>
+
+    </style>
+
+
+
+    <style name="AppTheme.CrashTrace" parent="Widget.AppCompat.TextView">
+
+        <item name="android:fontFamily">monospace</item>
+
+        <item name="android:textSize">12sp</item>
+
+        <item name="android:textColor">@color/textPrimary</item>
+
+        <item name="android:lineSpacingMultiplier">1.2</item>
+
+        <item name="android:textIsSelectable">true</item>
+
+    </style>
+
+
+
+</resources>
+

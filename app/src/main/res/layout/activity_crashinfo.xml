@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+
+    android:layout_width="match_parent"
+
+    android:layout_height="match_parent"
+
+    android:background="@color/background"
+
+    android:orientation="vertical">
+
+
+
+    <LinearLayout
+
+        android:id="@+id/toolbarHeader"
+
+        android:layout_width="match_parent"
+
+        android:layout_height="wrap_content"
+
+        android:background="@color/surface"
+
+        android:orientation="vertical">
+
+
+
+        <com.google.android.material.appbar.MaterialToolbar
+
+            android:id="@+id/toolbar"
+
+            style="@style/AppTheme.Toolbar"
+
+            android:layout_width="match_parent"
+
+            android:layout_height="@dimen/toolbar_height"
+
+            app:navigationIconTint="@color/textPrimary"
+
+            app:titleTextAppearance="@style/TextAppearance.App.ToolbarTitle"
+
+            app:title="@string/crash_info_title" />
+
+
+
+        <View
+
+            android:layout_width="match_parent"
+
+            android:layout_height="1dp"
+
+            android:background="@color/toolbarDivider" />
+
+
+
+    </LinearLayout>
+
+
+
+    <androidx.core.widget.NestedScrollView
+
+        android:layout_width="match_parent"
+
+        android:layout_height="match_parent"
+
+        android:fillViewport="true">
+
+
+
+        <HorizontalScrollView
+
+            android:layout_width="match_parent"
+
+            android:layout_height="wrap_content"
+
+            android:scrollbars="horizontal">
+
+
+
+            <TextView
+
+                android:id="@+id/textv"
+
+                style="@style/AppTheme.CrashTrace"
+
+                android:layout_width="wrap_content"
+
+                android:layout_height="wrap_content"
+
+                android:focusableInTouchMode="true"
+
+                android:padding="@dimen/spacing_lg"
+
+                android:textIsSelectable="true" />
+
+
+
+        </HorizontalScrollView>
+
+
+
+    </androidx.core.widget.NestedScrollView>
+
+
+
+</LinearLayout>
+

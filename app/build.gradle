@@ -1,0 +1,71 @@
+plugins {
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
+}
+
+android {
+    namespace 'nota.android.crash.xp.app'
+
+    compileSdkVersion 36
+    defaultConfig {
+        applicationId "nota.android.crash.xp.app"
+        minSdk 21
+        targetSdk 36
+        versionCode 1
+        versionName "0.1.0"
+    }
+
+    sourceSets {
+        main {
+            java.srcDirs = ['src/main/java', 'src/main/kotlin']
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    kotlin {
+        compilerOptions {
+            languageVersion = org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_3
+            jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17
+        }
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.debug
+        }
+    }
+    buildFeatures {
+        viewBinding true
+        dataBinding false
+    }
+    dependenciesInfo {
+        includeInApk false
+        includeInBundle false
+    }
+}
+
+androidComponents {
+    onVariants(selector().all(), { variant ->
+        variant.outputs.each { output ->
+            def versionName = android.defaultConfig.versionName
+            def buildType = variant.buildType
+            def fileName = "CrashCenter_v${versionName}_${buildType}.apk"
+            output.outputFileName.set(fileName)
+        }
+    })
+}
+
+dependencies {
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
+
+    implementation libs.androidx.appcompat
+    implementation libs.material
+    implementation libs.androidx.constraintlayout
+    implementation libs.androidx.recyclerview
+
+    compileOnly libs.xposed.api
+}

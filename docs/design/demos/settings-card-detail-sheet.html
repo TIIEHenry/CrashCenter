@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Demo · 设置 Card / 详情 Sheet</title>
+  <link rel="stylesheet" href="assets/tokens.css">
+  <link rel="stylesheet" href="assets/base.css">
+  <style>
+    .settings { padding: 0; background: var(--canvas); min-height: 100%; }
+    .settings-card {
+      background: var(--surface); border-radius: var(--radius-mobile-card);
+      overflow: hidden; margin-bottom: var(--section-gap);
+    }
+    .meta-pill {
+      display: inline-flex; gap: var(--space-sm); flex-wrap: wrap;
+    }
+    .meta-pill span {
+      font-size: 0.75rem; padding: 4px 10px; border-radius: 999px;
+      background: var(--canvas); color: var(--text-secondary);
+    }
+    .sheet-backdrop {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.4);
+      display: flex; align-items: flex-end; justify-content: center; z-index: 100;
+    }
+    .sheet-backdrop[hidden] { display: none; }
+    .sheet {
+      width: min(100%, 390px); background: var(--surface);
+      border-radius: var(--radius-mobile-sheet-detail) var(--radius-mobile-sheet-detail) 0 0;
+      padding-bottom: var(--space-xl); max-height: 70vh; overflow: auto;
+    }
+    .sheet-handle {
+      width: var(--sheet-drag-handle-width); height: var(--sheet-drag-handle-height);
+      background: var(--stroke); border-radius: var(--sheet-drag-handle-radius);
+      margin: var(--space-sm) auto var(--space-md);
+    }
+    .sheet-title {
+      margin: 0 0 var(--space-sm);
+      font-weight: 600; font-size: 1rem; line-height: 1.3;
+    }
+    .sheet-sub {
+      margin: 0 0 var(--space-md);
+      font-size: 0.8125rem; color: var(--text-secondary); line-height: 1.35;
+    }
+    .sheet-actions { display: flex; justify-content: center; gap: var(--space-xl); padding-top: var(--space-md); }
+    .sheet-actions button {
+      width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--stroke);
+      background: var(--surface); font-size: 1.125rem; cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <header class="demo-site-header">
+    <h1>设置 Card / 详情 Sheet</h1>
+    <nav class="demo-site-nav">
+      <a href="index.html">目录</a>
+      <a href="shared-dividers.html">分割线</a>
+      <a href="toolbar-list-chrome.html">Toolbar</a>
+      <a href="settings-card-detail-sheet.html" class="active">Sheet</a>
+      <a href="popup-filter-menu.html">Popup</a>
+      <a href="floating-chrome.html">悬浮</a>
+      <a href="form-controls.html">表单</a>
+    </nav>
+    <button type="button" id="theme-toggle">深色</button>
+  </header>
+
+  <main class="demo-page">
+    <h2>设置 Card 与详情 Sheet</h2>
+    <p class="lead">实色 layer Sheet；item 对齐 divider；metadata 用 content pill。</p>
+    <a class="spec-link" href="../components/settings-card-detail-sheet.md">Spec → settings-card-detail-sheet.md</a>
+
+    <div class="demo-grid" style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));">
+      <div class="demo-panel" style="padding:0;overflow:hidden;">
+        <div class="settings">
+          <p class="section-label">干预</p>
+          <div class="settings-card rounded-item-stack">
+            <div class="settings-row press-ios">显示通知 <span>›</span></div>
+            <div class="item-divider item-divider--text-only"></div>
+            <div class="settings-row press-ios">处理系统应用 <span>›</span></div>
+          </div>
+          <p class="section-label">关于</p>
+          <div class="settings-card rounded-item-stack">
+            <div class="settings-row press-ios">版本 1.0.0</div>
+          </div>
+        </div>
+      </div>
+      <div class="demo-panel">
+        <h3>详情 Sheet</h3>
+        <p class="hint">点击打开相册式 metadata 面板</p>
+        <button type="button" id="open-sheet" class="press-ios" style="padding:10px 16px;border-radius:8px;border:1px solid var(--stroke);background:var(--surface);cursor:pointer;">打开详情 Sheet</button>
+      </div>
+    </div>
+  </main>
+
+  <div class="sheet-backdrop" id="sheet" hidden>
+    <div class="sheet">
+      <div class="sheet-handle"></div>
+      <div class="sheet-title content-inset-h">2025-12-28 14:20:44</div>
+      <div class="sheet-sub content-inset-h">IMG_20251228_142044.jpg</div>
+      <div class="meta-pill content-inset-h content-inset-block">
+        <span>ISO 400</span><span>1/120s</span><span>f/1.8</span>
+      </div>
+      <div class="kv-row"><span>位置</span><span class="kv-row__value">珠海市 香洲区</span></div>
+      <div class="item-divider item-divider--text-only"></div>
+      <div class="kv-row"><span>设备</span><span class="kv-row__value">Xiaomi 15</span></div>
+      <div class="item-divider item-divider--text-only"></div>
+      <div class="kv-row"><span>路径</span><span class="kv-row__value">/DCIM/Camera/…</span></div>
+      <div class="sheet-actions">
+        <button type="button" title="分享">↗</button>
+        <button type="button" title="编辑">✎</button>
+        <button type="button" title="删除">🗑</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { bindPressIOS, initThemeToggle } from './assets/press.js';
+    initThemeToggle();
+    bindPressIOS();
+    const sheet = document.getElementById('sheet');
+    document.getElementById('open-sheet').addEventListener('click', () => { sheet.hidden = false; });
+    sheet.addEventListener('click', (e) => { if (e.target === sheet) sheet.hidden = true; });
+  </script>
+</body>
+</html>

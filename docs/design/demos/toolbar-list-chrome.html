@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Demo · Toolbar / 扁平列表</title>
+  <link rel="stylesheet" href="assets/tokens.css">
+  <link rel="stylesheet" href="assets/base.css">
+</head>
+<body>
+  <header class="demo-site-header">
+    <h1>Toolbar / 扁平列表</h1>
+    <nav class="demo-site-nav">
+      <a href="index.html">目录</a>
+      <a href="shared-dividers.html">分割线</a>
+      <a href="toolbar-list-chrome.html" class="active">Toolbar</a>
+      <a href="settings-card-detail-sheet.html">Sheet</a>
+      <a href="popup-filter-menu.html">Popup</a>
+      <a href="floating-chrome.html">悬浮</a>
+      <a href="form-controls.html">表单</a>
+    </nav>
+    <button type="button" id="theme-toggle">深色</button>
+  </header>
+
+  <main class="demo-page">
+    <h2>Toolbar 与扁平列表</h2>
+    <p class="lead">Toolbar 与列表共面、无底线；行间无 divider；行按压 ① iOS overlay。</p>
+    <a class="spec-link" href="../components/toolbar-list-chrome.md">Spec → toolbar-list-chrome.md</a>
+
+    <div class="phone-frame">
+      <div class="phone-screen chrome-screen">
+        <div class="status-bar" aria-hidden="true">
+          <span class="status-bar__time">9:41</span>
+          <span class="status-bar__icons">▮▮▮ WiFi 🔋</span>
+        </div>
+        <div class="toolbar">
+          <span class="toolbar-title">CrashCenter</span>
+          <span class="toolbar-spacer"></span>
+          <button
+            class="toolbar-overflow icon-btn press-ripple"
+            type="button"
+            aria-label="更多"
+          >
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <circle cx="12" cy="5" r="1.75"/>
+              <circle cx="12" cy="12" r="1.75"/>
+              <circle cx="12" cy="19" r="1.75"/>
+            </svg>
+          </button>
+        </div>
+        <div class="banner">Xposed 未激活 — 请在 LSPosed 中启用模块</div>
+        <div class="filter-row">
+          <span class="chip is-on">全部</span>
+          <span class="chip">用户应用</span>
+          <span class="chip">系统应用</span>
+        </div>
+        <div class="list-row press-ios is-on" data-toggle>
+          <div class="app-icon">📱</div>
+          <div class="list-row-body">
+            <div class="list-row-title">示例应用 A</div>
+            <div class="list-row-sub">com.example.a · Enhanced Switch</div>
+          </div>
+          <div class="switch switch-enhanced"></div>
+        </div>
+        <div class="list-row press-ios" data-toggle>
+          <div class="app-icon">🎮</div>
+          <div class="list-row-body">
+            <div class="list-row-title">示例应用 B</div>
+            <div class="list-row-sub">com.example.b · Standard Switch</div>
+          </div>
+          <div class="switch"></div>
+        </div>
+        <div class="list-row press-ios is-on" data-toggle>
+          <div class="app-icon">📷</div>
+          <div class="list-row-body">
+            <div class="list-row-title">相册</div>
+            <div class="list-row-sub">com.android.gallery</div>
+          </div>
+          <div class="switch"></div>
+        </div>
+      </div>
+    </div>
+    <p class="hint" style="text-align:center;margin-top:16px;color:var(--text-secondary);font-size:0.8125rem">
+      点击整行 toggle Switch（Switch 本身不可点）。首行 Enhanced（OFF 短横条 → ON 正圆）；其余 Standard。
+    </p>
+  </main>
+
+  <script type="module">
+    import { bindPressIOS, bindPressRipple, initThemeToggle } from './assets/press.js';
+    initThemeToggle();
+    bindPressIOS();
+    bindPressRipple();
+    document.querySelectorAll('[data-toggle]').forEach((row) => {
+      row.addEventListener('click', () => row.classList.toggle('is-on'));
+    });
+  </script>
+</body>
+</html>

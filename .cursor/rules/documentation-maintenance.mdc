@@ -1,0 +1,52 @@
+---
+description: 编辑 docs/ 或 dev/ 文档时遵守 CrashCenter 文档系统规范
+alwaysApply: true
+---
+
+# 文档维护规则
+
+## 新会话入口
+
+1. `AGENTS.md`
+2. `docs/DOCUMENTATION.md`
+3. `dev/progress/status.md`
+
+## 新建或编辑文档时
+
+- 除 `AGENTS.md` / `CLAUDE.md` 外，**必须有完整 YAML frontmatter**（title, type, status, phase, updated, summary）
+- 每次编辑更新 `updated` 日期
+- 术语引用 `docs/glossary.md`，不重复定义
+- 文档末尾附「相关文档」交叉链接
+- 使用相对路径链接
+
+## 分类速查
+
+| 写什么 | 放哪里 |
+|--------|--------|
+| 子系统设计 | `docs/architecture/` |
+| 架构决策（为什么） | `docs/decisions/NNN-topic.md` |
+| 实现踩坑（怎么做） | `dev/iterations/<subsystem>/` |
+| Phase 任务清单 | `dev/roadmap/active/phaseN_*.md` |
+| 设备验收报告 | `dev/verification/` |
+| 当前状态 | `dev/progress/status.md`（仅 Snapshot + Recent Sessions） |
+
+## 结构变更后必跑
+
+```bash
+./scripts/generate-docs-index.sh
+python3 scripts/check-docs-health.py
+```
+
+`docs/INDEX.md` **禁止手改**。
+
+## 提交门禁（规则 3a）
+
+含代码的 commit 前：更新 `status.md`、勾选 roadmap、同步行为变更到 `docs/architecture/`。
+
+**方案 commit**（plan/roadmap/ADR）与 **实施 commit**（代码）必须分开。
+
+## 禁止
+
+- 删除过时文档 → 移入 `dev/archive/`，设 `status: archived`
+- 未经用户要求额外创建 README（导航入口除外）
+- 在 `status.md` 写入 iter 级长 dump

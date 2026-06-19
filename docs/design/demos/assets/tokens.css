@@ -1,0 +1,143 @@
+:root {
+  --accent: #0078d4;
+  --accent-container: #e3f2fd;
+  --layer: #fafafa;
+  --canvas: #f0f0f0;
+  --surface: #ffffff;
+  --text-primary: #1a1a1a;
+  --text-secondary: #666666;
+  --stroke: #e0e0e0;
+  --stroke-dark: #3d3d3d;
+
+  --radius-control: 4px;
+  --radius-mobile-control: 8px;
+  --radius-mobile-card: 16px;
+  --radius-mobile-popup: 16px;
+  --radius-mobile-sheet-detail: 16px;
+  --radius-mobile-sheet: 28px;
+
+  --toolbar-height: 48px;
+  --sheet-drag-handle-width: 36px;
+  --sheet-drag-handle-height: 4px;
+  --sheet-drag-handle-hit-height: 24px;
+  --sheet-drag-handle-radius: 2px;
+  --sheet-height-half: 50%;
+  --sheet-height-expanded: 100%;
+  --transition-sheet: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+  --filter-row-height: 32px;
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 12px;
+  --space-lg: 16px;
+  --space-xl: 24px;
+  --type-toolbar-title: 1.0625rem; /* 17sp Medium */
+  --floating-bar-height: 40px;
+  --touch-target-min: 40px;
+  --icon-glyph-size: 24px;
+  --icon-glyph-size-compact: 18px;
+  --icon-button-size-compact: 32px;
+  --icon-button-size-glass: 36px;
+  --icon-leading-column: 24px;
+  --icon-leading-slot: 40px;
+  --list-row-padding-v: 12px;
+  --list-row-min-height: 36px;
+  --content-padding-h: var(--space-lg); /* Item 文案 / 图标列与布局左右缘 — SSSSOT */
+  --item-row-padding-v: var(--list-row-padding-v);
+  --item-row-padding-h: var(--content-padding-h);
+  --list-row-padding-h: var(--content-padding-h);
+  --divider-start-leading: 56px;
+  --popup-section-gap: 12px;
+  --popup-section-divider-height: 8px;
+  --menu-row-padding-v: 8px;
+  --menu-row-min-height: 20px;
+  --menu-row-height: calc(var(--menu-row-padding-v) * 2 + var(--icon-leading-column));
+  --popup-max-width: 320px;
+  --selection-bubble-height: 44px;
+  --radius-selection-bubble: calc(var(--selection-bubble-height) / 2);
+  --selection-bubble-inset-h: 4px;
+  --selection-bubble-anchor-gap: 8px;
+  --selection-bubble-max-width: min(calc(100vw - var(--space-xl)), 480px);
+  --selection-bubble-avatar-size: 28px;
+  --selection-bubble-drag-width: 20px;
+  --selection-bubble-divider-height: 24px;
+  --selection-bubble-input-min-width: 120px;
+  --selection-bubble-input-height: 32px;
+  --selection-bubble-action-gap: 2px;
+  --bubble-action-padding-h: 8px;
+  --bubble-action-padding-v: 6px;
+  --bubble-action-gap: 4px;
+  --shadow-whisper: 0 2px 4px rgba(0, 0, 0, 0.08);
+  --divider-start-menu: calc(var(--content-padding-h) + var(--icon-leading-column));
+  --divider-start-menu-label: calc(var(--content-padding-h) + var(--icon-leading-column) + var(--space-sm));
+  --divider-end-menu-check: var(--content-padding-h);
+  --section-gap: 24px;
+
+  --glass-fill: rgba(255, 255, 255, 0.12);
+  --glass-stroke: rgba(0, 0, 0, 0.08);
+  --glass-blur: 24px;
+  --glass-icon-active: rgba(255, 255, 255, 0.2);
+  --segment-selected-fill: #f5f5f5;
+  --text-on-glass: #ffffff;
+  --fg-on-scrim-light: #ffffff;
+  --fg-on-scrim-dark: #1a1a1a;
+
+  --scrim-top-peak: rgba(0, 0, 0, 0.45);
+  --scrim-bottom-color: rgba(0, 0, 0, 0.1);
+  --scrim-fade-distance: 32px;
+  --scrim-bottom-fade-height: 96px;
+
+  --shadow-popup: 0 4px 16px rgba(0, 0, 0, 0.12);
+  --font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --transition-fast: 100ms ease;
+  --transition-segment: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Press — ① iOS overlay（列表/菜单行；禁止 scale） */
+  --press-overlay: rgba(0, 0, 0, 0.08);
+  --press-overlay-duration: 100ms;
+
+  /* Press — ③ 形状填色（方 Icon 盒 / Toolbar overflow） */
+  --press-shape-fill: rgba(0, 0, 0, 0.08);
+  --press-ripple-alpha-hover: 0.08;
+  --press-ripple-alpha-pressed: 0.16;
+  --press-ripple-alpha-focused: 0.12;
+  --press-ripple-duration: 350ms;
+
+  /* Semantic — banner / status */
+  --warning: #8a6116;
+  --warning-container: #fff4e5;
+  --warning-on-container: #663c00;
+
+  /* Switch — visual-language §Switch 控件 */
+  --switch-track-width: 44px;
+  --switch-track-height: 24px;
+  --switch-track-radius: 12px;
+  --switch-thumb-margin: 4px; /* thumb 与 track 内缘间距（原 ~2dp） */
+  --switch-thumb-size: calc(var(--switch-track-height) - 2 * var(--switch-thumb-margin));
+  --switch-thumb-bar-width: 10px;
+  --switch-thumb-bar-height: 6px;
+  --switch-thumb-bar-radius: 3px;
+  /* thumb position: cap-center alignment — see base.css .switch-ui */
+  --switch-transition: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+[data-theme="dark"] {
+  --layer: #202020;
+  --canvas: #121212;
+  --surface: #2a2a2a;
+  --text-primary: #e8e8e8;
+  --text-secondary: #aaaaaa;
+  --stroke: #3d3d3d;
+  --accent-container: #1a3a52;
+  --segment-selected-fill: #2a2a2a;
+  --glass-fill: rgba(0, 0, 0, 0.15);
+  --glass-stroke: rgba(255, 255, 255, 0.12);
+  --scrim-top-peak: rgba(255, 255, 255, 0.35);
+  --scrim-bottom-color: rgba(0, 0, 0, 0.25);
+  --press-overlay: rgba(255, 255, 255, 0.12);
+  --press-shape-fill: rgba(255, 255, 255, 0.1);
+  --press-ripple-alpha-hover: 0.08;
+  --press-ripple-alpha-pressed: 0.16;
+  --warning: #fce100;
+  --warning-container: #3d2e00;
+  --warning-on-container: #ffcc80;
+}

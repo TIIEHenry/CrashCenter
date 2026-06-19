@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Demo · 筛选 Popup</title>
+  <link rel="stylesheet" href="assets/tokens.css">
+  <link rel="stylesheet" href="assets/base.css">
+  <style>
+    .fab {
+      border-radius: 50%; border: none;
+      background: var(--surface); box-shadow: var(--shadow-popup);
+      cursor: pointer; position: relative; z-index: 2;
+      width: var(--touch-target-min);
+      height: var(--touch-target-min);
+      touch-action: manipulation;
+    }
+    .demo-stage {
+      position: relative; height: 420px; background: var(--layer);
+      border-radius: var(--radius-mobile-card); overflow: visible;
+      display: flex; align-items: flex-end; justify-content: center; padding-bottom: 48px;
+    }
+    .popup-menu {
+      position: absolute; bottom: 108px; left: 50%;
+      transform: translateX(-50%);
+      z-index: 20; pointer-events: auto;
+    }
+    .popup-menu[hidden] { display: none !important; }
+    .status-bar-demo {
+      padding: var(--space-md) var(--content-padding-h);
+      font-size: 0.8125rem; color: var(--text-secondary);
+      background: var(--canvas); border-radius: 8px; margin-top: var(--space-lg);
+    }
+  </style>
+</head>
+<body>
+  <header class="demo-site-header">
+    <h1>筛选 Popup / 菜单</h1>
+    <nav class="demo-site-nav">
+      <a href="index.html">目录</a>
+      <a href="shared-dividers.html">分割线</a>
+      <a href="toolbar-list-chrome.html">Toolbar</a>
+      <a href="settings-card-detail-sheet.html">Sheet</a>
+      <a href="popup-filter-menu.html" class="active">Popup</a>
+      <a href="floating-chrome.html">悬浮</a>
+      <a href="form-controls.html">表单</a>
+    </nav>
+    <button type="button" id="theme-toggle">深色</button>
+  </header>
+
+  <main class="demo-page">
+    <h2>筛选 Popup · Press-Drag-Release</h2>
+    <p class="lead">三列层级：<strong>左 icon</strong> · <strong>文案</strong> · <strong>右 ✓</strong>；divider 仅对齐文案列。</p>
+    <a class="spec-link" href="../components/popup-filter-menu.md">Spec → popup-filter-menu.md</a>
+
+    <div class="demo-panel">
+      <p class="hint"><strong>路径 A</strong>：按住按钮不抬，滑入菜单选行后松手 · <strong>路径 B</strong>：单击打开，再点行 toggle</p>
+      <div class="demo-stage">
+        <div class="popup-menu" id="menu" hidden>
+          <div class="menu-row press-ios is-selected" data-menu-item data-toggle-select data-value="image" data-label="图片">
+            <span class="menu-row-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>
+            </span>
+            <span class="menu-row-label">图片</span>
+            <span class="menu-row-check" aria-hidden="true">✓</span>
+          </div>
+          <div class="item-divider"></div>
+          <div class="menu-row press-ios is-selected" data-menu-item data-toggle-select data-value="video" data-label="视频">
+            <span class="menu-row-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>
+            </span>
+            <span class="menu-row-label">视频</span>
+            <span class="menu-row-check" aria-hidden="true">✓</span>
+          </div>
+          <div class="item-divider"></div>
+          <div class="menu-row press-ios" data-menu-item data-toggle-select data-value="live" data-label="实况照片">
+            <span class="menu-row-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg>
+            </span>
+            <span class="menu-row-label">实况照片</span>
+            <span class="menu-row-check" aria-hidden="true">✓</span>
+          </div>
+          <div class="item-divider"></div>
+          <div class="menu-row press-ios" data-menu-item data-toggle-select data-value="screenshot" data-label="截屏录屏">
+            <span class="menu-row-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17 1H7c-1.1 0-2 .9-2 2v18c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V3c0-1.1-.9-2-2-2zm0 18H7V5h10v14zM9.5 12.5 11 15l2.5-3.5L15 15H9l.5-2.5z"/></svg>
+            </span>
+            <span class="menu-row-label">截屏录屏</span>
+            <span class="menu-row-check" aria-hidden="true">✓</span>
+          </div>
+          <div class="item-divider"></div>
+          <div class="menu-row press-ios" data-menu-item data-toggle-select data-value="favorite" data-label="个人收藏">
+            <span class="menu-row-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M16.5 3c-1.74 0-3.41.81-4.5 2.09C10.91 3.81 9.24 3 7.5 3 4.42 3 2 5.42 2 8.5c0 3.78 3.4 6.86 8.55 11.54L12 21.35l1.45-1.32C18.6 15.36 22 12.28 22 8.5 22 5.42 19.58 3 16.5 3zm-4.4 15.55-.1.1-.1-.1C7.14 14.24 4 11.39 4 8.5 4 6.5 5.5 5 7.5 5c1.54 0 3.04.99 3.57 2.36h1.87C13.46 5.99 14.96 5 16.5 5c2 0 3.5 1.5 3.5 3.5 0 2.89-3.14 5.74-7.9 10.05z"/></svg>
+            </span>
+            <span class="menu-row-label">个人收藏</span>
+            <span class="menu-row-check" aria-hidden="true">✓</span>
+          </div>
+          <div class="item-divider"></div>
+          <div class="menu-row press-ios" data-menu-item data-toggle-select data-value="edited" data-label="已编辑">
+            <span class="menu-row-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1.003 1.003 0 0 0 0-1.42l-2.34-2.34a1.003 1.003 0 0 0-1.42 0l-1.83 1.83 3.75 3.75 1.84-1.82z"/></svg>
+            </span>
+            <span class="menu-row-label">已编辑</span>
+            <span class="menu-row-check" aria-hidden="true">✓</span>
+          </div>
+          <div class="popup-section-divider" role="separator" aria-hidden="true"></div>
+          <div class="menu-row menu-row--master press-ios" data-menu-item data-toggle-select data-value="all" data-label="所有项目">
+            <span class="menu-row-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14zM7 10h2v7H7zm4-3h2v10h-2zm4 6h2v4h-2z"/></svg>
+            </span>
+            <span class="menu-row-label">所有项目</span>
+            <span class="menu-row-check" aria-hidden="true">✓</span>
+          </div>
+        </div>
+        <button type="button" class="fab icon-btn icon-btn--glyph" id="anchor" aria-label="筛选">≡</button>
+      </div>
+      <div class="status-bar-demo" id="status">尝试按住 ≡ 并滑入菜单</div>
+    </div>
+  </main>
+
+  <script type="module">
+    import { bindPressIOS, initThemeToggle } from './assets/press.js';
+    import { initPressDragMenu } from './assets/press-drag-menu.js';
+    initThemeToggle();
+    bindPressIOS(document.getElementById('menu'));
+    initPressDragMenu({
+      anchor: document.getElementById('anchor'),
+      menu: document.getElementById('menu'),
+      statusEl: document.getElementById('status'),
+      onSelect: (value, label, row) => {
+        if (row?.dataset.toggleSelect !== undefined) {
+          row.classList.toggle('is-selected');
+          document.getElementById('status').textContent =
+            `${label}：${row.classList.contains('is-selected') ? '已选' : '未选'}`;
+          return false;
+        }
+        document.getElementById('status').textContent = `已触发：${label} (${value})`;
+      },
+    });
+  </script>
+</body>
+</html>

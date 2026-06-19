@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Demo · 选区悬浮气泡</title>
+  <link rel="stylesheet" href="assets/tokens.css">
+  <link rel="stylesheet" href="assets/base.css">
+  <style>
+    .status-bar-demo {
+      padding: var(--space-md) var(--content-padding-h);
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+      background: var(--canvas);
+      border-radius: 8px;
+      margin-top: var(--space-lg);
+    }
+  </style>
+</head>
+<body>
+  <header class="demo-site-header">
+    <h1>选区悬浮气泡</h1>
+    <nav class="demo-site-nav">
+      <a href="index.html">目录</a>
+      <a href="popup-filter-menu.html">Popup</a>
+      <a href="floating-chrome.html">悬浮 Toolbar</a>
+      <a href="selection-bubble.html" class="active">选区气泡</a>
+      <a href="form-controls.html">表单</a>
+    </nav>
+    <button type="button" id="theme-toggle">深色</button>
+  </header>
+
+  <main class="demo-page">
+    <h2>SelectionBubble · 文本选择 / 长按</h2>
+    <p class="lead">选中或长按下方段落中的文字，水平 pill 工具条锚定于选区上方；宽度由动作项与输入槽 intrinsic 决定。</p>
+    <a class="spec-link" href="../components/selection-bubble.md">Spec → selection-bubble.md</a>
+
+    <div class="demo-panel">
+      <p class="hint"><strong>路径 A</strong>：拖选文字 · <strong>路径 B</strong>：长按词组 · <strong>路径 C</strong>：PC 右键选区内</p>
+
+      <div class="selection-anchor-layer" id="anchor-layer">
+        <p class="selectable-demo" id="sample-text">
+          广东省 <strong id="highlight-target">珠海市 香洲区</strong> 情侣路沿线拥有漫长的海岸线与城市天际线。
+          选中任意词句即可唤起 AI 搜索、解释、翻译等快捷操作，也可在右侧输入框直接追问助手。
+        </p>
+
+        <span class="selection-handle-demo" id="sel-handle-start" hidden aria-hidden="true"></span>
+        <span class="selection-handle-demo" id="sel-handle-end" hidden aria-hidden="true"></span>
+
+        <div class="selection-bubble-host" id="bubble-host" hidden>
+          <div class="selection-bubble" role="toolbar" aria-label="文本选区操作">
+            <button type="button" class="selection-bubble-drag press-ios" aria-label="拖移工具条">
+              <span class="selection-bubble-drag-grip" aria-hidden="true"><span></span><span></span></span>
+            </button>
+            <img class="selection-bubble-avatar" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='16' fill='%23e3f2fd'/%3E%3Ccircle cx='16' cy='13' r='5' fill='%230078d4'/%3E%3Cellipse cx='16' cy='24' rx='8' ry='5' fill='%230078d4'/%3E%3C/svg%3E" alt="" width="28" height="28">
+            <div class="selection-bubble-actions">
+              <button type="button" class="bubble-action press-ios" data-bubble-action data-action-value="ai-search">
+                <span class="bubble-action-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="currentColor"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C8.01 14 6 11.99 6 9.5S8.01 5 10.5 5 15 7.01 15 9.5 13.01 14 10.5 14z"/><path d="M18 2l1.5 3 3 1.5-3 1.5L18 11l-1.5-3-3-1.5 3-1.5z" opacity=".7"/></svg>
+                </span>
+                AI 搜索
+              </button>
+              <button type="button" class="bubble-action press-ios" data-bubble-action data-action-value="explain">
+                <span class="bubble-action-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 4h5v8l-2.5-1.5L6 12V4z"/></svg>
+                </span>
+                解释
+              </button>
+              <button type="button" class="bubble-action press-ios" data-bubble-action data-action-value="translate">
+                <span class="bubble-action-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.87 15.07l-2.54-2.51.03-.03c1.74-1.94 2.98-4.17 3.71-6.53H17V4h-7V2H8v2H1v1.99h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12zm-2.62 7 1.62-4.33L19.12 17h-3.24z"/></svg>
+                </span>
+                翻译
+              </button>
+            </div>
+            <button type="button" class="icon-btn icon-btn--compact icon-btn--glyph press-ripple selection-bubble-expand" aria-label="更多">▾</button>
+            <div class="selection-bubble-divider" role="separator" aria-orientation="vertical"></div>
+            <div class="selection-bubble-input-slot">
+              <input type="text" placeholder="问问豆包" aria-label="问问豆包">
+              <button type="button" class="selection-bubble-input-submit press-ripple" aria-label="发送">↑</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="status-bar-demo" id="status">选中「珠海市 香洲区」或任意文字以显示气泡</div>
+    </div>
+  </main>
+
+  <script type="module">
+    import { bindPressIOS, bindPressRipple, initThemeToggle } from './assets/press.js';
+    import { initSelectionBubble } from './assets/selection-bubble.js';
+
+    initThemeToggle();
+    bindPressIOS(document.getElementById('bubble-host'));
+    bindPressRipple(document.getElementById('bubble-host'));
+
+    const status = document.getElementById('status');
+    const sample = document.getElementById('sample-text');
+    const target = document.getElementById('highlight-target');
+
+    initSelectionBubble({
+      host: document.getElementById('bubble-host'),
+      anchorLayer: document.getElementById('anchor-layer'),
+      onAction: (value, label) => {
+        const sel = document.getSelection()?.toString().trim();
+        status.textContent = sel
+          ? `${label}：「${sel.slice(0, 40)}${sel.length > 40 ? '…' : ''}」`
+          : `${label}`;
+      },
+      onSubmit: (text) => {
+        const sel = document.getSelection()?.toString().trim();
+        status.textContent = sel
+          ? `已提交「${text}」（上下文：${sel.slice(0, 24)}…）`
+          : `已提交「${text}」`;
+      },
+    });
+
+    let longPressTimer;
+    sample.addEventListener('pointerdown', (e) => {
+      if (e.button !== 0) return;
+      longPressTimer = window.setTimeout(() => {
+        const range = document.createRange();
+        range.selectNodeContents(target);
+        const sel = document.getSelection();
+        sel?.removeAllRanges();
+        sel?.addRange(range);
+        status.textContent = '长按已选：珠海市 香洲区';
+      }, 450);
+    });
+    sample.addEventListener('pointerup', () => clearTimeout(longPressTimer));
+    sample.addEventListener('pointercancel', () => clearTimeout(longPressTimer));
+
+    sample.addEventListener('contextmenu', (e) => {
+      const sel = document.getSelection()?.toString().trim();
+      if (sel) {
+        e.preventDefault();
+        status.textContent = `右键选区：${sel.slice(0, 32)}`;
+      }
+    });
+  </script>
+</body>
+</html>

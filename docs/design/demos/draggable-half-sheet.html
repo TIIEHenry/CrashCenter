@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Demo · 可拖曳半屏 Sheet</title>
+  <link rel="stylesheet" href="assets/tokens.css">
+  <link rel="stylesheet" href="assets/base.css">
+  <style>
+    .variant-tabs {
+      display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px;
+    }
+    .snap-policy-tabs { margin-bottom: 8px; }
+    .variant-tabs button {
+      padding: 8px 14px; border-radius: 999px; border: 1px solid var(--stroke);
+      background: var(--surface); cursor: pointer; font-size: 0.8125rem;
+    }
+    .variant-tabs button.is-active {
+      background: var(--accent-container); border-color: var(--accent); color: var(--accent);
+    }
+
+    .open-btn {
+      padding: 10px 16px; border-radius: var(--radius-mobile-control);
+      border: 1px solid var(--stroke); background: var(--surface); cursor: pointer;
+      font-size: 0.875rem;
+    }
+
+    /* Sheet overlay inside phone frame */
+    .sheet-scrim {
+      position: absolute; inset: 0; z-index: 50;
+      background: rgba(0, 0, 0, 0.4);
+      opacity: 0; pointer-events: none;
+      transition: opacity var(--transition-sheet);
+    }
+    .sheet-scrim.is-open {
+      opacity: 1; pointer-events: auto;
+    }
+
+    .half-sheet {
+      position: absolute; left: 0; right: 0; bottom: 0; z-index: 60;
+      background: var(--surface);
+      border-radius: var(--radius-mobile-sheet) var(--radius-mobile-sheet) 0 0;
+      display: flex; flex-direction: column;
+      height: var(--sheet-height-half);
+      transform: translateY(100%);
+      transition: transform var(--transition-sheet), height var(--transition-sheet),
+        border-radius var(--transition-sheet);
+      touch-action: none;
+      box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.08);
+    }
+    .half-sheet.is-open { transform: translateY(0); }
+    .half-sheet.is-dragging {
+      transition: none;
+    }
+    .half-sheet.is-fullscreen {
+      border-radius: 0;
+    }
+    .half-sheet.is-fullscreen .sheet-toolbar-chrome {
+      border-radius: 0;
+    }
+
+    /* Half ↔ Full chrome morph */
+    .sheet-drag-zone {
+      display: flex; align-items: center; justify-content: center;
+      height: var(--sheet-drag-handle-hit-height);
+      margin: var(--space-sm) 0 0;
+      cursor: grab;
+      touch-action: none;
+      overflow: hidden;
+      transition:
+        height var(--transition-sheet), margin var(--transition-sheet),
+        opacity var(--transition-sheet);
+    }
+    .half-sheet.is-chrome-full .sheet-drag-zone {
+      height: 0;
+      margin: 0;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .sheet-toolbar-row--full {
+      display: none;
+      flex-direction: column;
+      padding: 0;
+    }
+    .half-sheet.is-chrome-full .sheet-toolbar-row--half { display: none; }
+    .half-sheet.is-chrome-full .sheet-toolbar-row--full { display: flex; }
+
+    .sheet-status-bar {
+      display: none;
+    }
+    .half-sheet.is-chrome-full .sheet-status-bar { display: flex; }
+
+    .sheet-toolbar-row--full .sheet-toolbar-main {
+      display: flex;
+      align-items: center;
+      min-height: var(--toolbar-height);
+      padding: 0 var(--content-padding-h);
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    .sheet-toolbar-row--full .toolbar-title {
+      flex: 1;
+      text-align: center;
+      padding: 0 var(--space-sm);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .sheet-toolbar-trail-slot {
+      width: var(--icon-button-size-compact);
+      flex-shrink: 0;
+    }
+    .sheet-drag-zone:active { cursor: grabbing; }
+
+    /* Toolbar chrome — handle lives inside */
+    .sheet-toolbar-chrome {
+      flex-shrink: 0;
+      border-radius: var(--radius-mobile-sheet) var(--radius-mobile-sheet) 0 0;
+      background: var(--surface);
+      transition: border-radius var(--transition-sheet);
+    }
+
+    .sheet-toolbar-row--half {
+      display: flex;
+      align-items: center;
+      min-height: var(--toolbar-height);
+      padding: 0 var(--content-padding-h);
+    }
+
+    .sheet-drag-handle {
+      width: var(--sheet-drag-handle-width);
+      height: var(--sheet-drag-handle-height);
+      border-radius: var(--sheet-drag-handle-radius);
+      background: var(--stroke);
+      pointer-events: none;
+    }
+
+    .sheet-toolbar-row[hidden] { display: none; }
+
+    .sheet-toolbar-title {
+      flex: 1; text-align: center;
+      font-size: var(--type-toolbar-title);
+      font-weight: 500;
+      line-height: 1.25;
+      letter-spacing: -0.01em;
+      padding: 0 var(--space-sm);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+
+    .sheet-toolbar-spacer {
+      width: var(--touch-target-min);
+      flex-shrink: 0;
+    }
+
+    .sheet-body {
+      flex: 1; overflow: auto; -webkit-overflow-scrolling: touch;
+      padding-bottom: var(--space-xl);
+    }
+
+    .state-hint {
+      font-size: 0.75rem; color: var(--text-secondary);
+      margin-top: 12px; line-height: 1.5;
+    }
+    .state-hint code {
+      font-size: 0.6875rem; background: var(--canvas);
+      padding: 1px 6px; border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+  <header class="demo-site-header">
+    <h1>可拖曳半屏 Sheet</h1>
+    <nav class="demo-site-nav">
+      <a href="index.html">目录</a>
+      <a href="shared-dividers.html">分割线</a>
+      <a href="toolbar-list-chrome.html">Toolbar</a>
+      <a href="settings-card-detail-sheet.html">详情 Sheet</a>
+      <a href="draggable-half-sheet.html" class="active">半屏 Sheet</a>
+      <a href="popup-filter-menu.html">Popup</a>
+      <a href="floating-chrome.html">悬浮</a>
+      <a href="form-controls.html">表单</a>
+    </nav>
+    <button type="button" id="theme-toggle">深色</button>
+  </header>
+
+  <main class="demo-page">
+    <h2>Draggable Half Sheet</h2>
+    <p class="lead">
+      顶栏 chrome 内嵌拖曳把手；**Half 50% / Full 100% 两档**可配置为只启一档；全屏 morph 为中心标题 Toolbar。
+      上拖展开至全屏、下拖关闭；点 scrim 关闭。半屏顶缘 <code>radius_mobile_sheet</code> 28dp，全屏时圆角收为 0。
+    </p>
+    <a class="spec-link" href="../components/draggable-half-sheet.md">Spec → draggable-half-sheet.md</a>
+
+    <div class="variant-tabs snap-policy-tabs" role="tablist" aria-label="停靠档">
+      <button type="button" class="is-active" data-snap-policy="both">两档 Half+Full</button>
+      <button type="button" data-snap-policy="half-only">仅 Half 50%</button>
+      <button type="button" data-snap-policy="full-only">仅 Full 100%</button>
+    </div>
+
+    <div class="variant-tabs" role="tablist" aria-label="Toolbar 变体">
+      <button type="button" class="is-active" data-variant="full">完整 Toolbar</button>
+      <button type="button" data-variant="handle-only">仅把手</button>
+      <button type="button" data-variant="no-title">无标题 + 双 icon</button>
+    </div>
+
+    <div class="phone-frame" id="phone">
+      <div class="phone-screen chrome-screen">
+        <div class="status-bar" aria-hidden="true">
+          <span class="status-bar__time">9:41</span>
+          <span class="status-bar__icons">▮▮▮ WiFi 🔋</span>
+        </div>
+        <div class="toolbar">
+          <span class="toolbar-title">主界面</span>
+          <span class="toolbar-spacer"></span>
+        </div>
+        <div class="content-inset-h">
+          <p style="margin:0 0 16px;font-size:0.875rem;color:var(--text-secondary);">
+            点击下方按钮打开半屏 Sheet，拖曳顶栏把手体验停靠点。
+          </p>
+          <button type="button" class="open-btn press-ios" id="open-sheet">打开半屏 Sheet</button>
+          <p class="state-hint" id="state-hint">
+            状态：<code id="snap-label">closed</code> · 高度 <code id="height-label">—</code>
+          </p>
+        </div>
+
+        <div class="sheet-scrim" id="scrim" aria-hidden="true"></div>
+        <div class="half-sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title" hidden>
+          <div class="sheet-toolbar-chrome" id="sheet-chrome">
+            <div class="sheet-drag-zone" id="drag-zone" aria-label="拖曳把手">
+              <div class="sheet-drag-handle"></div>
+            </div>
+            <div class="sheet-toolbar-row sheet-toolbar-row--half" id="toolbar-half">
+              <button type="button" class="toolbar-overflow icon-btn press-ripple" id="half-close" aria-label="关闭" title="关闭">✕</button>
+              <span class="sheet-toolbar-title" id="sheet-title">忽略的应用</span>
+              <button type="button" class="toolbar-overflow icon-btn press-ripple" id="trail-btn" aria-label="完成" title="完成">✓</button>
+            </div>
+            <div class="sheet-toolbar-row sheet-toolbar-row--full" id="toolbar-full">
+              <div class="sheet-status-bar status-bar" aria-hidden="true">
+                <span class="status-bar__time">9:41</span>
+                <span class="status-bar__icons">▮▮▮ WiFi 🔋</span>
+              </div>
+              <div class="sheet-toolbar-main">
+                <button type="button" class="toolbar-overflow icon-btn press-ripple" id="back-btn" aria-label="返回" title="返回">
+                  <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor" aria-hidden="true"><path d="M15.41 7.41 14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
+                </button>
+                <span class="toolbar-title" id="sheet-title-full">忽略的应用</span>
+                <span class="sheet-toolbar-trail-slot" aria-hidden="true"></span>
+              </div>
+            </div>
+          </div>
+          <div class="sheet-body">
+            <div class="list-row press-ios">com.android.chrome</div>
+            <div class="item-divider item-divider--text-only"></div>
+            <div class="list-row press-ios">com.google.android.gms</div>
+            <div class="item-divider item-divider--text-only"></div>
+            <div class="list-row press-ios">com.example.demo.a</div>
+            <div class="item-divider item-divider--text-only"></div>
+            <div class="list-row press-ios">com.example.demo.b</div>
+            <div class="item-divider item-divider--text-only"></div>
+            <div class="list-row press-ios">com.example.demo.c</div>
+            <div class="item-divider item-divider--text-only"></div>
+            <div class="list-row press-ios">com.example.demo.d</div>
+            <div class="item-divider item-divider--text-only"></div>
+            <div class="list-row press-ios">com.example.demo.e</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script type="module">
+    import { bindPressIOS, bindPressRipple, initThemeToggle } from './assets/press.js';
+
+    initThemeToggle();
+    bindPressIOS();
+    bindPressRipple();
+
+    const phone = document.getElementById('phone');
+    const scrim = document.getElementById('scrim');
+    const sheet = document.getElementById('sheet');
+    const dragZone = document.getElementById('drag-zone');
+    const toolbarHalf = document.getElementById('toolbar-half');
+    const toolbarFull = document.getElementById('toolbar-full');
+    const sheetTitle = document.getElementById('sheet-title');
+    const sheetTitleFull = document.getElementById('sheet-title-full');
+    const halfCloseBtn = document.getElementById('half-close');
+    const backBtn = document.getElementById('back-btn');
+    const trailBtn = document.getElementById('trail-btn');
+    const snapLabel = document.getElementById('snap-label');
+    const heightLabel = document.getElementById('height-label');
+    const variantBtns = document.querySelectorAll('[data-variant]');
+    const snapPolicyBtns = document.querySelectorAll('[data-snap-policy]');
+
+    const HALF = 0.5;
+    const EXPANDED = 1;
+    const FULLSCREEN_RADIUS_THRESHOLD = 0.97;
+    const CHROME_FULL_THRESHOLD = 0.75;
+    const DISMISS_THRESHOLD = 0.25;
+    const EXPAND_DRAG_PX = 80;
+    const DISMISS_DRAG_PX = 120;
+
+    let variant = 'full';
+    let snapPolicy = 'both';
+    let snap = 'closed';
+    let phoneH = 0;
+    let dragStartY = 0;
+    let dragStartH = 0;
+    let dragging = false;
+
+    function measurePhone() {
+      phoneH = phone.querySelector('.phone-screen').clientHeight;
+    }
+
+    function allowsFull() {
+      return snapPolicy === 'both' || snapPolicy === 'full-only';
+    }
+
+    function allowsHalf() {
+      return snapPolicy === 'both' || snapPolicy === 'half-only';
+    }
+
+    function defaultSnapTarget() {
+      if (snapPolicy === 'full-only') return 'expanded';
+      return 'half';
+    }
+
+    function maxHeightRatio() {
+      if (snapPolicy === 'half-only') return HALF;
+      return EXPANDED;
+    }
+
+    function ratioForSnap(target) {
+      return target === 'expanded' ? EXPANDED : HALF;
+    }
+
+    function updateChromeMode(ratio) {
+      const allowFullChrome = allowsFull() && ratio >= CHROME_FULL_THRESHOLD;
+      sheet.classList.toggle('is-fullscreen', allowFullChrome && ratio >= FULLSCREEN_RADIUS_THRESHOLD);
+      sheet.classList.toggle('is-chrome-full', allowFullChrome);
+    }
+
+    function setSheetHeight(ratio, animate = true) {
+      const h = Math.round(phoneH * ratio);
+      if (!animate) sheet.classList.add('is-dragging');
+      else sheet.classList.remove('is-dragging');
+      sheet.style.height = `${h}px`;
+      heightLabel.textContent = `${Math.round(ratio * 100)}%`;
+      updateChromeMode(ratio);
+    }
+
+    function applyVariant() {
+      const title = sheetTitle.textContent;
+      sheetTitleFull.textContent = title;
+      if (variant === 'full') {
+        toolbarHalf.hidden = false;
+        sheetTitle.hidden = false;
+        halfCloseBtn.hidden = false;
+        trailBtn.hidden = false;
+      } else if (variant === 'handle-only') {
+        toolbarHalf.hidden = true;
+      } else if (variant === 'no-title') {
+        toolbarHalf.hidden = false;
+        sheetTitle.hidden = true;
+        halfCloseBtn.hidden = false;
+        trailBtn.hidden = false;
+      }
+    }
+
+    function openSheet() {
+      measurePhone();
+      sheet.hidden = false;
+      const initial = defaultSnapTarget();
+      requestAnimationFrame(() => {
+        scrim.classList.add('is-open');
+        sheet.classList.add('is-open');
+        snapTo(initial);
+      });
+    }
+
+    function closeSheet() {
+      scrim.classList.remove('is-open');
+      sheet.classList.remove('is-open');
+      sheet.classList.remove('is-dragging');
+      sheet.classList.remove('is-fullscreen');
+      sheet.classList.remove('is-chrome-full');
+      snap = 'closed';
+      snapLabel.textContent = snap;
+      heightLabel.textContent = '—';
+      setTimeout(() => { sheet.hidden = true; }, 300);
+    }
+
+    function snapTo(target) {
+      sheet.classList.remove('is-dragging');
+      if (target === 'dismissed') {
+        closeSheet();
+        return;
+      }
+      if (target === 'expanded' && !allowsFull()) target = 'half';
+      if (target === 'half' && !allowsHalf()) target = 'expanded';
+      snap = target;
+      snapLabel.textContent = target === 'expanded' ? 'full' : target;
+      setSheetHeight(ratioForSnap(target));
+    }
+
+    function nearestSnap(currentRatio) {
+      if (snapPolicy === 'half-only') return 'half';
+      if (snapPolicy === 'full-only') return 'expanded';
+      return currentRatio > (HALF + EXPANDED) / 2 ? 'expanded' : 'half';
+    }
+
+    function onDragEnd(clientY, velocity) {
+      const delta = dragStartY - clientY;
+      const currentRatio = sheet.offsetHeight / phoneH;
+
+      if (allowsFull() && (delta > EXPAND_DRAG_PX || velocity < -800)) {
+        snapTo('expanded');
+        return;
+      }
+      if (delta < -DISMISS_DRAG_PX || currentRatio < DISMISS_THRESHOLD || velocity > 800) {
+        snapTo('dismissed');
+        return;
+      }
+      snapTo(nearestSnap(currentRatio));
+    }
+
+    function bindDrag(el) {
+      let lastY = 0;
+      let lastT = 0;
+      let velocity = 0;
+
+      const onDown = (e) => {
+        if (!sheet.classList.contains('is-open')) return;
+        dragging = true;
+        measurePhone();
+        dragStartY = e.clientY ?? e.touches?.[0]?.clientY;
+        dragStartH = sheet.offsetHeight;
+        lastY = dragStartY;
+        lastT = performance.now();
+        sheet.classList.add('is-dragging');
+        e.preventDefault();
+      };
+
+      const onMove = (e) => {
+        if (!dragging) return;
+        const y = e.clientY ?? e.touches?.[0]?.clientY;
+        const now = performance.now();
+        velocity = (y - lastY) / (now - lastT || 1) * 1000;
+        lastY = y;
+        lastT = now;
+        const delta = dragStartY - y;
+        const next = Math.min(
+          phoneH * maxHeightRatio(),
+          Math.max(phoneH * 0.12, dragStartH + delta),
+        );
+        sheet.style.height = `${next}px`;
+        const ratio = next / phoneH;
+        heightLabel.textContent = `${Math.round(ratio * 100)}%`;
+        updateChromeMode(ratio);
+        e.preventDefault();
+      };
+
+      const onUp = (e) => {
+        if (!dragging) return;
+        dragging = false;
+        const y = e.clientY ?? e.changedTouches?.[0]?.clientY;
+        onDragEnd(y, velocity);
+      };
+
+      el.addEventListener('pointerdown', onDown);
+      window.addEventListener('pointermove', onMove);
+      window.addEventListener('pointerup', onUp);
+      window.addEventListener('pointercancel', onUp);
+    }
+
+    document.getElementById('open-sheet').addEventListener('click', openSheet);
+    scrim.addEventListener('click', closeSheet);
+    halfCloseBtn.addEventListener('click', closeSheet);
+    backBtn.addEventListener('click', () => {
+      if (snapPolicy === 'both') snapTo('half');
+      else closeSheet();
+    });
+    trailBtn.addEventListener('click', () => {
+      if (allowsHalf()) snapTo('half');
+      else closeSheet();
+    });
+
+    snapPolicyBtns.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        snapPolicyBtns.forEach((b) => b.classList.remove('is-active'));
+        btn.classList.add('is-active');
+        snapPolicy = btn.dataset.snapPolicy;
+        if (sheet.classList.contains('is-open')) {
+          snapTo(defaultSnapTarget());
+        }
+      });
+    });
+
+    variantBtns.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        variantBtns.forEach((b) => b.classList.remove('is-active'));
+        btn.classList.add('is-active');
+        variant = btn.dataset.variant;
+        applyVariant();
+      });
+    });
+
+    bindDrag(dragZone);
+    applyVariant();
+    window.addEventListener('resize', measurePhone);
+  </script>
+</body>
+</html>

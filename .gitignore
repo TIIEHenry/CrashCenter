@@ -1,0 +1,32 @@
+# Built application files
+*.apk
+*.ap_
+*.aab
+
+# Gradle
+.gradle/
+build/
+/app/build/
+/app/release/
+
+# Local configuration
+/local.properties
+
+# IDE
+*.iml
+.idea/
+!.idea/.gitignore
+
+# Kotlin
+.kotlin/
+
+# Android Studio captures
+/captures
+.externalNativeBuild
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Verification lock (adb smoke script)
+dev/verification/.adb-test.lock

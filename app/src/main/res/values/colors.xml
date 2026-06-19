@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Fluent Design palette (aligned with AppSnapShotor) -->
+    <color name="white">#FFFFFFFF</color>
+
+    <color name="fluent_canvas">#FFFAFAFA</color>
+    <color name="fluent_layer">#FFFFFFFF</color>
+    <color name="fluent_stroke">#FFE0E0E0</color>
+    <color name="fluent_stroke_subtle">#FFEBEBEB</color>
+    <color name="fluent_text_primary">#FF242424</color>
+    <color name="fluent_text_secondary">#FF616161</color>
+    <color name="fluent_text_tertiary">#FF707070</color>
+    <color name="fluent_fill_subtle">#FFF5F5F5</color>
+
+    <color name="fluent_accent">#FF0078D4</color>
+    <color name="fluent_accent_hover">#FF106EBE</color>
+    <color name="fluent_accent_container">#FFDEECF9</color>
+    <color name="fluent_accent_container_subtle">#FFE8F4FD</color>
+
+    <!-- Theme aliases -->
+    <color name="colorPrimary">@color/fluent_accent</color>
+    <color name="colorPrimaryDark">#FF005A9E</color>
+    <color name="colorPrimaryVariant">@color/fluent_accent_hover</color>
+    <color name="colorAccent">@color/fluent_accent</color>
+    <color name="colorOnPrimary">@color/white</color>
+
+    <color name="background">@color/fluent_canvas</color>
+    <color name="surface">@color/fluent_layer</color>
+    <color name="surfaceCard">@color/fluent_layer</color>
+    <color name="surfaceVariant">@color/fluent_fill_subtle</color>
+    <color name="textPrimary">@color/fluent_text_primary</color>
+    <color name="textSecondary">@color/fluent_text_secondary</color>
+    <color name="textTertiary">@color/fluent_text_tertiary</color>
+    <color name="divider">@color/fluent_stroke</color>
+    <color name="outline">@color/fluent_stroke</color>
+    <color name="outlineVariant">@color/fluent_stroke_subtle</color>
+    <color name="toolbarDivider">@color/fluent_stroke</color>
+
+    <color name="primaryContainer">@color/fluent_accent_container</color>
+    <color name="chipSelectedText">@color/fluent_accent</color>
+
+    <!-- Fluent semantic status -->
+    <color name="status_success">#FF107C10</color>
+    <color name="status_warning">#FF8A6116</color>
+    <color name="statusActiveBg">@color/fluent_accent_container_subtle</color>
+    <color name="statusActiveText">@color/status_success</color>
+    <color name="statusInactiveBg">#FFFFF4CE</color>
+    <color name="statusInactiveText">@color/status_warning</color>
+
+    <!-- Legacy aliases kept for code references -->
+    <color name="chipSelectedBg">@color/fluent_accent_container</color>
+    <color name="chipSelectedStroke">@color/fluent_accent</color>
+    <color name="systemAppBadge">@color/fluent_text_secondary</color>
+</resources>

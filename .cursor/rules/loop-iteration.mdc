@@ -1,0 +1,28 @@
+---
+description: AGENT_LOOP_WAKE 或 /loop 心跳迭代规则
+alwaysApply: true
+---
+
+# Loop 心跳迭代规则
+
+## 触发
+
+每次 `/loop` 或 `AGENT_LOOP_WAKE` 触发时执行本规则。
+
+## 每轮必做（顺序）
+
+1. **读文档**：`dev/progress/status.md` + 活跃 `dev/roadmap/active/`
+2. **选任务**：至少完成 **1 个可勾选 roadmap 任务** 或 **1 项架构文档中的编码/修复**
+3. **编码后更新**：勾选 roadmap + 更新 `status.md`（满足 [规则 3a](../../docs/DOCUMENTATION.md#规则-3a提交前文档门禁)）
+4. **验证**：`:app:assembleDebug`；adb 在线则 `./scripts/adb-smoke-verification.sh --skip-build`
+5. **Git commit**：有可提交变更时 commit（默认不 push，除非用户要求）
+
+## 禁止
+
+- **禁止空转**：不得仅 assemble 而无代码/文档变更
+- **禁止未经用户要求 push**
+- **禁止跳过方案直接做架构级改动**（trivial bugfix 除外）
+
+## 输出
+
+每轮说明：完成的任务、改动文件、commit hash（若有）、下一轮建议。

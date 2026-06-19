@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/item_sort"
+        android:icon="@drawable/ic_sort"
+        android:title="@string/sort"
+        app:showAsAction="ifRoom">
+        <menu>
+            <group android:checkableBehavior="single">
+                <item
+                    android:id="@+id/item_sort_by_update_time_reverse"
+                    android:checked="true"
+                    android:title="@string/sort_by_update_time_reverse" />
+                <item
+                    android:id="@+id/item_sort_by_install_time_reverse"
+                    android:title="@string/sort_by_install_time_reverse" />
+                <item
+                    android:id="@+id/item_sort_by_name_reverse"
+                    android:title="@string/sort_by_name_reverse" />
+                <item
+                    android:id="@+id/item_sort_by_name"
+                    android:title="@string/sort_by_name" />
+                <item
+                    android:id="@+id/item_sort_by_install_time"
+                    android:title="@string/sort_by_install_time" />
+                <item
+                    android:id="@+id/item_sort_by_update_time"
+                    android:title="@string/sort_by_update_time" />
+            </group>
+        </menu>
+    </item>
+
+    <item
+        android:id="@+id/item_select_all"
+        android:title="@string/item_select_all" />
+
+    <item
+        android:id="@+id/item_cancel_all"
+        android:title="@string/item_deselect_all" />
+
+    <item
+        android:id="@+id/item_help"
+        android:title="@string/item_about" />
+
+    <item
+        android:id="@+id/item_test"
+        android:title="@string/item_test" />
+
+</menu>

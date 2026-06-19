@@ -1,0 +1,66 @@
+<resources>
+    <string name="app_name">CrashCenter</string>
+    <string name="title_activity_settings">Settings</string>
+    <string name="xposed_description">Intercept uncaught Java exceptions in hooked apps</string>
+    <string name="crash_tip">CrashCenter [Xposed]</string>
+    <string name="using_warning_title">ReadMe</string>
+    <string name="using_warning">1.It is a Xposed module, so it needs xposed to support\n2.It aims to ignoring the errors instead of handling the errors.
+    it may bring unexpected problems, so use it carefully(not sure)\n3.the most simple way to use this module, apply
+        the app which crash while running, then pray</string>
+    <string name="btn_dont_show_again">Don\'t show again</string>
+
+    <string name="item_crash_notify">notify me when crash</string>
+    <string name="item_handle_system_app">handle system apps</string>
+    <string name="item_show_system_app">show system apps</string>
+    <string name="item_filter_app">filter</string>
+    <string name="item_all">all</string>
+    <string name="item_selected">selected</string>
+    <string name="item_not_selected">not selected</string>
+    <string name="item_deselect_all">deselect all</string>
+    <string name="item_select_all">select all</string>
+    <string name="item_about">about</string>
+    <string name="found_nougat_title">Sorry</string>
+    <string name="found_nougat_message"> </string>
+    <string name="search_title">search</string>
+    <string name="sort">sort</string>
+    <string name="sort_by_name">sort by name</string>
+    <string name="sort_by_name_reverse">sort by name (reverse)</string>
+    <string name="sort_by_install_time">sort by install time</string>
+    <string name="sort_by_install_time_reverse">sort by install time (reverse)</string>
+    <string name="sort_by_update_time">sort by update time</string>
+    <string name="sort_by_update_time_reverse">sort by update time (reverse)</string>
+    <string name="update_time">update time</string>
+    <string name="install_time">install time</string>
+    <string name="loading">loading</string>
+    <string name="loading_message">loading, please wait</string>
+
+    <string name="xposed_not_active">Xposed module is not actived</string>
+    <string name="xposed_hint">Please active this module in Xposed Installer app and then reboot you phone</string>
+    <string name="item_test">test</string>
+    <string name="test_hint">success if app is not crash</string>
+    <string name="item_scope_mode">Scope Mode</string>
+    <string name="item_scope_mode_short">Scope</string>
+    <string name="item_handle_system_short">Sys hook</string>
+    <string name="item_show_system_short">Show sys</string>
+    <string name="xposed_active_inline">Module active · Hook loaded</string>
+    <string name="xposed_inactive_inline">Not active · Enable in Xposed &amp; reboot</string>
+    <string name="scope_mode_description">When enabled, only selected apps are hooked. When disabled, all apps are hooked except those you exclude.</string>
+    <string name="settings_section_title">Settings</string>
+    <string name="search_hint">Search by name or package</string>
+    <string name="xposed_status_title">Module status</string>
+    <string name="xposed_active">Module active</string>
+    <string name="xposed_active_hint">Xposed hook is loaded and ready</string>
+    <string name="app_count_format">%1$d apps</string>
+    <string name="filter_empty">No apps match the current filters</string>
+    <string name="system_app_badge">System</string>
+    <string name="crash_info_title">Crash details</string>
+
+    <string name="permission_banner_title">App list incomplete — grant package visibility</string>
+    <string name="permission_grant_action">Grant</string>
+    <string name="permission_rationale_title">Package visibility required</string>
+    <string name="permission_rationale_message">CrashCenter needs to see all installed apps so you can choose which ones to hook.\n\nOn Android 11 and later, enable \"Query all packages\" (or reinstall the app if the permission was never granted):\n\n1. Tap Open settings below\n2. Open Permissions\n3. Allow query all packages\n4. Return here — the list will refresh automatically</string>
+    <string name="permission_open_settings">Open settings</string>
+    <string name="permission_settings_failed">Could not open app settings</string>
+    <string name="permission_list_partial_hint">Showing %1$d visible apps. Grant permission for the full list.</string>
+
+</resources>

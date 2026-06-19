@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Demo · 悬浮 Toolbar</title>
+  <link rel="stylesheet" href="assets/tokens.css">
+  <link rel="stylesheet" href="assets/base.css">
+  <style>
+    :root { --scrim-top-height: 84px; }
+
+    .variant-tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+    .variant-tabs button {
+      padding: 8px 14px; border-radius: 999px; border: 1px solid var(--stroke);
+      background: var(--surface); cursor: pointer; font-size: 0.8125rem;
+    }
+    .variant-tabs button.is-active { background: var(--accent-container); border-color: var(--accent); color: var(--accent); }
+
+    .feed-screen {
+      height: 100%; position: relative; overflow: visible;
+      background: #888;
+    }
+    .feed-scroll {
+      height: 100%; overflow: auto; -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+    .feed-scroll::-webkit-scrollbar { display: none; }
+    .feed-hero { padding: 48px 16px 16px; font-size: 2rem; font-weight: 700; color: var(--fg-on-scrim-dark); }
+    .photo-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; padding-bottom: 120px;
+    }
+    .photo-cell {
+      aspect-ratio: 1; background: linear-gradient(135deg, #607d8b, #37474f);
+    }
+    .photo-cell:nth-child(3n) { background: linear-gradient(135deg, #8d6e63, #5d4037); }
+    .photo-cell:nth-child(5n) { background: linear-gradient(135deg, #78909c, #455a64); }
+
+    .top-scrim {
+      position: absolute; top: 0; left: 0; right: 0; height: var(--scrim-top-height);
+      pointer-events: none; z-index: 5; opacity: 0;
+      background: linear-gradient(to bottom, var(--scrim-top-peak), transparent);
+      backdrop-filter: blur(var(--glass-blur));
+      -webkit-backdrop-filter: blur(var(--glass-blur));
+      transition: opacity 0.15s ease;
+    }
+    .bottom-fade {
+      position: absolute; bottom: 0; left: 0; right: 0; height: var(--scrim-bottom-fade-height);
+      pointer-events: none; z-index: 4; opacity: 0;
+      background: linear-gradient(to top, var(--scrim-bottom-color), transparent);
+      transition: opacity 0.15s ease;
+    }
+    .top-actions {
+      position: absolute; top: 36px; right: 16px; z-index: 10;
+      display: flex; gap: 8px;
+    }
+    .glass-btn {
+      border-radius: 50%; border: 1px solid var(--glass-stroke);
+      background: var(--glass-fill); backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      color: inherit;
+      cursor: pointer;
+    }
+    .top-title {
+      position: absolute; top: 40px; left: 16px; z-index: 10;
+      font-size: 1.0625rem; font-weight: 600; transition: color 0.15s, opacity 0.15s;
+      opacity: 0; pointer-events: none;
+    }
+    .top-title.is-compact-visible {
+      opacity: 1; pointer-events: auto;
+    }
+
+    .float-bottom {
+      position: absolute; bottom: 16px; left: 0; right: 0; z-index: 10;
+      display: flex; justify-content: center; align-items: center;
+      padding: 0 16px;
+    }
+    .float-bottom.split { gap: 8px; }
+
+    .glass-capsule {
+      display: flex; align-items: center; height: var(--floating-bar-height);
+      border-radius: 999px; border: 1px solid var(--glass-stroke);
+      background: var(--glass-fill); backdrop-filter: blur(var(--glass-blur));
+      -webkit-backdrop-filter: blur(var(--glass-blur));
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08); padding: 0 4px; max-width: 360px; width: 100%;
+    }
+    .glass-capsule .icon-slot {
+      border-radius: var(--radius-mobile-control);
+      border: none; background: transparent; color: var(--text-on-glass);
+      cursor: pointer;
+    }
+    .glass-capsule .icon-slot.is-active { background: var(--glass-icon-active); }
+    .glass-capsule .icon-slot.round { border-radius: 50%; }
+
+    .segment-track {
+      flex: 1; position: relative; display: flex; height: calc(var(--floating-bar-height) - 4px);
+      margin: 0 2px; align-items: center;
+    }
+    .segment-pill {
+      position: absolute; top: 2px; bottom: 2px; border-radius: 999px;
+      background: var(--segment-selected-fill); z-index: 0;
+    }
+    .segment {
+      flex: 1; z-index: 1; border: none; background: transparent; height: 100%;
+      font-size: 0.875rem; font-weight: 500; cursor: pointer; color: var(--text-on-glass);
+    }
+    .segment.is-selected { color: var(--text-primary); }
+
+    .split-aux {
+      width: var(--floating-bar-height); height: var(--floating-bar-height);
+      border-radius: 50%; border: 1px solid var(--glass-stroke);
+      background: var(--glass-fill); backdrop-filter: blur(var(--glass-blur));
+      -webkit-backdrop-filter: blur(var(--glass-blur));
+      color: var(--text-on-glass); cursor: pointer;
+      font-size: 1.25rem; line-height: 1;
+    }
+    .icon-nav {
+      gap: 0; padding: 0 8px; width: auto; min-width: 112px; max-width: none;
+      flex: 0 0 auto; justify-content: center;
+    }
+    .icon-nav .nav-icon {
+      border: none; background: transparent;
+      cursor: pointer; opacity: 0.7; color: var(--text-on-glass);
+      flex: 1; min-width: 48px;
+    }
+    .icon-nav .nav-icon.is-selected { opacity: 1; color: var(--accent); }
+
+    .light-feed .feed-hero { color: var(--text-primary); }
+    .light-feed .photo-grid { background: var(--layer); }
+    .light-feed .photo-cell { background: var(--surface); border: 1px solid var(--stroke); }
+    .light-feed .feed-screen { background: var(--layer); }
+    .light-feed .glass-btn,
+    .light-feed .glass-capsule,
+    .light-feed .split-aux {
+      --glass-fill: rgba(255, 255, 255, 0.92);
+      --glass-stroke: rgba(0, 0, 0, 0.12);
+      --glass-icon-active: rgba(0, 0, 0, 0.08);
+      --text-on-glass: var(--text-secondary);
+      --segment-selected-fill: rgba(0, 0, 0, 0.1);
+      color: var(--text-primary);
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+    }
+    .light-feed .segment.is-selected { color: var(--text-primary); font-weight: 600; }
+    .light-feed .top-title.adaptive-fg,
+    .light-feed .top-actions .adaptive-fg { color: var(--text-primary); }
+
+    [data-theme="dark"] .feed-screen:not(.light-feed) .glass-capsule,
+    [data-theme="dark"] .feed-screen:not(.light-feed) .split-aux {
+      --segment-selected-fill: rgba(255, 255, 255, 0.16);
+    }
+    .light-feed .icon-nav .nav-icon { opacity: 0.55; color: var(--text-secondary); }
+    .light-feed .icon-nav .nav-icon.is-selected { opacity: 1; color: var(--accent); }
+
+    .filter-popup {
+      position: absolute; z-index: 30;
+      pointer-events: auto; touch-action: manipulation;
+    }
+    .filter-popup[hidden] { display: none !important; }
+    .filter-popup .menu-row.is-highlight::before { opacity: 1; }
+    .demo-toast {
+      margin-top: 12px; padding: 10px 14px; font-size: 0.8125rem;
+      color: var(--text-secondary); background: var(--canvas); border-radius: 8px;
+    }
+  </style>
+</head>
+<body>
+  <header class="demo-site-header">
+    <h1>悬浮 Toolbar</h1>
+    <nav class="demo-site-nav">
+      <a href="index.html">目录</a>
+      <a href="shared-dividers.html">分割线</a>
+      <a href="toolbar-list-chrome.html">Toolbar</a>
+      <a href="settings-card-detail-sheet.html">Sheet</a>
+      <a href="popup-filter-menu.html">Popup</a>
+      <a href="floating-chrome.html" class="active">悬浮</a>
+      <a href="form-controls.html">表单</a>
+    </nav>
+    <button type="button" id="theme-toggle">深色</button>
+  </header>
+
+  <main class="demo-page">
+    <h2>FloatingToolbar 族</h2>
+    <p class="lead">Unified / Split / IconNav、TopActions、ScrollLinked Scrim。<strong>Unified 模式下点击/按住右侧 ≡ 打开筛选 Popup。</strong></p>
+    <a class="spec-link" href="../components/floating-chrome.md">Spec → floating-chrome.md</a>
+
+    <div class="variant-tabs" id="variants">
+      <button type="button" class="is-active" data-variant="unified">Unified 胶囊</button>
+      <button type="button" data-variant="split">Split 双件</button>
+      <button type="button" data-variant="icon">IconNav</button>
+      <button type="button" data-variant="light">图集（浅底 resting）</button>
+    </div>
+
+    <div class="phone-frame">
+      <div class="feed-screen" id="feed">
+        <div class="top-scrim" id="top-scrim"></div>
+        <div class="bottom-fade" id="bottom-fade"></div>
+        <div class="top-title adaptive-fg" id="top-title">照片</div>
+        <div class="top-actions">
+          <button type="button" class="glass-btn icon-btn icon-btn--touch icon-btn--glyph adaptive-fg" aria-label="搜索">🔍</button>
+          <button type="button" class="glass-btn icon-btn icon-btn--touch icon-btn--glyph adaptive-fg" id="top-overflow" aria-label="更多">⋮</button>
+        </div>
+        <div class="feed-scroll" id="scroll">
+          <div class="feed-hero" id="hero">照片</div>
+          <div class="photo-grid" id="grid"></div>
+        </div>
+        <div class="float-bottom" id="float-bar"></div>
+        <div class="filter-popup popup-menu popup-menu--simple" id="top-filter-menu" hidden>
+          <div class="menu-row menu-row--simple press-ios" data-menu-item data-value="search" data-label="搜索">
+            <span class="menu-row-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C8.01 14 6 11.99 6 9.5S8.01 5 10.5 5 15 7.01 15 9.5 13.01 14 10.5 14z"/></svg>
+            </span>
+            <span class="menu-row-label">搜索</span>
+          </div>
+          <div class="item-divider item-divider--menu-simple"></div>
+          <div class="menu-row menu-row--simple press-ios" data-menu-item data-value="settings" data-label="设置">
+            <span class="menu-row-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.14 12.94c.04-.31.06-.63.06-.94 0-.31-.02-.63-.06-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94L14.4 2.81c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+            </span>
+            <span class="menu-row-label">设置</span>
+          </div>
+          <div class="item-divider item-divider--menu-simple"></div>
+          <div class="menu-row menu-row--simple press-ios" data-menu-item data-value="about" data-label="关于">
+            <span class="menu-row-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+            </span>
+            <span class="menu-row-label">关于</span>
+          </div>
+        </div>
+        <div class="filter-popup popup-menu" id="filter-menu" hidden>
+          <div class="menu-row press-ios is-selected" data-menu-item data-toggle-select data-value="image" data-label="图片">
+            <span class="menu-row-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>
+            </span>
+            <span class="menu-row-label">图片</span>
+            <span class="menu-row-check" aria-hidden="true">✓</span>
+          </div>
+          <div class="item-divider"></div>
+          <div class="menu-row press-ios is-selected" data-menu-item data-toggle-select data-value="video" data-label="视频">
+            <span class="menu-row-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>
+            </span>
+            <span class="menu-row-label">视频</span>
+            <span class="menu-row-check" aria-hidden="true">✓</span>
+          </div>
+          <div class="item-divider"></div>
+          <div class="menu-row press-ios" data-menu-item data-toggle-select data-value="live" data-label="实况照片">
+            <span class="menu-row-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg>
+            </span>
+            <span class="menu-row-label">实况照片</span>
+            <span class="menu-row-check" aria-hidden="true">✓</span>
+          </div>
+          <div class="item-divider"></div>
+          <div class="menu-row press-ios" data-menu-item data-toggle-select data-value="screenshot" data-label="截屏录屏">
+            <span class="menu-row-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17 1H7c-1.1 0-2 .9-2 2v18c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V3c0-1.1-.9-2-2-2zm0 18H7V5h10v14zM9.5 12.5 11 15l2.5-3.5L15 15H9l.5-2.5z"/></svg>
+            </span>
+            <span class="menu-row-label">截屏录屏</span>
+            <span class="menu-row-check" aria-hidden="true">✓</span>
+          </div>
+          <div class="item-divider"></div>
+          <div class="menu-row press-ios" data-menu-item data-toggle-select data-value="favorite" data-label="个人收藏">
+            <span class="menu-row-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M16.5 3c-1.74 0-3.41.81-4.5 2.09C10.91 3.81 9.24 3 7.5 3 4.42 3 2 5.42 2 8.5c0 3.78 3.4 6.86 8.55 11.54L12 21.35l1.45-1.32C18.6 15.36 22 12.28 22 8.5 22 5.42 19.58 3 16.5 3zm-4.4 15.55-.1.1-.1-.1C7.14 14.24 4 11.39 4 8.5 4 6.5 5.5 5 7.5 5c1.54 0 3.04.99 3.57 2.36h1.87C13.46 5.99 14.96 5 16.5 5c2 0 3.5 1.5 3.5 3.5 0 2.89-3.14 5.74-7.9 10.05z"/></svg>
+            </span>
+            <span class="menu-row-label">个人收藏</span>
+            <span class="menu-row-check" aria-hidden="true">✓</span>
+          </div>
+          <div class="item-divider"></div>
+          <div class="menu-row press-ios" data-menu-item data-toggle-select data-value="edited" data-label="已编辑">
+            <span class="menu-row-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1.003 1.003 0 0 0 0-1.42l-2.34-2.34a1.003 1.003 0 0 0-1.42 0l-1.83 1.83 3.75 3.75 1.84-1.82z"/></svg>
+            </span>
+            <span class="menu-row-label">已编辑</span>
+            <span class="menu-row-check" aria-hidden="true">✓</span>
+          </div>
+          <div class="popup-section-divider" role="separator" aria-hidden="true"></div>
+          <div class="menu-row menu-row--master press-ios" data-menu-item data-toggle-select data-value="all" data-label="所有项目">
+            <span class="menu-row-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14zM7 10h2v7H7zm4-3h2v10h-2zm4 6h2v4h-2z"/></svg>
+            </span>
+            <span class="menu-row-label">所有项目</span>
+            <span class="menu-row-check" aria-hidden="true">✓</span>
+          </div>
+        </div>
+        <template id="unified-toolbar-tpl">
+          <div class="glass-capsule" id="toolbar-unified">
+            <button type="button" class="icon-slot icon-btn icon-btn--glass icon-btn--glyph is-active" aria-label="网格">▦</button>
+            <div class="segment-track" id="seg-main">
+              <div class="segment-pill"></div>
+              <button type="button" class="segment is-selected" data-value="photos">照片</button>
+              <button type="button" class="segment" data-value="albums">图集</button>
+            </div>
+            <button type="button" class="icon-slot icon-btn icon-btn--glass icon-btn--glyph round" id="trail-filter" aria-label="筛选">≡</button>
+          </div>
+        </template>
+      </div>
+    </div>
+    <div class="demo-toast" id="filter-status">点击或按住底栏右侧 ≡ 打开筛选 Popup</div>
+  </main>
+
+  <script type="module">
+    import { initThemeToggle } from './assets/press.js';
+    import { initSegmentedTrack } from './assets/segmented.js';
+    import { initScrollScrim } from './assets/scrim.js';
+    import { mountFilterPopup, closeMenu } from './assets/filter-popup-mount.js';
+
+    initThemeToggle();
+
+    const grid = document.getElementById('grid');
+    for (let i = 0; i < 36; i++) {
+      const c = document.createElement('div');
+      c.className = 'photo-cell';
+      grid.appendChild(c);
+    }
+
+    const floatBar = document.getElementById('float-bar');
+    const unifiedTpl = document.getElementById('unified-toolbar-tpl');
+    const feed = document.getElementById('feed');
+    const scroll = document.getElementById('scroll');
+    const hero = document.getElementById('hero');
+    const topTitle = document.getElementById('top-title');
+
+    let segCtl = null;
+    let popupCtl = null;
+    let topPopupCtl = null;
+
+    const filterMenu = document.getElementById('filter-menu');
+    const topFilterMenu = document.getElementById('top-filter-menu');
+    const statusEl = document.getElementById('filter-status');
+
+    const getTrailAnchor = () => document.getElementById('trail-filter');
+    const getTopOverflow = () => document.getElementById('top-overflow');
+
+    const bindTopOverflow = () => {
+      topPopupCtl?.destroy?.();
+      topPopupCtl = mountFilterPopup({
+        host: feed,
+        menu: topFilterMenu,
+        getAnchor: getTopOverflow,
+        placement: 'below',
+        statusEl,
+        onBeforeOpen: () => closeMenu(filterMenu),
+        onSelect: (value, label) => {
+          statusEl.textContent = `更多菜单：${label} (${value})`;
+        },
+      });
+    };
+
+    const bindFilterPopup = () => {
+      popupCtl?.destroy?.();
+      popupCtl = mountFilterPopup({
+        host: feed,
+        menu: filterMenu,
+        getAnchor: getTrailAnchor,
+        statusEl,
+        onBeforeOpen: () => closeMenu(topFilterMenu),
+        onSelect: (value, label, row) => {
+          if (row?.dataset.toggleSelect !== undefined) {
+            row.classList.toggle('is-selected');
+            statusEl.textContent = `${label}：${row.classList.contains('is-selected') ? '已选' : '未选'}`;
+            return false;
+          }
+          statusEl.textContent = `筛选：${label} (${value})`;
+        },
+      });
+    };
+    const mountSegmented = (id) => {
+      segCtl?.destroy?.();
+      segCtl = initSegmentedTrack(document.getElementById(id));
+    };
+
+    const renderUnified = (segmentIndex = 0) => {
+      segCtl?.destroy?.();
+      floatBar.className = 'float-bottom';
+      floatBar.replaceChildren(unifiedTpl.content.cloneNode(true));
+      segCtl = initSegmentedTrack(document.getElementById('seg-main'));
+      if (segCtl && segmentIndex !== segCtl.getSelected()) {
+        segCtl.movePill(segmentIndex, false);
+      }
+      bindFilterPopup();
+    };
+
+    renderUnified();
+    bindTopOverflow();
+
+    const renderSplit = () => {
+      segCtl?.destroy?.();
+      segCtl = null;
+      popupCtl?.destroy?.();
+      closeMenu(filterMenu);
+      statusEl.textContent = 'Split 模式：右上角 ⋮ 打开菜单；底栏无 ≡';
+      floatBar.className = 'float-bottom split';
+      floatBar.innerHTML = `
+        <button type="button" class="split-aux icon-btn icon-btn--glyph" aria-label="关闭">×</button>
+        <div class="glass-capsule" style="flex:1;max-width:240px">
+          <div class="segment-track" id="seg-split">
+            <div class="segment-pill"></div>
+            <button type="button" class="segment is-selected" data-value="y">年</button>
+            <button type="button" class="segment" data-value="m">月</button>
+            <button type="button" class="segment" data-value="d">日</button>
+          </div>
+        </div>`;
+      mountSegmented('seg-split');
+    };
+
+    const renderIcon = () => {
+      segCtl?.destroy?.();
+      segCtl = null;
+      popupCtl?.destroy?.();
+      closeMenu(filterMenu);
+      statusEl.textContent = 'IconNav 模式：右上角 ⋮ 打开菜单；Unified 才有底栏 ≡ 筛选';
+      floatBar.className = 'float-bottom';
+      floatBar.innerHTML = `
+        <div class="glass-capsule icon-nav">
+          <button type="button" class="nav-icon icon-btn icon-btn--glass icon-btn--glyph is-selected" aria-label="配置">🛡</button>
+          <button type="button" class="nav-icon icon-btn icon-btn--glass icon-btn--glyph" aria-label="观测">📊</button>
+        </div>`;
+      floatBar.querySelectorAll('.nav-icon').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          floatBar.querySelectorAll('.nav-icon').forEach((b) => b.classList.remove('is-selected'));
+          btn.classList.add('is-selected');
+        });
+      });
+    };
+
+    let scrimUpdate = initScrollScrim({
+      scrollEl: scroll,
+      topScrim: document.getElementById('top-scrim'),
+      bottomFade: document.getElementById('bottom-fade'),
+      topFgEls: [...document.querySelectorAll('.adaptive-fg')],
+      topTitleEl: topTitle,
+    });
+
+    document.getElementById('variants').addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-variant]');
+      if (!btn) return;
+      document.querySelectorAll('#variants button').forEach((b) => b.classList.remove('is-active'));
+      btn.classList.add('is-active');
+      const v = btn.dataset.variant;
+      feed.classList.toggle('light-feed', v === 'light');
+      hero.textContent = v === 'light' ? '图集' : '照片';
+      topTitle.textContent = v === 'light' ? '图集' : '照片';
+      if (v === 'split') renderSplit();
+      else if (v === 'icon') renderIcon();
+      else renderUnified(v === 'light' ? 1 : 0);
+      bindTopOverflow();
+      if (v === 'light') {
+        statusEl.textContent = '图集浅底 — 右上角 ⋮ 或 Unified 底栏 ≡ 打开菜单';
+      } else if (v === 'unified') {
+        statusEl.textContent = 'Unified：底栏 ≡ 筛选；右上角 ⋮ 更多';
+      } else if (v === 'icon') {
+        statusEl.textContent = 'IconNav：右上角 ⋮ 打开菜单';
+      }
+      scroll.scrollTop = v === 'light' ? 0 : 120;
+      scrimUpdate();
+      requestAnimationFrame(scrimUpdate);
+    });
+
+    scroll.scrollTop = 120;
+    scrimUpdate();
+  </script>
+</body>
+</html>

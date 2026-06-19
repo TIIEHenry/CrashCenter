@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Demo · Item 对齐分割线</title>
+  <link rel="stylesheet" href="assets/tokens.css">
+  <link rel="stylesheet" href="assets/base.css">
+  <style>
+    .card-demo { background: var(--surface); border-radius: var(--radius-mobile-card); overflow: hidden; max-width: 360px; }
+    .card-row .icon { opacity: 0.7; }
+    .bad-label { font-size: 0.75rem; color: #c62828; margin-top: var(--space-sm); }
+    .good-label { font-size: 0.75rem; color: #2e7d32; margin-top: var(--space-sm); }
+  </style>
+</head>
+<body>
+  <header class="demo-site-header">
+    <h1>Item 对齐分割线</h1>
+    <nav class="demo-site-nav">
+      <a href="index.html">目录</a>
+      <a href="shared-dividers.html" class="active">分割线</a>
+      <a href="toolbar-list-chrome.html">Toolbar</a>
+      <a href="settings-card-detail-sheet.html">Sheet</a>
+      <a href="popup-filter-menu.html">Popup</a>
+      <a href="floating-chrome.html">悬浮</a>
+      <a href="form-controls.html">表单</a>
+    </nav>
+    <button type="button" id="theme-toggle">深色</button>
+  </header>
+
+  <main class="demo-page">
+    <h2>Item 对齐分割线</h2>
+    <p class="lead">Card / Sheet / Popup 内 divider 与行内容列对齐，禁止拉满外容器。</p>
+    <a class="spec-link" href="../components/shared-dividers.md">Spec → shared-dividers.md</a>
+
+    <div class="demo-grid" style="grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));">
+      <div class="demo-panel">
+        <h3>✅ Item 对齐（有图标）</h3>
+        <p class="hint">divider 起始于 56dp（40 图标槽 + 16 padding）</p>
+        <div class="card-demo rounded-item-stack">
+          <div class="card-row press-ios"><span class="icon icon-leading-slot">🖼</span>图片</div>
+          <div class="item-divider"></div>
+          <div class="card-row press-ios"><span class="icon icon-leading-slot">🎬</span>视频</div>
+          <div class="item-divider"></div>
+          <div class="card-row press-ios"><span class="icon icon-leading-slot">✨</span>实况照片</div>
+        </div>
+        <p class="good-label">divider 短于 Card 外缘</p>
+      </div>
+
+      <div class="demo-panel">
+        <h3>✅ 纯文案行</h3>
+        <p class="hint">无 leading icon → 16dp 左 inset</p>
+        <div class="card-demo rounded-item-stack">
+          <div class="card-row press-ios">存储路径</div>
+          <div class="item-divider item-divider--text-only"></div>
+          <div class="card-row press-ios">相册来源</div>
+        </div>
+      </div>
+
+      <div class="demo-panel">
+        <h3>❌ 禁止：全宽线</h3>
+        <div class="card-demo rounded-item-stack">
+          <div class="card-row press-ios"><span class="icon icon-leading-slot">⚙</span>设置项 A</div>
+          <div class="item-divider item-divider--full"></div>
+          <div class="card-row press-ios"><span class="icon icon-leading-slot">ℹ</span>设置项 B</div>
+        </div>
+        <p class="bad-label">红色示意 — 不得用于生产</p>
+      </div>
+
+      <div class="demo-panel">
+        <h3>Popup section gap</h3>
+        <div class="card-demo" style="padding: 12px 0;">
+          <div class="card-row press-ios"><span class="icon icon-leading-slot">✓</span>图片</div>
+          <div class="item-divider"></div>
+          <div class="card-row press-ios"><span class="icon icon-leading-slot">✓</span>视频</div>
+          <div class="popup-section-divider" role="separator" aria-hidden="true"></div>
+          <div class="card-row press-ios" style="font-weight:600">所有项目</div>
+        </div>
+        <p class="hint">Master 行前全宽 section divider（含 12dp 下间距）；Master 行高与组内行相同</p>
+      </div>
+    </div>
+  </main>
+
+  <script type="module">
+    import { bindPressIOS, initThemeToggle } from './assets/press.js';
+    initThemeToggle();
+    bindPressIOS();
+  </script>
+</body>
+</html>

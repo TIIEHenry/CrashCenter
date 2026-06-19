@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Demo · 表单控件</title>
+  <link rel="stylesheet" href="assets/tokens.css">
+  <link rel="stylesheet" href="assets/base.css">
+  <style>
+    .form-demo { max-width: 360px; display: flex; flex-direction: column; gap: 20px; }
+    .chip-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .chip-btn {
+      border: 1px solid var(--stroke); border-radius: 999px; padding: 6px 14px;
+      font-size: 0.8125rem; background: transparent; cursor: pointer;
+      overflow: hidden;
+      transition: background 0.15s;
+    }
+    .chip-btn.is-on { background: var(--accent-container); border-color: var(--accent); color: var(--accent); }
+    .search-field {
+      display: flex; align-items: center; gap: 8px;
+      border: 1px solid var(--stroke); border-radius: var(--radius-mobile-control);
+      padding: 8px 12px; background: var(--surface);
+    }
+    .search-field input {
+      border: none; outline: none; flex: 1; font-size: 0.9375rem; background: transparent; color: inherit;
+    }
+    .switch-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: var(--item-row-padding-v) 0; font-size: 0.9375rem;
+    }
+    .switch-compare {
+      display: grid; grid-template-columns: 1fr auto auto; gap: 12px 16px;
+      align-items: center; font-size: 0.875rem;
+    }
+    .switch-compare-header {
+      font-size: 0.75rem; font-weight: 600; color: var(--text-secondary);
+      text-align: center;
+    }
+    .switch-compare-label { color: var(--text-secondary); }
+    .filter-icon {
+      border-radius: var(--radius-control);
+      border: none; background: transparent; cursor: pointer;
+    }
+    .filter-icon:active { background: var(--accent-container); }
+  </style>
+</head>
+<body>
+  <header class="demo-site-header">
+    <h1>Chip / 搜索 / Switch</h1>
+    <nav class="demo-site-nav">
+      <a href="index.html">目录</a>
+      <a href="shared-dividers.html">分割线</a>
+      <a href="toolbar-list-chrome.html">Toolbar</a>
+      <a href="settings-card-detail-sheet.html">Sheet</a>
+      <a href="popup-filter-menu.html">Popup</a>
+      <a href="floating-chrome.html">悬浮</a>
+      <a href="form-controls.html" class="active">表单</a>
+    </nav>
+    <button type="button" id="theme-toggle">深色</button>
+  </header>
+
+  <main class="demo-page">
+    <h2>表单与筛选控件</h2>
+    <p class="lead">FilterChip 即时过滤；Switch 整行点击（Standard / Enhanced）；Outlined 搜索框。</p>
+    <a class="spec-link" href="../components/form-controls.md">Spec → form-controls.md</a>
+
+    <div class="demo-panel form-demo">
+      <div>
+        <h3>FilterChip（多选）</h3>
+        <div class="chip-row" id="chips">
+          <button type="button" class="chip-btn press-ios is-on" data-chip>全部</button>
+          <button type="button" class="chip-btn press-ios" data-chip>用户</button>
+          <button type="button" class="chip-btn press-ios" data-chip>系统</button>
+        </div>
+      </div>
+      <div>
+        <h3>搜索框</h3>
+        <div class="search-field">
+          <span>🔍</span>
+          <input type="search" placeholder="搜索应用…" aria-label="搜索">
+        </div>
+      </div>
+      <div>
+        <h3>Switch 变体</h3>
+        <p class="hint" style="margin-bottom:12px">Enhanced：OFF 左对齐短横条 → ON morph 为右对齐正圆（200ms）。</p>
+        <div class="switch-compare">
+          <span></span>
+          <span class="switch-compare-header">Standard</span>
+          <span class="switch-compare-header">Enhanced</span>
+
+          <span class="switch-compare-label">OFF</span>
+          <div class="switch-ui" aria-hidden="true"></div>
+          <div class="switch-ui switch-enhanced" aria-hidden="true"></div>
+
+          <span class="switch-compare-label">ON</span>
+          <div class="switch-ui is-on-static" aria-hidden="true"></div>
+          <div class="switch-ui switch-enhanced is-on-static" aria-hidden="true"></div>
+        </div>
+        <style>
+          .is-on-static { background: var(--accent); }
+          .is-on-static::after {
+            left: calc(
+              var(--switch-track-width) - var(--switch-track-height) / 2 - var(--switch-thumb-size) / 2
+            );
+          }
+          .switch-enhanced.is-on-static::after {
+            width: var(--switch-thumb-size);
+            height: var(--switch-thumb-size);
+            border-radius: 50%;
+            top: calc((var(--switch-track-height) - var(--switch-thumb-size)) / 2);
+          }
+        </style>
+      </div>
+      <div class="switch-row press-ios" id="switch-row-standard">
+        <span>处理系统应用（Standard）</span>
+        <div class="switch-ui"></div>
+      </div>
+      <div class="switch-row press-ios" id="switch-row-enhanced">
+        <span>处理系统应用（Enhanced）</span>
+        <div class="switch-ui switch-enhanced"></div>
+      </div>
+      <div>
+        <h3>筛选图标 32dp</h3>
+        <button type="button" class="filter-icon icon-btn icon-btn--compact icon-btn--glyph-compact" title="筛选">☰</button>
+      </div>
+    </div>
+  </main>
+
+  <script type="module">
+    import { bindPressIOS, initThemeToggle } from './assets/press.js';
+    initThemeToggle();
+    bindPressIOS();
+    document.querySelectorAll('[data-chip]').forEach((chip) => {
+      chip.addEventListener('click', () => chip.classList.toggle('is-on'));
+    });
+    document.getElementById('switch-row-standard').addEventListener('click', function () {
+      this.classList.toggle('is-on');
+    });
+    document.getElementById('switch-row-enhanced').addEventListener('click', function () {
+      this.classList.toggle('is-on');
+    });
+  </script>
+</body>
+</html>

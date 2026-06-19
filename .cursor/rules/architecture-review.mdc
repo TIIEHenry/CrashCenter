@@ -1,0 +1,36 @@
+---
+description: 方案/ADR/roadmap 制定或架构疑难时，用 subagent 评审把关
+alwaysApply: true
+---
+
+# 架构方案评审
+
+## 触发条件
+
+遇到以下任一情况时**立即**启动架构评审 subagent：
+
+1. **新建或大幅修订** `docs/architecture/`、`docs/decisions/`、`dev/roadmap/` 方案文档
+2. **架构疑难**：hook 边界、scope 模型、跨进程配置、崩溃拦截策略取舍
+3. 用户明确要求「制定方案」「写 ADR」「拆 roadmap」或「架构评审」
+
+## 动作
+
+1. 使用 **Task subagent**（`readonly: true`）做架构评审
+2. 评审输入须包含：待审文档路径、`AGENTS.md` 约束、相关源码（`XposedEntry`、`CrashHandler`、`ActivityMain`）对照
+3. Subagent 职责：与现有 ADR/架构文档一致性、Xposed 机制可行性、缺口与风险
+
+## 输出
+
+- **默认**：先呈现评审报告，用户确认后再改文档
+- **用户说「更新文档」**：评审报告 + 直接修订（保持 frontmatter 规范）
+- 评审不替代文档：方案 → ADR → roadmap 顺序不变
+
+## 不触发
+
+- 小 bugfix、格式微调
+- 纯编码实施（roadmap 已明确，无新架构决策）
+- 仅更新 `status.md` 勾选进度
+
+## 与开发流程对齐
+
+`architecture` → `decision (ADR)` → `roadmap` → 编码 → `status.md`
