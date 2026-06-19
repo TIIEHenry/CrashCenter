@@ -1,7 +1,7 @@
 ---
 title: "崩溃日志采集与统计"
 type: architecture
-status: proposed
+status: accepted
 phase: 4
 updated: 2026-06-19
 summary: "hook 侧异步持久化全量拦截崩溃；多后端编排见 crash-log-backends.md"
@@ -157,8 +157,8 @@ createPackageContext(MODULE_PKG, CONTEXT_IGNORE_SECURITY)
   └── CrashLogIngestCoordinator
         ├─ RootFsBackend — harvest */crashcenter_relay/
         └─ merge → files/crash_logs/events.jsonl
-              ├── ActivityCrashHistory（P1 UI）
-              └── StatsAggregator（P2）
+              ├── CrashHistoryFragment（P1 UI）— [crash-history-ui.md](crash-history-ui.md)
+              └── StatsAggregator（P2）— [crash-data-layer.md](crash-data-layer.md)
 ```
 
 详见 [crash-log-backends.md](crash-log-backends.md)。单后端 IPC 对比见 [crash-log-ipc.md](crash-log-ipc.md)。

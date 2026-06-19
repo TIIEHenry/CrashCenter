@@ -1,7 +1,7 @@
 ---
 title: "崩溃日志跨进程通信"
 type: architecture
-status: proposed
+status: accepted
 phase: 4
 updated: 2026-06-19
 summary: "hook 目标进程向模块进程写入 CrashEvent 的 IPC 机制对比；编排见 crash-log-backends.md（多后端并行、root 优先）"

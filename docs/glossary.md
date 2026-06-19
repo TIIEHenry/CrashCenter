@@ -4,7 +4,7 @@ type: concept
 status: accepted
 phase: N/A
 updated: 2026-06-19
-summary: "CrashCenter 项目术语单一事实源（含分析层）"
+summary: "CrashCenter 项目术语单一事实源（含受管应用与干预规则）"
 ---
 
 # 术语表
@@ -15,7 +15,10 @@ summary: "CrashCenter 项目术语单一事实源（含分析层）"
 |------|------|
 | **CrashCenter** | 本 Xposed 模块项目，应用 ID `nota.android.crash.xp.app`，显示名 CrashCenter / 崩溃中心 |
 | **Scope Mode** | 作用域模式。开启时仅 hook 非禁用、非系统（除非允许系统应用）的目标包；关闭时 hook 全部包 |
-| **Disabled Package** | `package_list` 中记录的包名。UI 上 Switch **关闭** = 加入禁用列表 = 不 hook |
+| **Disabled Package** | `package_list` 中记录的包名（**Legacy**）。UI 上 Switch **关闭** = 加入禁用列表 = 不 hook；新模型见 [Managed App](#managed-app-受管应用) |
+| **Managed App（受管应用）** | 用户通过「添加应用」主动加入配置列表的包；存于 `managed_packages`。在列表中 **不** 等于已 hook — 见 [app-management-ui.md](architecture/app-management-ui.md) |
+| **Intervention Rule（干预规则）** | 单应用 hook 侧崩溃拦截配置（v1 类型 `CATCH_ALL`），存于 `intervention_rules` JSON。**无启用规则时不 hook**。与 Phase 4G **诊断规则（RuleEngine）** 不同 |
+| **待配置** | 受管应用已入库但无 **enabled** 干预规则；Switch OFF；UI 角标；`shouldHook=false` |
 | **CrashHandler** | 核心拦截器：通过无限 `Looper.loop()` 与替换 `UncaughtExceptionHandler` 吞掉崩溃 |
 | **Observation Layer** | 观测层：记录每次被拦截的崩溃，不改变吞异常行为；与干预层（CrashHandler）分离 |
 | **Analysis Layer** | 分析层：对 CrashEvent 做分类、聚类与诊断建议，**不修复**目标 app；见 [crash-intelligent-analysis.md](architecture/crash-intelligent-analysis.md) |

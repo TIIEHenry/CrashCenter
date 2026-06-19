@@ -20,7 +20,7 @@ CrashCenter（崩溃中心）是一个 Xposed 模块，**拦截目标 app 的 Ja
 1. 安装 APK（见 [build-and-install.md](build-and-install.md) 或 [getting-started/INDEX.md](getting-started/INDEX.md)）
 2. 在 Xposed 管理器（LSPosed 推荐）中启用模块
 3. 打开 CrashCenter，确认顶部**状态条**显示「模块已激活」（绿色）
-4. 在应用列表中配置要 hook 的应用
+4. 在应用列表中配置要 hook 的应用（**当前版本**：全量列表 + Switch；**Phase 3G 起**：受管列表 + 添加应用，见 [受管应用配置](#受管应用配置phase-3g-起)）
 
 若状态条为橙色「模块未激活」，请点击状态条或到 Xposed 管理器启用本模块并重启。
 
@@ -39,6 +39,8 @@ CrashCenter（崩溃中心）是一个 Xposed 模块，**拦截目标 app 的 Ja
 崩溃日志（Phase 4 计划）只记录**已被 hook 且被拦截**的异常；与「应用列表是否完整」无直接关系。列表完整性依赖 [包可见性权限](#包可见性android-11)（模块进程 `QUERY_ALL_PACKAGES`）。
 
 ## 界面说明
+
+> **当前已发布版本**仍为全量应用列表 + Switch（ADR-002）。**Phase 3G** 将改为受管应用模型 — 见 [app-management-ui.md](../architecture/app-management-ui.md)。
 
 主界面自上而下分为以下区域（详见 [configuration-ui.md](../architecture/configuration-ui.md)）：
 
@@ -111,6 +113,39 @@ CrashCenter（崩溃中心）是一个 Xposed 模块，**拦截目标 app 的 Ja
 | 关于 | 显示详细使用说明 |
 | 测试 | 触发测试崩溃，验证模块是否拦截 |
 
+## 受管应用配置（Phase 3G 起）
+
+Phase 3G 起，配置方式改为 **显式添加应用** + **干预规则**（[ADR-015](../decisions/015-managed-apps-intervention-rules.md)）：
+
+```
+┌─────────────────────────────┐
+│  Toolbar（添加应用 / 排序）   │
+├─────────────────────────────┤
+│  状态条 · 包可见性条 · Chip   │
+├─────────────────────────────┤
+│  搜索 + [全部][已启用][待配置] │
+├─────────────────────────────┤
+│  受管应用列表（Switch + 角标） │
+└─────────────────────────────┘
+        │ 添加应用
+        ▼
+   Half Sheet 选择已安装 app
+        │ 点击行
+        ▼
+   干预规则编辑页
+```
+
+| 操作 | 说明 |
+|------|------|
+| **添加应用** | 从已安装列表挑选；**不要求**预先配置规则；添加后 Switch 默认关 |
+| **待配置** | 在列表中但未启用干预；**不会** hook |
+| **Switch 打开** | 快捷启用；若无规则会自动创建「拦截未捕获异常」 |
+| **Switch 关闭** | 停用干预；应用仍在列表中 |
+| **点击行** | 进入编辑页，可手动添加/删除规则、调整通知等 |
+| **移除应用** | 从列表删除，规则一并清除 |
+
+新用户空列表时 **默认不 hook 任何 app**，需先添加并启用。
+
 ## Scope Mode 行为
 
 [Scope Mode](../glossary.md#scope-mode) 决定 hook 范围：
@@ -141,6 +176,8 @@ CrashCenter（崩溃中心）是一个 Xposed 模块，**拦截目标 app 的 Ja
 ## 相关文档
 
 - [getting-started/INDEX.md](getting-started/INDEX.md) — 指南导航
+- [app-management-ui.md](../architecture/app-management-ui.md)
+- [ADR-015](../decisions/015-managed-apps-intervention-rules.md)
 - [configuration-ui.md](../architecture/configuration-ui.md)
 - [crash-logging.md](../architecture/crash-logging.md)
 - [crash-log-ipc.md](../architecture/crash-log-ipc.md)

@@ -4,7 +4,7 @@ type: roadmap
 status: in_progress
 phase: 3
 updated: 2026-06-19
-summary: "Material v1 验收 + 单屏密度 IA；LSPosed 手动项收尾"
+summary: "Shell/3Gβ/暗色 A–D/M2+M5 已编码；LSPosed 手动 smoke 与 3A 报告收尾"
 ---
 
 # Phase 3: 配置 UI 重设计
@@ -53,7 +53,7 @@ Material v1 已实现（见 [material-ui-redesign-2026-06-19.md](../../iteration
 
 - [x] 过滤空状态 UI
 - [ ] ActivityCrashInfo 复制 + 分享
-- [ ] （可选）暗色主题 `values-night/`
+- [x] （可选）暗色主题 `values-night/` — Phase A–D 已编码（[dark-mode-theming.md](../../../docs/architecture/dark-mode-theming.md)；Phase D **Meizu 实机 PASS**，AOSP 模拟器 defer）
 - [ ] 新文案 `values` + `values-zh`
 
 ## 3E — Material 3（可选，默认不做）
@@ -62,6 +62,29 @@ Material v1 已实现（见 [material-ui-redesign-2026-06-19.md](../../iteration
 - [x] compileSdk 36 / AGP 9.0.0 / Gradle 9.2.1 升级（ADR-004）
 - [ ] Material 3 主题迁移
 - [ ] 全量 hook smoke 回归
+
+## 3G — 受管应用与干预规则（方案）
+
+- [x] [app-management-ui.md](../../../docs/architecture/app-management-ui.md) accepted + [ADR-015](../../../docs/decisions/015-managed-apps-intervention-rules.md)
+- [x] 迭代记录 [managed-apps-intervention-2026-06-19.md](../../iterations/configuration-ui/managed-apps-intervention-2026-06-19.md)
+- [x] 3G-α：`managed_packages` / `intervention_rules` + `PrefMigrator` 迁移 + `ScopePolicy` 扩展
+- [x] 3G-β：受管列表 UI + 行内 Switch + `AddManagedAppBottomSheet` + `AppInterventionEditActivity`
+- [x] M5：`AddManagedAppBottomSheet` 装饰 polish — 28dp 顶圆角 + DragHandle + `peekHeight` 50%（全功能拖曳 / Full chrome morph defer）
+- [x] M2：permission banner compact — Xposed 未激活时单行文案、隐藏 Grant（整行仍可点 rationale）
+
+## 3F — UI 架构重设（文档 + 壳层 α）
+
+- [x] ADR-009：Shell + Design System + Domain Page + Feature State 架构定稿
+- [x] 更新 `configuration-ui.md`：配置域从 `ActivityMain` 单体演进为 `ConfigFragment` + `ConfigUiState`
+- [x] 更新 `navigation-ia.md` / `ui-routing.md`：Phase 4C 2-tab Shell、`MainShellActivity`、`ObserveHostFragment`、详情参数兼容
+- [x] 代码实施（4C-α）：`MainShellActivity` / `ShellViewModel` / `ConfigFragment` / `ConfigViewModel` / `AppListRepository`；Launcher 迁 Shell；`ActivityMain` 兼容 wrapper
+- [x] Design System 组件类化：`StatusBanner`、`PermissionBanner`、`FilterChipRow`、`DenseSearchField`；`ConfigFragment` / `MainShellActivity` 接线
+
+## 3H — UI 审计遗留 backlog
+
+- [x] 删 `activity_main.xml`；`MainShellActivity` `OnBackPressedCallback`；Observe `menu_observe_stub` disabled
+- [x] `AddManagedAppBottomSheet` → `EmptyState`；`crash_source_*` EN+zh；`FilterChipRow` dead code 清理
+- [x] `ActivityCrashInfo` → `ToolbarHeaderInsets`；图标 tint / legacy row a11y；`ScopePolicy` `globalDefaultShowNotify` 澄清
 
 ---
 
@@ -78,6 +101,9 @@ python3 scripts/check-docs-health.py
 
 ## 相关文档
 
+- [app-management-ui.md](../../../docs/architecture/app-management-ui.md)
+- [ADR-015: 受管应用与干预规则](../../../docs/decisions/015-managed-apps-intervention-rules.md)
 - [ui-redesign-execution-plan.md](../../plans/ui-redesign-execution-plan.md)
 - [configuration-ui.md](../../../docs/architecture/configuration-ui.md)
+- [ADR-009: UI Shell 与 Design System 架构](../../../docs/decisions/009-ui-shell-design-system.md)
 - [material-ui-redesign-2026-06-19.md](../../iterations/configuration-ui/material-ui-redesign-2026-06-19.md)

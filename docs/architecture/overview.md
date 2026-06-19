@@ -51,9 +51,12 @@ Xposed Framework
 |------|------|------|
 | Xposed 入口 | `XposedEntry.java` | 包过滤、hook 安装、通知展示 |
 | 崩溃拦截 | `CrashHandler.java` | Looper 续命 + 异常处理器替换 |
-| 配置 UI | `ActivityMain.kt` | 应用列表、scope 开关、搜索排序 |
+| 配置 UI | `ActivityMain.kt` | 应用列表、scope 开关、搜索排序、FilterChip 全局设置 |
 | 崩溃详情 | `ActivityCrashInfo.java` | 通知点击后展示 stack trace |
-| 偏好常量 | `PrefManager.java` | SharedPreferences key 定义 |
+| 偏好常量 | `PrefManager.java` | SharedPreferences key 定义（含 `PREF_SHOW_SYSTEM_UI`） |
+| 偏好迁移 | `PrefMigrator.kt` | 一次性从 legacy `tiiehenry.xp.grapcrash` 导入配置 |
+| 包可见性 | `PackageVisibilityHelper.kt` | Android 11+ `QUERY_ALL_PACKAGES` 检测与手动授权引导 |
+| Xposed 管理器跳转 | `XposedManagerLauncher.kt` | 状态条点击 → 多框架回退打开 LSPosed / EdXposed |
 | RecyclerView 辅助 | `recyclerhelper/` | 通用 Adapter / ViewHolder |
 
 ## 跨进程配置同步

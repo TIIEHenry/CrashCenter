@@ -1,7 +1,7 @@
 ---
 title: "架构优化设计"
 type: architecture
-status: proposed
+status: accepted
 phase: 4
 updated: 2026-06-19
 summary: "现状债务清单、目标分层与包结构、Phase 4 落地映射；prescriptive 演进路线图"
@@ -486,9 +486,29 @@ try { CrashLogCoordinator } catch { silent }
 
 ---
 
+## 与独立文档的分工
+
+本文档为 **prescriptive** 演进总纲。以下新建文档从 §5.1–5.2 扩展出独立规格：
+
+| 本文档章节 | 独立文档 | 分工 |
+|-----------|----------|------|
+| §5.1 拆分 XposedEntry + §5.2 Pipeline | [crash-capture-pipeline.md](crash-capture-pipeline.md) | Pipeline 完整接口、字段映射、时序 |
+| §5.1 ScopePolicy | [ADR-010](../decisions/010-scope-policy-show-notify.md) | static showNotify 消除决策 |
+| §6.3 失败域隔离 | [ADR-011](../decisions/011-feedback-failure-isolation.md) | System.exit 移除决策 |
+| §5.5 CrashLogRepository | [crash-data-layer.md](crash-data-layer.md) | Repository 接口、retention、StatsAggregator |
+| §5.4 Shell + ConfigFragment | [design-system.md](design-system.md) | Design System 共享组件清单 |
+| §7 UI 壳层 | [crash-history-ui.md](crash-history-ui.md) | 历史列表 IA、字段、筛选 |
+
+**原则**：本文档保留架构全景与优化项索引；具体接口与决策细节以独立文档为准。
+
 ## 相关文档
 
 - [overview.md](overview.md) — 系统总览（as-is 描述）
+- [crash-capture-pipeline.md](crash-capture-pipeline.md) — hook 侧 Pipeline（§5.1–5.2 扩展）
+- [crash-data-layer.md](crash-data-layer.md) — Repository 与聚合（§5.5 扩展）
+- [design-system.md](design-system.md) — Design System 共享组件
+- [crash-history-ui.md](crash-history-ui.md) — 历史列表 UI
+- [crash-export-retention.md](crash-export-retention.md) — 导出与 retention 管理
 - [xposed-entry.md](xposed-entry.md) — hook 入口
 - [crash-handler.md](crash-handler.md) — 干预层
 - [crash-logging.md](crash-logging.md) — 观测层
@@ -499,6 +519,11 @@ try { CrashLogCoordinator } catch { silent }
 - [crash-intelligent-analysis.md](crash-intelligent-analysis.md) — 分析层
 - [configuration-ui.md](configuration-ui.md) — 配置 UI
 - [scope-and-prefs.md](scope-and-prefs.md) — prefs 模型
+- [ADR-010](../decisions/010-scope-policy-show-notify.md) — ScopePolicy
+- [ADR-011](../decisions/011-feedback-failure-isolation.md) — 失败域隔离
+- [ADR-012](../decisions/012-package-visibility-manual-grant.md) — 包可见性授权
+- [ADR-013](../decisions/013-notification-crash-id-intent.md) — 通知 crash_id
+- [ADR-014](../decisions/014-legacy-prefs-migration.md) — 旧 prefs 迁移
 - [phase4_crash_observability.md](../../dev/roadmap/active/phase4_crash_observability.md) — Phase 4 任务
 - [phase3_ui_redesign.md](../../dev/roadmap/active/phase3_ui_redesign.md) — Phase 3 任务
 - [glossary.md](../glossary.md) — 术语

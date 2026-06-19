@@ -1,7 +1,7 @@
 ---
 title: "ADB / Logcat 崩溃日志分析需求"
 type: architecture
-status: proposed
+status: accepted
 phase: 4
 updated: 2026-06-19
 summary: "通过 PC adb 或本机 root 读取 logcat 辅助验收与崩溃分析；与 JSONL 观测层互补，非 SSOT 替代"

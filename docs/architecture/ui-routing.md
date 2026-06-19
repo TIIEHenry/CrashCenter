@@ -1,16 +1,17 @@
 ---
 title: "界面路由与导航图"
 type: architecture
-status: proposed
+status: accepted
 phase: 4
 updated: 2026-06-19
-summary: "Activity/Fragment 路由表、外部 Intent 入口、返回栈与 Phase 4C+ Navigation 图；信息架构见 navigation-ia.md"
+summary: "MainShellActivity、ConfigFragment、ObserveHost 与详情 Activity 的路由表、Intent 兼容参数、返回栈与 Phase 4C+ Navigation 图"
 ---
 
 # 界面路由与导航图
 
 > 适用模块：`:app` UI
 > 信息架构（为何 2 tab）：[navigation-ia.md](navigation-ia.md)
+> UI Shell 决策：[ADR-009](../decisions/009-ui-shell-design-system.md)
 > 单页需求： [configuration-ui.md](configuration-ui.md)、[crash-stats-ui.md](crash-stats-ui.md)、[adb-logcat-analysis.md](adb-logcat-analysis.md)
 
 ## 概述
@@ -20,11 +21,22 @@ CrashCenter UI 路由按 **壳层深度** 分为四层：
 | 层级 | 载体 | 典型内容 |
 |------|------|----------|
 | **L0 外部入口** | 系统 / 其他 app Intent | 桌面、通知、SAF |
-| **L1 应用壳层** | `MainShellActivity`（4C+）或当前 `ActivityMain` | 底栏 配置 \| 观测、共享状态条 |
+| **L1 应用壳层** | `MainShellActivity`（4C+）或当前 `ActivityMain` | Toolbar、状态条、底栏 配置 \| 观测、WindowInsets |
 | **L2 壳内子页** | `Fragment` + 可选内层 `TabLayout` | 配置列表、历史、统计 |
 | **L3 任务页** | 独立 `Activity` 或全屏 `Fragment` | 详情、单应用观测、logcat 导入 |
 
 **原则**：深度阅读与单次任务走 **L3 Activity**（或全屏 Fragment）；tab 内列表走 **L2**；**不**为 About/Test 建路由节点。
+
+## 目标分层契约
+
+| 层 | 路由责任 | 不做 |
+|----|----------|------|
+| **Shell** | Launcher、BottomNavigation、Toolbar 菜单分发、全局状态条 | 不直接读写 `package_list`；不承载详情大文本 |
+| **Design System / common ui** | 提供行、banner、Chip、加载/空态组件 | 不拥有 NavController 或业务参数 |
+| **Domain Page** | `ConfigFragment`、`ObserveHostFragment`、`CrashHistoryFragment`、`CrashStatsFragment`、`PerAppCrashActivity` | 不拥有全局底栏 |
+| **Feature State** | `ConfigUiState`、历史列表状态、统计聚合状态 | 不跨域持有 Shell 状态 |
+ 
+Phase 4C 路由迁移的核心是：`ActivityMain` 的页面内容变成 `ConfigFragment`，Launcher 入口变为 `MainShellActivity`，详情 Activity 继续兼容旧通知 extra。
 
 ---
 
@@ -73,10 +85,10 @@ flowchart LR
 
 | 方案 | 类名 | 说明 |
 |------|------|------|
-| **推荐** | `MainShellActivity` | 新壳：Toolbar + 状态条 + `NavHost` + BottomNav；`ActivityMain` 降为 `ConfigFragment` |
+| **推荐** | `MainShellActivity` | 新壳：Toolbar + 状态条 + `NavHost` + BottomNav；`ActivityMain` 页面内容降为 `ConfigFragment` |
 | 备选 | 保留 `ActivityMain` 作壳 | 观测 tab 用 `FragmentTransaction` 切换；历史 Activity 独立（不推荐二次重构） |
 
-Launcher **唯一**入口指向 `MainShellActivity`（或演进后的 `ActivityMain` 壳）。
+Launcher **唯一**入口指向 `MainShellActivity`。迁移期可保留 `ActivityMain` 类作内部兼容壳或薄 wrapper，但 manifest 的 `MAIN` / `LAUNCHER` 不再指向配置单体。
 
 ### 目标路由总图
 
@@ -98,6 +110,7 @@ flowchart TB
     end
 
     subgraph observe [L2 观测 Fragment + TabLayout]
+        ObsHost[ObserveHostFragment]
         Hist[CrashHistoryFragment 历史]
         Stats[CrashStatsFragment 统计]
     end
@@ -106,11 +119,17 @@ flowchart TB
         CrashDetail[CrashLogDetailActivity]
         PerApp[PerAppCrashActivity]
         LogcatImport[LogcatImportActivity]
+        AddApp[AddManagedAppBottomSheet]
+        AppEdit[AppInterventionEditActivity]
     end
 
     Launcher --> shell
     BottomNav --> ConfigList
-    BottomNav --> observe
+    ConfigList --> AddApp
+    ConfigList --> AppEdit
+    BottomNav --> ObsHost
+    ObsHost --> Hist
+    ObsHost --> Stats
     Hist --> CrashDetail
     Stats --> PerApp
     ConfigList -->|菜单 崩溃记录| PerApp
@@ -131,11 +150,14 @@ flowchart TB
 | routeId | Activity | launchMode | exported | 参数（Intent extras） | 说明 |
 |---------|----------|------------|----------|----------------------|------|
 | `main` | `MainShellActivity` | `singleTask` | `true` | — | Launcher；恢复底栏选中 tab |
+| `legacy_main` | `ActivityMain`（迁移期可选） | `singleTask` | `false` 或移除 | — | 仅内部兼容；不再作为 Launcher |
 | `crash_detail` | `CrashLogDetailActivity` * | `singleTop` | `true` | `crash_id` UUID **或** `Exception` String | 统一详情；兼容通知旧 extra |
 | `per_app_crash` | `PerAppCrashActivity` | `standard` | `false` | `packageName` String | 单应用观测列表 |
 | `logcat_import` | `LogcatImportActivity` | `standard` | `false` | —（SAF 在 onCreate 选文件） | [adb-logcat-analysis.md](adb-logcat-analysis.md) |
+| `add_managed_app` | `AddManagedAppBottomSheet` | —（壳内 BottomSheet） | — | — | 从已安装包挑选受管应用；Draggable Half Sheet；见 [app-management-ui.md](app-management-ui.md) |
+| `app_intervention_edit` | `AppInterventionEditActivity` | `standard` | `false` | `packageName` String | 单应用干预规则 CRUD；配置域，非观测 |
 
-\* 可保留类名 `ActivityCrashInfo` 并扩展参数，或重命名以区分「通知瞬时」与「历史 id」。
+\* 可保留类名 `ActivityCrashInfo` 并扩展参数，或新建/重命名为 `CrashLogDetailActivity` 以区分「通知瞬时」与「历史 id」。无论类名如何，路由契约统一为 `crash_detail`。
 
 **`CrashLogDetailActivity` 参数优先级**：
 
@@ -147,9 +169,10 @@ flowchart TB
 
 | routeId | Fragment | 父容器 | 参数 | 说明 |
 |---------|----------|--------|------|------|
-| `config` | `ConfigFragment` | BottomNav 配置 | — | 原 `ActivityMain` 内容 |
-| `crash_history` | `CrashHistoryFragment` | 观测 TabLayout | `filter_package?`、`filter_exception?` | 历史时间线 |
-| `crash_stats` | `CrashStatsFragment` | 观测 TabLayout | — | [crash-stats-ui.md](crash-stats-ui.md) 全局统计 |
+| `config` | `ConfigFragment` | BottomNav 配置 | — | 原 `ActivityMain` 内容；由 `ConfigUiState` 驱动 |
+| `observe` | `ObserveHostFragment` | BottomNav 观测 | `initial_page?` | 观测域宿主；持有历史/统计内层 tab |
+| `crash_history` | `CrashHistoryFragment` | `ObserveHostFragment` TabLayout | `filter_package?`、`filter_exception?` | 历史时间线 |
+| `crash_stats` | `CrashStatsFragment` | `ObserveHostFragment` TabLayout | — | [crash-stats-ui.md](crash-stats-ui.md) 全局统计 |
 
 ### 非页面路由（显式不进 NavGraph）
 
@@ -158,6 +181,8 @@ flowchart TB
 | About / 使用警告 | `AlertDialog` |
 | Test 崩溃 | `Handler.postDelayed` throw |
 | 排序 / 批量 | Toolbar 菜单，同 Fragment 内状态 |
+| 添加受管应用 | `AddManagedAppBottomSheet`（Half Sheet，非 NavGraph Activity） |
+| 应用干预编辑 | `startActivity` → `AppInterventionEditActivity` |
 | 清空历史确认 | `AlertDialog` → Repository |
 | SAF 导出 JSONL | `ActivityResultContracts` → 无新 Activity |
 | Xposed 管理器 | `startActivity` 外部包 |
@@ -176,7 +201,7 @@ Flags:     NEW_TASK | RESET_TASK_IF_NEEDED
 Extra:     Exception = Log.getStackTraceString(throwable)
 ```
 
-Phase 4E 目标：
+Phase 4C 详情可先兼容旧 `Exception` extra；Phase 4E 通知改造目标：
 
 ```text
 Extra: crash_id = <uuid>
@@ -188,6 +213,14 @@ Extra: crash_id = <uuid>
 ```text
 Action: MAIN + category LAUNCHER
 → MainShellActivity / ActivityMain
+```
+
+Phase 4C 后：
+
+```text
+Action: MAIN + category LAUNCHER
+→ MainShellActivity
+startDestination: config
 ```
 
 ### 可选 Deep Link（P3）
@@ -261,7 +294,8 @@ logcat_import_activity
 |------|-------------|----------|----------|
 | **Phase 3（现）** | 2 | 0 | Launcher、通知 → `ActivityCrashInfo` |
 | **4B** | 2 | 0 | 同上 |
-| **4C** | 3（+`MainShell` 或壳改造） | 2（配置 + 历史） | 通知；历史 → 详情（`crash_id`） |
+| **4C-α** | 3（+`MainShell`，`ActivityMain` 降级/兼容） | 2（配置 + 观测宿主） | Launcher → Shell；通知仍可走旧详情 extra |
+| **4C-β** | 3 | 3（配置 + 观测宿主 + 历史） | 历史 → 详情（`crash_id`） |
 | **4D** | 4（+`PerAppCrash`） | 3（+统计） | 配置菜单 → 单应用 |
 | **4E** | 4 | 3 | 通知改 `crash_id`；SAF 导出 |
 | **4F** | 5（+`LogcatImport`） | 3 | SAF 导入 logcat |
@@ -273,9 +307,10 @@ logcat_import_activity
 | UI 层 | 建议包路径 |
 |-------|------------|
 | 壳层 Activity | `nota.android.crash.xp.app.shell` |
-| 配置 Fragment | `nota.android.crash.xp.app.config` |
-| 观测 Fragment | `nota.android.crash.xp.app.observe` |
-| 任务 Activity | `nota.android.crash`（`ActivityCrashInfo` 已在此包） |
+| Design System / common ui | `nota.android.crash.xp.app.common.ui` / `common.design` |
+| 配置 Fragment / state | `nota.android.crash.xp.app.config` |
+| 观测 Fragment / state | `nota.android.crash.xp.app.observe` |
+| 任务 Activity | `nota.android.crash`（`ActivityCrashInfo` 已在此包，可演进为 `CrashLogDetailActivity`） |
 | 详情 Viewer | `nota.android.crash.xp.app.view`（`CrashLogViewerClient`） |
 
 跨包 Activity 须在 Manifest **全限定类名**（见现有 `ActivityCrashInfo`）。
@@ -306,3 +341,4 @@ logcat_import_activity
 - [configuration-ui.md](configuration-ui.md) — 配置 tab 布局
 - [ADR-005](../decisions/005-settings-information-architecture.md) — 配置单屏约束
 - [ADR-006](../decisions/006-material3-toolchain.md) — Navigation 组件 defer
+- [ADR-009](../decisions/009-ui-shell-design-system.md) — Shell / Design System / Domain Page / Feature State

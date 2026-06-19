@@ -1,17 +1,17 @@
 ---
-title: "ADR-006: Material 3 与工具链升级"
+title: "ADR-006: Material 3 Defer — 沿用 Material Components 2.x Fluent"
 type: decision
-status: draft
+status: accepted
 phase: 3
 updated: 2026-06-19
-summary: "工具链已升级（ADR-004）；Material 3 完整主题仍 defer，当前 Material Components 2.x Fluent 对齐"
+summary: "正式决策：Phase 3/4 沿用 Material Components 2.x + Fluent token；Material 3 完整主题明确 defer，不作为 Shell/Design System 前置"
 ---
 
-# ADR-006: Material 3 与工具链升级
+# ADR-006: Material 3 Defer — 沿用 Material Components 2.x Fluent
 
 ## 状态
 
-**草案 — M3 主题 defer**。构建工具链已于 ADR-004 升级至 compileSdk 36 / AGP 9.0.0 / Gradle 9.2.1；Phase 3 采用 Material Components **2.x** Fluent 视觉（对齐 AppSnapShotor 色板与密度），非 Material 3 dynamic color。
+**Accepted**。构建工具链已于 ADR-004 升级至 compileSdk 36 / AGP 9.0.0 / Gradle 9.2.1；Phase 3/4 **正式沿用** Material Components **2.x** + Fluent 视觉（对齐 AppSnapShotor 色板与密度），**不** 迁移 Material 3 dynamic color / `Theme.Material3.*`。
 
 ## 背景
 

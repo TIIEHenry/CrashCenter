@@ -1,7 +1,7 @@
 ---
 title: "崩溃日志多后端存储"
 type: architecture
-status: proposed
+status: accepted
 phase: 4
 updated: 2026-06-19
 summary: "CrashLogBackend 抽象、hook 侧 root 优先并行写入、模块侧 root ingest 与管理；canonical JSONL 为 SSOT"

@@ -4,7 +4,7 @@ type: roadmap
 status: draft
 phase: 4
 updated: 2026-06-19
-summary: "多后端 CrashLogger、root ingest、历史 UI、智能分析 backlog；见 crash-log-backends.md"
+summary: "4C-α Shell + 4C-β 历史 scaffolding 已编码；4B 写入与 CodeEditor 详情待实施"
 ---
 
 # Phase 4: 崩溃可观测性
@@ -15,7 +15,7 @@ summary: "多后端 CrashLogger、root ingest、历史 UI、智能分析 backlog
 
 **产品叙事**：Xposed 稳定性分析中心 — **观测层**（记录 + 统计）与 **干预层**（吞异常）分离。
 
-**实施顺序说明**（[architecture-optimization.md](../../../docs/architecture/architecture-optimization.md) §8）：4B 前宜完成 hook 侧 `showNotify` 消除与反馈/日志 try 隔离；4B-α 不依赖 UI 壳层；**4C 与 MainShell 壳层同批**，避免 4D 二次导航重构；4G 不阻塞 4B–4E。
+**实施顺序说明**（[architecture-optimization.md](../../../docs/architecture/architecture-optimization.md) §8）：4B 前宜完成 hook 侧 `showNotify` 消除与反馈/日志 try 隔离；4B-α 不依赖 UI 壳层；**4C 拆为 Shell/Design System 迁移（α）与历史 UI（β）**，避免 4D 二次导航重构；4G 不阻塞 4B–4E。
 
 ## 前置
 
@@ -33,15 +33,17 @@ summary: "多后端 CrashLogger、root ingest、历史 UI、智能分析 backlog
 
 ## 4B — MVP：CrashLogCoordinator（无 UI）
 
+> **2026-06-19 scaffold**：`CrashLogCoordinator` + `DirectFsCrashLogWriter` 单后端直写 canonical `events.jsonl`；多后端 / Provider / retention 仍待 4B-α。
+
 ### 4B-α — 基础后端 + 并行
 
 - [ ] `CrashLogBackend` 接口 + 注册表
-- [ ] `CrashLogCoordinator`：Phase 2 并行（Provider + DirectFs + TargetRelay）
-- [ ] `CrashEvent` 结构化 + UUID + `backendWritten`
-- [ ] hook 回调内、`showNotify` **之外**调用 Coordinator
-- [ ] 采集：timestamp、package、进程/线程、异常类、完整 stack、`source`
+- [~] `CrashLogCoordinator`：scaffold 仅 DirectFs；Phase 2 并行（Provider + DirectFs + TargetRelay）待建
+- [x] `CrashEvent` 结构化 + UUID（`backendWritten` 待多后端）
+- [x] hook 回调内、`showNotify` **之外**调用 Coordinator
+- [x] 采集：timestamp、package、进程/线程、异常类、完整 stack、`source`（`CrashHandler` 区分 looper/uncaught）
 - [ ] 默认 retention：500 条或 8MB 轮转
-- [ ] 写入失败 silent；不与 Toast/通知同 try
+- [x] 写入失败 silent；不与 Toast/通知同 try
 - [ ] `CrashLogProvider`：`exported="true"`，无 signature permission
 - [ ] **独立启动矩阵** IS-1~IS-6
 
@@ -73,14 +75,26 @@ summary: "多后端 CrashLogger、root ingest、历史 UI、智能分析 backlog
 
 Provider / DirectFs / Relay 作为 `CrashLogBackend` 实现，不再单独 Phase。见 4B-α checklist。
 
-## 4C — P1：崩溃历史 UI
+## 4C — P1：Shell + 崩溃历史 UI
 
-- [ ] 引入 **2-tab 壳层**（配置 \| 观测），见 [navigation-ia.md](../../../docs/architecture/navigation-ia.md)；观测 tab 先仅「历史」子页（4D 再加「统计」内层 TabLayout）
-- [ ] 列表：时间、包名、异常类、应用名
-- [ ] 详情页：`CrashLogViewerClient`（CodeEditor 只读）— [code-editor-porting.md](../../../docs/architecture/code-editor-porting.md)
+### 4C-α — UI Shell / Design System
+
+- [x] 引入 `MainShellActivity` + `ShellViewModel`：Toolbar、Xposed 状态条、2-tab BottomNavigation、WindowInsets
+- [x] `ActivityMain` 页面内容迁为 `ConfigFragment`；Launcher 入口迁 `MainShellActivity`
+- [x] 抽出 common UI：`EmptyState`、`LoadingState`、`ToolbarHeaderInsets`、`StatusBanner`、`PermissionBanner`、`FilterChipRow`、`DenseSearchField`
+- [x] 配置域拆出 `ConfigUiState`、`ConfigViewModel`、`AppListRepository`、`AppToggleAdapter`
+- [x] `ObserveHostFragment` 占位（空态文案）；历史列表待 4C-β
+- [x] 验收：adb smoke（461QYGDD2226C 2026-06-19）安装/启动/logcat PASS；底栏 **配置 | 观测** + Observe 空态/回路已 tap 验；配置 tab Phase 3 parity 与 Test 拦截仍 LSPosed 手动
+
+### 4C-β — 崩溃历史
+
+- [x] `ObserveHostFragment`：观测 tab 宿主；4C 先仅「历史」子页（4D 再加「统计」内层 TabLayout）
+- [x] `CrashHistoryFragment`：时间倒序历史列表（scaffolding + `FileCrashLogRepository` 读 `events.jsonl`）
+- [x] 列表：时间、包名、异常类、应用名（`CrashEventRow`）
+- [~] 详情页：`ActivityCrashInfo` 已支持 `crash_id` 从 Repository 加载；`CrashLogViewerClient` / CodeEditor 待后续
 - [ ] Gradle 引入 `CodeEditor` + `CodeEditorClient`（不含 Antlr MVP）
-- [ ] 按 `crash_id` 打开详情（为 P3 通知改造预留）
-- [ ] 空状态与加载态
+- [x] 按 `crash_id` 打开详情，兼容旧 `Exception` extra（为 P3 通知改造预留）
+- [x] 空状态与加载态
 
 ## 4D — P2：统计
 
@@ -131,7 +145,7 @@ Provider / DirectFs / Relay 作为 `CrashLogBackend` 实现，不再单独 Phase
 ### 4G-V3 — 可选 LLM / PC 分析
 
 - [ ] `scripts/analyze-crashes.py` 读导出 JSONL + Markdown 报告
-- [ ] （可选）设置项：端侧 LLM 实验 — **须 ADR-009 后再做**
+- [ ] （可选）设置项：端侧 LLM 实验 — **须另立 ADR 后再做**
 - [ ] logcat 导入事件走同一分析管道（对齐 adb-logcat-analysis P2）
 
 ---
@@ -154,6 +168,8 @@ python3 scripts/check-docs-health.py
 
 - [architecture-optimization.md](../../../docs/architecture/architecture-optimization.md) — 包结构、分层与 Phase 映射
 - [navigation-ia.md](../../../docs/architecture/navigation-ia.md)
+- [ui-routing.md](../../../docs/architecture/ui-routing.md)
+- [ADR-009](../../../docs/decisions/009-ui-shell-design-system.md)
 - [crash-logging.md](../../../docs/architecture/crash-logging.md)
 - [ADR-007](../../../docs/decisions/007-crash-log-cross-process-storage.md)
 - [crash-log-backends.md](../../../docs/architecture/crash-log-backends.md) — 多后端编排

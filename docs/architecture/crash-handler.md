@@ -63,6 +63,15 @@ public interface ExceptionHandler {
 
 `XposedEntry` 在 `insert()` 时传入 lambda，负责 UI 反馈（Toast / Notification）。详见 [crash-notification.md](crash-notification.md)。
 
+## 与观测层的关系
+
+`CrashHandler` 本身**不含持久化逻辑**。Phase 4B 起，`XposedEntry` 传入的 `ExceptionHandler` lambda 内部会调用 `CrashCapturePipeline`，将每次捕获的异常并行投递至：
+
+- **CrashLogCoordinator**（异步写入 JSONL — [crash-capture-pipeline.md](crash-capture-pipeline.md)）
+- **CrashFeedbackFacade**（Toast + Notification — [crash-notification.md](crash-notification.md)）
+
+两条路径 **失败域隔离**：日志写入失败不影响 `CrashHandler` 续命语义，也不影响 UI 反馈（[ADR-011](../decisions/011-feedback-failure-isolation.md)）。
+
 ## 注意事项
 
 - 仅处理 **Java 层**异常；Native crash（SIGSEGV 等）无法拦截
@@ -72,7 +81,9 @@ public interface ExceptionHandler {
 
 ## 相关文档
 
+- [crash-capture-pipeline.md](crash-capture-pipeline.md) — hook 侧 Pipeline（观测 + 反馈）
 - [crash-notification.md](crash-notification.md)
 - [overview.md](overview.md)
 - [xposed-entry.md](xposed-entry.md)
 - [ADR-001](../decisions/001-looper-loop-resurrection.md)
+- [ADR-011](../decisions/011-feedback-failure-isolation.md) — 失败域隔离

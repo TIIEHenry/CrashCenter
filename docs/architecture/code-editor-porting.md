@@ -1,15 +1,15 @@
 ---
 title: "CodeEditor 移植方案（日志浏览）"
 type: architecture
-status: proposed
+status: accepted
 phase: 4
 updated: 2026-06-19
-summary: "参照 celestailruler CodeEditor 三模块，在 CrashCenter 中替换 TextView 详情页并支撑 Phase 4 崩溃历史浏览"
+summary: "参照 celestailruler CodeEditor 三模块，在 observe/detail 域替换 TextView 详情页并支撑 Phase 4 崩溃历史浏览"
 ---
 
 # CodeEditor 移植方案（日志浏览）
 
-> 参照项目：[celestailruler](/home/clarence/Projects/Android/celestailruler)（外部 sibling，路径 `/home/clarence/Projects/Android/celestailruler`）
+> 参照项目：celestailruler（外部 sibling，路径 `/home/clarence/Projects/Android/celestailruler`）
 > 源码对照：`CrashInfoActivity.kt`、`BaseCodeEditorClient.kt`、`CodeEditor` / `CodeEditorClient` 模块
 > 关联：[crash-notification.md](crash-notification.md)、[crash-logging.md](crash-logging.md)、[navigation-ia.md](navigation-ia.md)
 
@@ -20,6 +20,7 @@ summary: "参照 celestailruler CodeEditor 三模块，在 CrashCenter 中替换
 - **不必**为日志浏览引入 `CodeEditorAntlr`（Lua 语法）；默认 `TextLanguage` 即可覆盖 stack trace 与 JSONL 行。
 - **不必**使用 celestailruler 的 `CodeEditorClient` 子类（Lua 保存/运行）；那是脚本编辑场景。
 - celestailruler 已在 `CrashInfoActivity` 验证过**与 CrashCenter 同构**的崩溃详情场景。
+- 详情页属于 **observe/detail domain**：可保留 `ActivityCrashInfo` 类名，也可演进为 `CrashLogDetailActivity`；路由契约统一为 `crash_detail`，参数优先 `crash_id`，兼容旧 `Exception` extra。
 
 ---
 
@@ -93,15 +94,15 @@ client.quickFloatLayout.downView.setOnClickListener { finish() }
 
 ### 场景 A — 通知 / 即时详情（Phase 3，优先）
 
-- **载体**：`ActivityCrashInfo`（或重命名为 `CrashLogViewerActivity` 可选）
+- **载体**：`ActivityCrashInfo`（或重命名 / 新建 `CrashLogDetailActivity` 可选）
 - **数据**：`Intent.getStringExtra("Exception")`（`Log.getStackTraceString` 全文）
 - **模式**：只读浏览 + 查找；隐藏保存浮动钮
 
 ### 场景 B — 历史单条详情（Phase 4C）
 
-- **载体**：观测 tab 内详情 Fragment / Activity
+- **载体**：`CrashLogDetailActivity` / 兼容扩展后的 `ActivityCrashInfo`
 - **数据**：`CrashEvent.stackTrace` 或 `Gson` 美化后的整段 JSON
-- **入口**：历史列表 item 点击；可选 `eventId` 从 `events.jsonl` 加载而非 Intent 塞全文（避免 Binder 限制，见 [crash-logging.md](crash-logging.md)）
+- **入口**：`CrashHistoryFragment` / `PerAppCrashActivity` item 点击；以 `crash_id` 从 `events.jsonl` 加载而非 Intent 塞全文（避免 Binder 限制，见 [crash-logging.md](crash-logging.md)）
 
 ### 场景 C — JSONL 文件抽查（Phase 4D+，可选）
 
@@ -168,6 +169,17 @@ implementation project(':CodeEditorClient')
 
 ## CrashCenter 集成设计
 
+### observe/detail 包边界
+
+| 元素 | 建议包 | 说明 |
+|------|--------|------|
+| `CrashLogViewerClient` | `nota.android.crash.xp.app.view` | Design System 与 CodeEditor 的适配层，只读日志浏览 |
+| `CrashLogDetailActivity` / `ActivityCrashInfo` | `nota.android.crash` | L3 任务页，manifest 显式 Component 兼容通知 |
+| `CrashHistoryFragment` | `nota.android.crash.xp.app.observe` | 传 `crash_id` 打开详情 |
+| `PerAppCrashActivity` | `nota.android.crash.xp.app.observe` | 单应用列表，复用 `CrashEventRow` 与详情路由 |
+
+`CrashLogViewerClient` 不持有历史列表状态；它只接收已经解析出的文本并展示。
+
 ### 1. `CrashLogViewerClient`（建议新建）
 
 继承 `BaseCodeEditorClient`，封装日志只读模式：
@@ -190,17 +202,18 @@ class CrashLogViewerClient(...) : BaseCodeEditorClient(...) {
 }
 ```
 
-### 2. 改造 `ActivityCrashInfo`
+### 2. 改造 `ActivityCrashInfo` / `CrashLogDetailActivity`
 
 - 保留 Toolbar + `SystemBars`（与 [configuration-ui.md](configuration-ui.md) 一致）
 - 内容区：`FrameLayout` 承载 `client.layout`（替代 `TextView`）
-- `onCreate`：`CrashLogViewerClient.showStackTrace(intent.getStringExtra("Exception"))`
+- `onCreate` 参数优先级：`crash_id` → Repository 加载 `CrashEvent.stackTrace`；否则 `Exception` → 直接展示旧通知 stack
+- 若类名保留为 `ActivityCrashInfo`，manifest 与通知 Component 可不变；若新增 `CrashLogDetailActivity`，旧 Component 需保留 wrapper 兼容
 
 ### 3. Phase 4C 历史详情
 
-- 列表 → 传 `eventId` 或 URI
-- ViewModel 从 `events.jsonl` 读单行 → `showStackTrace(event.stackTrace)`
-- 与 [navigation-ia.md](navigation-ia.md) 观测 tab 详情页共用 `CrashLogViewerClient`
+- 列表 → 传 `crash_id`
+- ViewModel / Repository 从 `events.jsonl` 读单行 → `showStackTrace(event.stackTrace)`
+- 与 [navigation-ia.md](navigation-ia.md) 观测 tab 和 [ui-routing.md](ui-routing.md) `crash_detail` 路由共用 `CrashLogViewerClient`
 
 ### 4. 主题与资源
 
@@ -221,13 +234,13 @@ flowchart LR
         N[通知 PendingIntent]
     end
     subgraph module [CrashCenter 模块进程]
-        A[ActivityCrashInfo]
+        A[ActivityCrashInfo / CrashLogDetailActivity]
         C[CrashLogViewerClient]
         E[CodeIEditor + TextLanguage]
         J[Phase 4: JSONL → CrashEvent]
     end
     N -->|extra Exception| A
-    J -->|stackTrace| C
+    J -->|crash_id → stackTrace| A
     A --> C
     C --> E
 ```
@@ -274,6 +287,7 @@ flowchart LR
 ## 相关文档
 
 - [navigation-ia.md](navigation-ia.md) — Phase 4C 观测详情入口
-- [ui-routing.md](ui-routing.md) — `crash_detail` / `per_app_crash` 路由
+- [ui-routing.md](ui-routing.md) — `crash_detail` / `per_app_crash` 路由；`crash_id` 与 `Exception` 参数兼容
+- [ADR-009](../decisions/009-ui-shell-design-system.md) — observe/detail 域与 Design System 边界
 - [glossary.md](../glossary.md) — CrashEvent、events.jsonl
 - celestailruler `dev/DEV_GUIDE.md` — 上游模块地图

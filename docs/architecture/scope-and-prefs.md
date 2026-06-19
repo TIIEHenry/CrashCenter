@@ -24,7 +24,24 @@ CrashCenter 通过 SharedPreferences 在 UI 进程写入配置，Xposed hook 侧
 | `crash` | — | — | SharedPreferences 文件名（`PREF_NAME`） |
 | `scope_mode` | boolean | `false` | 作用域模式开关 |
 | `handle_system` | boolean | `false` | scope 模式下是否包含系统应用 |
-| `package_list` | Set\<String\> | 空 | **禁用**包名列表（见 ADR-002） |
+| `show_system_ui` | boolean | `false` | **UI 侧**是否在列表中显示系统应用（不影响 hook 行为） |
+| `package_list` | Set\<String\> | 空 | **禁用**包名列表（见 ADR-002；**Legacy**，新模型见 ADR-015） |
+| `managed_packages` | Set\<String\> | **`null`** | 受管应用集合；`null` = Legacy 模式，非 null = 新模型 SSOT（见 [ADR-015](../decisions/015-managed-apps-intervention-rules.md)） |
+| `intervention_rules` | String（JSON） | `{}` | 包名 → 干预规则 profile；无 enabled 规则时不 hook |
+| `managed_model_migrated` | boolean | `false` | 一次性从 ADR-002 模型迁移标记 |
+
+### `show_system_ui` 语义
+
+`show_system_ui` 是纯 UI 侧过滤键，**不参与 hook 决策**：
+
+| `show_system_ui` | `handle_system` | UI 列表 | hook 行为 |
+|-------------------|-----------------|---------|-----------|
+| `false` | `false` | 仅第三方 app | scope=true 时不 hook 系统 app |
+| `false` | `true` | 仅第三方 app | scope=true 时仍 hook 系统 app（隐藏但 hook） |
+| `true` | `true` | 全部 app | scope=true 时 hook 系统 app |
+| `true` | `false` | 全部 app | scope=true 时不 hook 系统 app（可见但不 hook） |
+
+源码：`PrefManager.PREF_SHOW_SYSTEM_UI`；UI 读取位于 `ActivityMain.kt` FilterChip（"显示系统应用"）。
 
 ### Phase 4 计划键（崩溃观测，待实现）
 
@@ -50,6 +67,8 @@ CrashCenter 通过 SharedPreferences 在 UI 进程写入配置，Xposed hook 侧
 
 ## UI 与存储的映射
 
+### Legacy（`managed_packages == null`）
+
 ActivityMain 中 Switch **开启**（checked）表示 app **被 hook**：
 
 ```
@@ -58,6 +77,39 @@ Switch OFF → 包名 IN package_list (disabled)
 ```
 
 初始化时：`prefWhiteList == null`（首次使用）→ 所有 app 默认 checked（全部 hook）。
+
+### 受管模型（ADR-015，`managed_packages != null`）
+
+| UI 操作 | 存储 |
+|---------|------|
+| Picker 添加 | `managed_packages += pkg` |
+| Switch ON（无规则） | `intervention_rules[pkg]` append `CATCH_ALL` enabled |
+| Switch OFF | 全部 rules `enabled=false` |
+| 编辑页改规则 | 更新 `intervention_rules` JSON |
+| 移除应用 | 删 pkg + profile |
+
+Hook 侧由 `ScopePolicy` 读 `managed_packages` + `intervention_rules`；**不读** `package_list`。详见 [app-management-ui.md](app-management-ui.md)。
+
+### `intervention_rules` JSON 结构（摘要）
+
+```json
+{
+  "com.example.app": {
+    "rules": [
+      {
+        "id": "uuid",
+        "type": "CATCH_ALL",
+        "enabled": true,
+        "showNotify": null,
+        "crashLogEnabled": null
+      }
+    ],
+    "updatedAt": 1718812800000
+  }
+}
+```
+
+v1 仅支持 `type: CATCH_ALL`。`null` 字段表示继承全局 prefs。
 
 ## 跨进程读取
 
@@ -82,6 +134,8 @@ sXSharedPreferences.reload();  // 每次 handleLoadPackage 时
 - [crash-log-backends.md](crash-log-backends.md) — 多后端与 ingest
 - [crash-log-ipc.md](crash-log-ipc.md) — 配置 vs 事件体分工
 
+- [app-management-ui.md](app-management-ui.md)
+- [ADR-015](../decisions/015-managed-apps-intervention-rules.md)
 - [configuration-ui.md](configuration-ui.md)
 - [xposed-entry.md](xposed-entry.md)
 - [glossary.md](../glossary.md)
