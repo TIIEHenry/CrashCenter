@@ -2,8 +2,6 @@ package nota.android.crash.xp.app.config
 
 import android.content.Context
 import android.content.pm.ApplicationInfo
-import android.content.pm.PackageManager
-import android.os.Build
 import nota.android.crash.xp.PrefManager.ITSELF
 import nota.android.crash.xp.PrefManager.PREF_HANDLE_SYSTEM
 import nota.android.crash.xp.PrefManager.PREF_NAME
@@ -62,11 +60,7 @@ class AppListRepository(context: Context) {
 
         val prefWhiteList = prefs.getStringSet(PREF_PACKAGE_LIST, null)
         val packageManager = appContext.packageManager
-        val installedPackages = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            packageManager.getInstalledPackages(PackageManager.MATCH_UNINSTALLED_PACKAGES)
-        } else {
-            packageManager.getInstalledPackages(PackageManager.GET_META_DATA)
-        }
+        val installedPackages = PackageVisibilityHelper.getInstalledPackagesCompat(packageManager)
         return installedPackages.map { packageInfo ->
             val appInfo = packageInfo.applicationInfo ?: return@map null
             AppItem(

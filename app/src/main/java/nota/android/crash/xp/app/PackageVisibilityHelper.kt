@@ -2,6 +2,7 @@ package nota.android.crash.xp.app
 
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
@@ -97,13 +98,22 @@ object PackageVisibilityHelper {
         }
     }
 
+    /**
+     * Returns all installed packages using the correct API-level flag.
+     * On [Build.VERSION_CODES.N]+ uses [PackageManager.MATCH_UNINSTALLED_PACKAGES];
+     * on older API levels falls back to [PackageManager.GET_META_DATA].
+     */
+    fun getInstalledPackagesCompat(pm: PackageManager): List<PackageInfo> {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            pm.getInstalledPackages(PackageManager.MATCH_UNINSTALLED_PACKAGES)
+        } else {
+            pm.getInstalledPackages(PackageManager.GET_META_DATA)
+        }
+    }
+
     private fun countInstalledPackages(pm: PackageManager): Int {
         return try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                pm.getInstalledPackages(PackageManager.MATCH_UNINSTALLED_PACKAGES).size
-            } else {
-                pm.getInstalledPackages(PackageManager.GET_META_DATA).size
-            }
+            getInstalledPackagesCompat(pm).size
         } catch (_: Exception) {
             0
         }

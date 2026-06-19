@@ -3,7 +3,6 @@ package nota.android.crash.xp.app.config
 import android.content.Context
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
-import android.os.Build
 import nota.android.crash.xp.PrefManager.ITSELF
 import nota.android.crash.xp.PrefManager.PREF_HANDLE_SYSTEM
 import nota.android.crash.xp.PrefManager.PREF_INTERVENTION_RULES
@@ -94,11 +93,7 @@ class ManagedAppRepository(context: Context) {
         val managedPackages = readManagedPackageNames() ?: emptySet()
         val showSystemUi = readShowSystemUi()
         val packageManager = appContext.packageManager
-        val installedPackages = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            packageManager.getInstalledPackages(PackageManager.MATCH_UNINSTALLED_PACKAGES)
-        } else {
-            packageManager.getInstalledPackages(PackageManager.GET_META_DATA)
-        }
+        val installedPackages = PackageVisibilityHelper.getInstalledPackagesCompat(packageManager)
 
         val apps = mutableListOf<PickableApp>()
         for (packageInfo in installedPackages) {
@@ -252,11 +247,7 @@ class ManagedAppRepository(context: Context) {
 
         internal fun enumerateInstalledPackageNames(context: Context): Set<String> {
             val packageManager = context.packageManager
-            val installedPackages = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                packageManager.getInstalledPackages(PackageManager.MATCH_UNINSTALLED_PACKAGES)
-            } else {
-                packageManager.getInstalledPackages(PackageManager.GET_META_DATA)
-            }
+            val installedPackages = PackageVisibilityHelper.getInstalledPackagesCompat(packageManager)
             return installedPackages.map { it.packageName }
                 .filter { packageName -> packageName != ITSELF }
                 .toSet()

@@ -1,11 +1,13 @@
 package nota.android.crash.xp.app.observe
 
-import android.os.Handler
-import android.os.Looper
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import nota.android.crash.xp.app.data.CrashFilter
 import nota.android.crash.xp.app.data.CrashLogRepository
 
@@ -17,7 +19,6 @@ class CrashHistoryViewModel(
     val uiState: LiveData<CrashHistoryUiState> = _uiState
 
     private var loadGeneration = 0
-    private val mainHandler = Handler(Looper.getMainLooper())
 
     fun loadEvents(forceReload: Boolean = false) {
         val current = _uiState.value ?: CrashHistoryUiState()
@@ -28,23 +29,23 @@ class CrashHistoryViewModel(
         val generation = ++loadGeneration
         emitState { copy(isLoading = true) }
 
-        Thread {
-            val events = try {
-                repository.getAll(CrashFilter(), Int.MAX_VALUE, 0)
-            } catch (_: Exception) {
-                emptyList()
-            }
-            mainHandler.post {
-                if (generation != loadGeneration) return@post
-                emitState {
-                    copy(
-                        isLoading = false,
-                        events = events,
-                        eventCount = events.size,
-                    )
+        viewModelScope.launch {
+            val events = withContext(Dispatchers.IO) {
+                try {
+                    repository.getAll(CrashFilter(), Int.MAX_VALUE, 0)
+                } catch (_: Exception) {
+                    emptyList()
                 }
             }
-        }.start()
+            if (generation != loadGeneration) return@launch
+            emitState {
+                copy(
+                    isLoading = false,
+                    events = events,
+                    eventCount = events.size,
+                )
+            }
+        }
     }
 
     private inline fun emitState(block: CrashHistoryUiState.() -> CrashHistoryUiState) {

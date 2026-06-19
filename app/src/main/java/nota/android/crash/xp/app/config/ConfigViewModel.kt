@@ -1,12 +1,13 @@
 package nota.android.crash.xp.app.config
 
-import android.os.Handler
-import android.os.Looper
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import java.util.Collections
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.util.Locale
 
 class ConfigViewModel(
@@ -18,7 +19,6 @@ class ConfigViewModel(
     val uiState: LiveData<ConfigUiState> = _uiState
 
     private var appsLoadGeneration = 0
-    private val mainHandler = Handler(Looper.getMainLooper())
 
     init {
         val legacyMode = managedRepository.isLegacyMode()
@@ -43,45 +43,49 @@ class ConfigViewModel(
         val loadGeneration = ++appsLoadGeneration
         emitState { copy(isLoading = true) }
 
-        Thread {
+        viewModelScope.launch {
             try {
                 if (current.isLegacyMode) {
-                    val loadedApps = legacyRepository.loadInstalledApps()
-                    val visibility = legacyRepository.detectPackageVisibilityAfterLoad(loadedApps.size)
-                    mainHandler.post {
-                        if (loadGeneration != appsLoadGeneration) return@post
-                        emitState {
-                            copy(
-                                isLoading = false,
-                                allApps = loadedApps,
-                                packageVisibility = visibility,
-                            )
-                        }
-                        applyLegacyFiltersAndSort(preserveSort = false)
+                    val loadedApps = withContext(Dispatchers.IO) {
+                        legacyRepository.loadInstalledApps()
                     }
+                    val visibility = withContext(Dispatchers.IO) {
+                        legacyRepository.detectPackageVisibilityAfterLoad(loadedApps.size)
+                    }
+                    if (loadGeneration != appsLoadGeneration) return@launch
+                    emitState {
+                        copy(
+                            isLoading = false,
+                            allApps = loadedApps,
+                            packageVisibility = visibility,
+                        )
+                    }
+                    applyLegacyFiltersAndSort(preserveSort = false)
                 } else {
-                    managedRepository.pruneUninstalled()
-                    val managedApps = managedRepository.loadManagedApps()
-                    val visibility = managedRepository.detectPackageVisibility()
-                    mainHandler.post {
-                        if (loadGeneration != appsLoadGeneration) return@post
-                        emitState {
-                            copy(
-                                isLoading = false,
-                                managedApps = managedApps,
-                                packageVisibility = visibility,
-                            )
-                        }
-                        applyManagedFiltersAndSort(preserveSort = false)
+                    withContext(Dispatchers.IO) {
+                        managedRepository.pruneUninstalled()
                     }
+                    val managedApps = withContext(Dispatchers.IO) {
+                        managedRepository.loadManagedApps()
+                    }
+                    val visibility = withContext(Dispatchers.IO) {
+                        managedRepository.detectPackageVisibility()
+                    }
+                    if (loadGeneration != appsLoadGeneration) return@launch
+                    emitState {
+                        copy(
+                            isLoading = false,
+                            managedApps = managedApps,
+                            packageVisibility = visibility,
+                        )
+                    }
+                    applyManagedFiltersAndSort(preserveSort = false)
                 }
             } catch (_: Exception) {
-                mainHandler.post {
-                    if (loadGeneration != appsLoadGeneration) return@post
-                    emitState { copy(isLoading = false) }
-                }
+                if (loadGeneration != appsLoadGeneration) return@launch
+                emitState { copy(isLoading = false) }
             }
-        }.start()
+        }
     }
 
     fun setQuery(query: String) {
@@ -207,7 +211,7 @@ class ConfigViewModel(
                 app.packageName.lowercase(Locale.getDefault()).contains(query)
         }.toMutableList()
 
-        sortLegacyList(filtered, current.sortMode)
+        sortList(filtered, current.sortMode, { it.name }, { it.installTime }, { it.updateTime })
 
         emitState {
             copy(
@@ -233,7 +237,7 @@ class ConfigViewModel(
                 app.packageName.lowercase(Locale.getDefault()).contains(query)
         }.toMutableList()
 
-        sortManagedList(filtered, current.sortMode)
+        sortList(filtered, current.sortMode, { it.label }, { it.installTime }, { it.updateTime })
 
         val emptyMessage = when {
             filtered.isNotEmpty() -> null
@@ -249,25 +253,20 @@ class ConfigViewModel(
         }
     }
 
-    private fun sortLegacyList(apps: MutableList<AppItem>, mode: SortMode) {
+    private fun <T> sortList(
+        list: MutableList<T>,
+        mode: SortMode,
+        nameExtractor: (T) -> String,
+        installTimeExtractor: (T) -> Long,
+        updateTimeExtractor: (T) -> Long,
+    ) {
         when (mode) {
-            SortMode.NAME_ASC -> Collections.sort(apps) { a, b -> a.name.compareTo(b.name) }
-            SortMode.NAME_DESC -> Collections.sort(apps, Collections.reverseOrder { a, b -> a.name.compareTo(b.name) })
-            SortMode.INSTALL_TIME_ASC -> Collections.sort(apps) { a, b -> java.lang.Long.compare(a.installTime, b.installTime) }
-            SortMode.INSTALL_TIME_DESC -> Collections.sort(apps, Collections.reverseOrder { a, b -> java.lang.Long.compare(a.installTime, b.installTime) })
-            SortMode.UPDATE_TIME_ASC -> Collections.sort(apps) { a, b -> java.lang.Long.compare(a.updateTime, b.updateTime) }
-            SortMode.UPDATE_TIME_DESC -> Collections.sort(apps, Collections.reverseOrder { a, b -> java.lang.Long.compare(a.updateTime, b.updateTime) })
-        }
-    }
-
-    private fun sortManagedList(apps: MutableList<ManagedApp>, mode: SortMode) {
-        when (mode) {
-            SortMode.NAME_ASC -> Collections.sort(apps) { a, b -> a.label.compareTo(b.label) }
-            SortMode.NAME_DESC -> Collections.sort(apps, Collections.reverseOrder { a, b -> a.label.compareTo(b.label) })
-            SortMode.INSTALL_TIME_ASC -> Collections.sort(apps) { a, b -> java.lang.Long.compare(a.installTime, b.installTime) }
-            SortMode.INSTALL_TIME_DESC -> Collections.sort(apps, Collections.reverseOrder { a, b -> java.lang.Long.compare(a.installTime, b.installTime) })
-            SortMode.UPDATE_TIME_ASC -> Collections.sort(apps) { a, b -> java.lang.Long.compare(a.updateTime, b.updateTime) }
-            SortMode.UPDATE_TIME_DESC -> Collections.sort(apps, Collections.reverseOrder { a, b -> java.lang.Long.compare(a.updateTime, b.updateTime) })
+            SortMode.NAME_ASC -> list.sortWith(compareBy { nameExtractor(it) })
+            SortMode.NAME_DESC -> list.sortWith(compareByDescending { nameExtractor(it) })
+            SortMode.INSTALL_TIME_ASC -> list.sortWith(compareBy { installTimeExtractor(it) })
+            SortMode.INSTALL_TIME_DESC -> list.sortWith(compareByDescending { installTimeExtractor(it) })
+            SortMode.UPDATE_TIME_ASC -> list.sortWith(compareBy { updateTimeExtractor(it) })
+            SortMode.UPDATE_TIME_DESC -> list.sortWith(compareByDescending { updateTimeExtractor(it) })
         }
     }
 
