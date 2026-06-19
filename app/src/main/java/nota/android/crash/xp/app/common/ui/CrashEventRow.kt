@@ -12,7 +12,6 @@ import nota.android.crash.xp.app.data.CrashEvent
 
 object CrashEventRow {
 
-    @JvmStatic
     fun bind(root: View, event: CrashEvent, context: Context) {
         val appNameView = root.findViewById<TextView>(R.id.tvAppName)
         val subtitleView = root.findViewById<TextView>(R.id.tvSubtitle)

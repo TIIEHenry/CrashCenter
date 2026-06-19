@@ -5,7 +5,6 @@ import nota.android.crash.xp.app.SystemBars
 
 object ToolbarHeaderInsets {
 
-    @JvmStatic
     fun apply(toolbarHeader: View) {
         SystemBars.applyToolbarHeaderInsets(toolbarHeader)
     }

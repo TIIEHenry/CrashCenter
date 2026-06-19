@@ -33,7 +33,6 @@ class CrashLogViewerClient(
     }
 
     companion object {
-        @JvmStatic
         fun attach(
             hostContext: Context,
             container: ViewGroup,

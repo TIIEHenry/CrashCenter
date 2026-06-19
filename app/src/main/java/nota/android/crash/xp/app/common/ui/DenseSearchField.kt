@@ -8,10 +8,8 @@ import nota.android.crash.xp.app.R
 
 object DenseSearchField {
 
-    @JvmStatic
     fun editText(root: View): EditText = root.findViewById(R.id.searchInput)
 
-    @JvmStatic
     fun setOnQueryChangeListener(root: View, listener: (String) -> Unit) {
         editText(root).addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) = Unit

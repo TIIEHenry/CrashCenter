@@ -31,7 +31,6 @@ object CrashFeedbackFacade {
     private const val CHANNEL_ID = "catch_exception"
     private const val CHANNEL_NAME = "catch exception[Xposed]"
 
-    @JvmStatic
     fun show(
         application: Application,
         packageName: String,

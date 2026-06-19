@@ -9,17 +9,14 @@ import nota.android.crash.xp.app.R
 
 object EmptyState {
 
-    @JvmStatic
     fun bind(root: View, message: CharSequence) {
         bind(root, message, actionLabel = null, onAction = null, iconRes = null)
     }
 
-    @JvmStatic
     fun bind(root: View, message: CharSequence, @DrawableRes iconRes: Int?) {
         bind(root, message, actionLabel = null, onAction = null, iconRes = iconRes)
     }
 
-    @JvmStatic
     fun bind(
         root: View,
         message: CharSequence,
@@ -29,7 +26,6 @@ object EmptyState {
         bind(root, message, actionLabel, onAction, iconRes = null)
     }
 
-    @JvmStatic
     fun bind(
         root: View,
         message: CharSequence,

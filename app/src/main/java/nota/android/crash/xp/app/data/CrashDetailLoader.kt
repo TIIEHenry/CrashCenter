@@ -4,7 +4,6 @@ import android.content.Context
 
 object CrashDetailLoader {
 
-    @JvmStatic
     fun loadStackTraceById(context: Context, crashId: String): String? {
         if (crashId.isBlank()) return null
         val event = FileCrashLogRepository(context).getById(crashId) ?: return null

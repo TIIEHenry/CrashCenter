@@ -11,7 +11,6 @@ import androidx.core.view.updatePadding
 
 object SystemBars {
 
-    @JvmStatic
     fun setup(activity: AppCompatActivity) {
         val window = activity.window
         WindowCompat.setDecorFitsSystemWindows(window, false)
@@ -24,7 +23,6 @@ object SystemBars {
         }
     }
 
-    @JvmStatic
     fun applyToolbarHeaderInsets(toolbarHeader: View) {
         ViewCompat.setOnApplyWindowInsetsListener(toolbarHeader) { view, windowInsets ->
             val statusBarInsets = windowInsets.getInsets(WindowInsetsCompat.Type.statusBars())

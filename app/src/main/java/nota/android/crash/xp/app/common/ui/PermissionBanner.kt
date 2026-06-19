@@ -6,8 +6,6 @@ import nota.android.crash.xp.app.R
 
 object PermissionBanner {
 
-    @JvmStatic
-    @JvmOverloads
     fun bind(root: View, visible: Boolean, title: CharSequence? = null, compact: Boolean = false) {
         root.visibility = if (visible) View.VISIBLE else View.GONE
         if (!visible) return
@@ -19,7 +17,6 @@ object PermissionBanner {
             if (compact) View.GONE else View.VISIBLE
     }
 
-    @JvmStatic
     fun setOnActionClickListener(root: View, listener: View.OnClickListener?) {
         val openSettingsFlow = listener
         root.setOnClickListener(openSettingsFlow)

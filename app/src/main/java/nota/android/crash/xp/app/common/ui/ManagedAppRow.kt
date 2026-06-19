@@ -11,7 +11,6 @@ import nota.android.crash.xp.app.config.ManagedApp
 
 object ManagedAppRow {
 
-    @JvmStatic
     fun bind(
         root: View,
         app: ManagedApp,

@@ -19,7 +19,6 @@ object CrashLogCoordinator {
 
     private val executor = Executors.newSingleThreadExecutor()
 
-    @JvmStatic
     fun logAsync(
         hookContext: Context,
         packageName: String,

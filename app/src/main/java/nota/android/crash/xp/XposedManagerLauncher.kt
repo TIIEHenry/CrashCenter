@@ -11,7 +11,6 @@ object XposedManagerLauncher {
         "de.robv.android.xposed.installer",
     )
 
-    @JvmStatic
     fun open(context: Context): Boolean {
         val pm = context.packageManager
         for (packageName in MANAGER_PACKAGES) {

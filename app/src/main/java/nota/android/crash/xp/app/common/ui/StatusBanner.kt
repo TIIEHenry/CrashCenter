@@ -7,7 +7,6 @@ import nota.android.crash.xp.app.R
 
 object StatusBanner {
 
-    @JvmStatic
     fun bind(root: View, active: Boolean) {
         val context = root.context
         if (active) {
@@ -27,7 +26,6 @@ object StatusBanner {
         }
     }
 
-    @JvmStatic
     fun setOnClickListener(root: View, listener: View.OnClickListener?) {
         root.setOnClickListener(listener)
     }
