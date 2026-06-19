@@ -109,7 +109,9 @@
             android:id="@+id/emptyState"
             layout="@layout/view_empty_state"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="top|center_horizontal"
+            android:layout_marginTop="@dimen/spacing_xl"
             android:visibility="gone"
             tools:visibility="visible" />
 
