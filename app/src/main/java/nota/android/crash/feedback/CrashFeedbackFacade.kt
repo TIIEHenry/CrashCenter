@@ -19,7 +19,6 @@ import android.widget.Toast
 import de.robv.android.xposed.XposedBridge
 import nota.android.crash.xp.PrefManager
 import nota.android.crash.xp.app.R
-import java.util.Random
 
 /**
  * Hook-side Toast + Notification feedback (ADR-011).
@@ -30,7 +29,16 @@ object CrashFeedbackFacade {
     private const val CRASH_INFO_CLASS = "nota.android.crash.ActivityCrashInfo"
     private const val CHANNEL_ID = "catch_exception"
     private const val CHANNEL_NAME = "catch exception[Xposed]"
+    private const val NOTIFY_ID_BASE = 0x4E43_4100  // "NCA" prefix in ASCII
 
+    /**
+     * Deterministic notification ID for a package.
+     * Same app => same ID, so later crashes update the existing notification
+     * instead of spamming new ones. Different apps get different IDs.
+     */
+    private fun notificationIdFor(packageName: String): Int {
+        return NOTIFY_ID_BASE + packageName.hashCode()
+    }
     fun show(
         application: Application,
         packageName: String,
@@ -107,7 +115,7 @@ object CrashFeedbackFacade {
             .setContentIntent(contentIntent)
             .build()
 
-        notificationManager.notify(Random().nextInt(), notification)
+        notificationManager.notify(notificationIdFor(pkgName), notification)
     }
 
     private fun crashTipPrefix(packageName: String): String {
