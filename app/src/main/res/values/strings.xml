@@ -25,8 +25,6 @@
 
     <string name="xposed_not_active">Xposed module is not actived</string>
     <string name="xposed_hint">Please active this module in Xposed Installer app and then reboot you phone</string>
-    <string name="item_test">test</string>
-    <string name="test_hint">success if app is not crash</string>
     <string name="item_scope_mode_short">Scope</string>
     <string name="item_handle_system_short">Sys hook</string>
     <string name="item_show_system_short">Show sys</string>

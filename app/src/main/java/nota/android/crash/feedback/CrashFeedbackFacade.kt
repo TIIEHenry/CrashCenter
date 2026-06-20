@@ -18,7 +18,6 @@ import android.util.Log
 import android.widget.Toast
 import de.robv.android.xposed.XposedBridge
 import nota.android.crash.xp.PrefManager
-import nota.android.crash.xp.app.R
 import androidx.core.app.NotificationCompat
 
 /**
@@ -115,7 +114,9 @@ object CrashFeedbackFacade {
         val contentIntent = PendingIntent.getActivity(application, 0, intent, pendingFlags)
 
         val title = try {
-            moduleContext.getString(R.string.crash_tip) + " - " + appName
+            moduleContext.getString(
+                moduleContext.resources.getIdentifier("crash_tip", "string", PrefManager.PACKAGE_NAME)
+            ) + " - " + appName
         } catch (_: Throwable) {
             appName
         }
@@ -142,7 +143,9 @@ object CrashFeedbackFacade {
         return try {
             val currentApp = AndroidAppHelper.currentApplication() ?: return ""
             val context = currentApp.createPackageContext(packageName, Context.CONTEXT_IGNORE_SECURITY)
-            context.getString(R.string.crash_tip) + ": "
+            context.getString(
+                context.resources.getIdentifier("crash_tip", "string", PrefManager.PACKAGE_NAME)
+            ) + ": "
         } catch (_: Throwable) {
             ""
         }

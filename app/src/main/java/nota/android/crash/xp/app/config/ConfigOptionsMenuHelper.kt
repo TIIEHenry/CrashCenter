@@ -2,14 +2,9 @@ package nota.android.crash.xp.app.config
 
 import android.view.Menu
 import android.view.MenuItem
-import androidx.lifecycle.lifecycleScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import nota.android.crash.xp.app.R
-import nota.android.crash.xp.app.common.ui.LoadingState
 
 internal class ConfigOptionsMenuHelper(
-    private val showTestToastAndCrash: () -> Unit,
     private val viewModel: ConfigViewModel,
     private val showAddManagedAppSheet: () -> Unit,
     private val showHelpDialog: () -> Unit,
@@ -37,10 +32,6 @@ internal class ConfigOptionsMenuHelper(
             }
             R.id.item_help -> {
                 showHelpDialog()
-                true
-            }
-            R.id.item_test -> {
-                showTestToastAndCrash()
                 true
             }
             R.id.item_sort_by_name -> {

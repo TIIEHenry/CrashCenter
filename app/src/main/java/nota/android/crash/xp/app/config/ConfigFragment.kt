@@ -115,17 +115,8 @@ class ConfigFragment : Fragment() {
         return optionsMenuHelper.handleOptionsItem(item)
     }
 
-    internal fun showTestToastAndCrash() {
-        Toast.makeText(requireContext(), R.string.test_hint, Toast.LENGTH_LONG).show()
-        lifecycleScope.launch {
-            delay(2000)
-            throw RuntimeException("just for test")
-        }
-    }
-
     private fun setupHelpers() {
         optionsMenuHelper = ConfigOptionsMenuHelper(
-            showTestToastAndCrash = ::showTestToastAndCrash,
             viewModel = viewModel,
             showAddManagedAppSheet = ::showAddManagedAppSheet,
             showHelpDialog = { dialogHelper.showHelpDialog() },
