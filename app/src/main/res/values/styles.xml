@@ -36,6 +36,8 @@
         <item name="statusBannerInactiveBackground">@color/statusInactiveBg</item>
         <item name="statusBannerActiveTextColor">@color/statusActiveText</item>
         <item name="statusBannerInactiveTextColor">@color/statusInactiveText</item>
+        <item name="colorSurface">@color/surface</item>
+        <item name="dividerColor">@color/toolbarDivider</item>
 
     </style>
 

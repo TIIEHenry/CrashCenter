@@ -2,13 +2,14 @@ package nota.android.crash.xp.app.common.ui
 
 import android.view.View
 import android.widget.TextView
-import nota.android.crash.xp.app.R
+import nota.android.crash.xp.app.databinding.ViewLoadingStateBinding
 
 object LoadingState {
 
     fun bind(root: View, message: CharSequence? = null) {
+        val binding = ViewLoadingStateBinding.bind(root)
         if (message != null) {
-            root.findViewById<TextView>(R.id.loadingMessage)?.text = message
+            binding.loadingMessage.text = message
         }
     }
 }

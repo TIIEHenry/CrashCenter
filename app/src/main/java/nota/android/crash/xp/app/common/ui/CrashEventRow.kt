@@ -9,17 +9,15 @@ import android.widget.TextView
 import androidx.core.content.ContextCompat
 import nota.android.crash.xp.app.R
 import nota.android.crash.xp.app.data.CrashEvent
+import nota.android.crash.xp.app.databinding.ViewCrashEventRowBinding
 
 object CrashEventRow {
 
     fun bind(root: View, event: CrashEvent, context: Context) {
-        val appNameView = root.findViewById<TextView>(R.id.tvAppName)
-        val subtitleView = root.findViewById<TextView>(R.id.tvSubtitle)
-        val iconView = root.findViewById<ImageView>(R.id.ivIcon)
-        val sourceBadge = root.findViewById<TextView>(R.id.tvSourceBadge)
+        val binding = ViewCrashEventRowBinding.bind(root)
 
         val label = event.appLabel?.takeIf { it.isNotEmpty() } ?: event.packageName
-        appNameView.text = label
+        binding.tvAppName.text = label
 
         val relativeTime = DateUtils.getRelativeTimeSpanString(
             event.timestampMs,
@@ -39,18 +37,18 @@ object CrashEventRow {
             label,
             subtitle,
         )
-        subtitleView.text = subtitle
+        binding.tvSubtitle.text = subtitle
 
-        iconView.setImageDrawable(loadIcon(context, event.packageName))
+        binding.ivIcon.setImageDrawable(loadIcon(context, event.packageName))
 
         val sourceLabel = formatSource(context, event.source)
         if (sourceLabel != null) {
-            sourceBadge.visibility = View.VISIBLE
-            sourceBadge.text = sourceLabel.label
-            sourceBadge.contentDescription = sourceLabel.contentDescription
+            binding.tvSourceBadge.visibility = View.VISIBLE
+            binding.tvSourceBadge.text = sourceLabel.label
+            binding.tvSourceBadge.contentDescription = sourceLabel.contentDescription
         } else {
-            sourceBadge.visibility = View.GONE
-            sourceBadge.contentDescription = null
+            binding.tvSourceBadge.visibility = View.GONE
+            binding.tvSourceBadge.contentDescription = null
         }
     }
 

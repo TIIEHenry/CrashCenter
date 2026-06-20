@@ -5,34 +5,30 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.fragment.app.viewModels
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import nota.android.crash.xp.app.R
 import nota.android.crash.xp.app.common.ui.DenseSearchField
 import nota.android.crash.xp.app.common.ui.EmptyState
 import nota.android.crash.xp.app.common.ui.LoadingState
 import nota.android.crash.xp.app.common.ui.configureBottomSheetAppearance
 import nota.android.crash.xp.app.databinding.BottomSheetAddManagedAppBinding
-import java.util.Locale
 
 class AddManagedAppBottomSheet : BottomSheetDialogFragment() {
 
     private var _binding: BottomSheetAddManagedAppBinding? = null
     private val binding get() = checkNotNull(_binding) { "Binding accessed after onDestroyView" }
 
-    private lateinit var repository: AppRepository
-    private lateinit var adapter: PickableAppAdapter
-    private var allApps: List<PickableApp> = emptyList()
-    private var query: String = ""
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        repository = AppRepository(requireContext())
+    private val viewModel: AddManagedAppViewModel by viewModels {
+        AddManagedAppViewModel.Factory(AppRepository(requireContext()))
     }
+
+    private lateinit var adapter: PickableAppAdapter
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -48,7 +44,7 @@ class AddManagedAppBottomSheet : BottomSheetDialogFragment() {
         setupList()
         setupToolbar()
         setupSearch()
-        loadPickableApps()
+        observeViewModel()
     }
 
     override fun onStart() {
@@ -68,8 +64,7 @@ class AddManagedAppBottomSheet : BottomSheetDialogFragment() {
 
     private fun setupSearch() {
         DenseSearchField.setOnQueryChangeListener(binding.searchField.root) { newQuery ->
-            query = newQuery
-            applyFilter()
+            viewModel.setQuery(newQuery)
         }
     }
 
@@ -82,46 +77,37 @@ class AddManagedAppBottomSheet : BottomSheetDialogFragment() {
         binding.recyclerPickable.adapter = adapter
     }
 
-    private fun loadPickableApps() {
-        binding.loadingPanel.root.visibility = View.VISIBLE
-        LoadingState.bind(binding.loadingPanel.root)
-        binding.recyclerPickable.visibility = View.GONE
-        binding.emptyState.root.visibility = View.GONE
+    private fun observeViewModel() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.uiState.collect { state ->
+                    when (state) {
+                        is AddManagedAppUiState.Loading -> {
+                            binding.loadingPanel.root.visibility = View.VISIBLE
+                            LoadingState.bind(binding.loadingPanel.root)
+                            binding.recyclerPickable.visibility = View.GONE
+                            binding.emptyState.root.visibility = View.GONE
+                        }
+                        is AddManagedAppUiState.Success -> {
+                            if (_binding == null) return@collect
+                            binding.loadingPanel.root.visibility = View.GONE
+                            adapter.submitList(state.apps)
 
-        lifecycleScope.launch {
-            val loaded = withContext(Dispatchers.IO) {
-                try {
-                    repository.loadPickableApps()
-                } catch (_: Exception) {
-                    emptyList()
+                            val empty = state.apps.isEmpty()
+                            if (empty) {
+                                EmptyState.bind(
+                                    binding.emptyState.root,
+                                    getString(R.string.add_managed_picker_empty),
+                                    R.drawable.ic_add,
+                                )
+                            }
+                            binding.emptyState.root.visibility = if (empty) View.VISIBLE else View.GONE
+                            binding.recyclerPickable.visibility = if (!empty) View.VISIBLE else View.GONE
+                        }
+                    }
                 }
             }
-            if (_binding == null) return@launch
-            allApps = loaded
-            binding.loadingPanel.root.visibility = View.GONE
-            applyFilter()
         }
-    }
-
-    private fun applyFilter() {
-        val normalized = query.lowercase(Locale.getDefault())
-        val visible = allApps.filter { app ->
-            if (normalized.isEmpty()) return@filter true
-            app.label.lowercase(Locale.getDefault()).contains(normalized) ||
-                app.packageName.lowercase(Locale.getDefault()).contains(normalized)
-        }
-        adapter.submitList(visible)
-
-        val empty = visible.isEmpty() && binding.loadingPanel.root.visibility != View.VISIBLE
-        if (empty) {
-            EmptyState.bind(
-                binding.emptyState.root,
-                getString(R.string.add_managed_picker_empty),
-                R.drawable.ic_add,
-            )
-        }
-        binding.emptyState.root.visibility = if (empty) View.VISIBLE else View.GONE
-        binding.recyclerPickable.visibility = if (!empty) View.VISIBLE else View.GONE
     }
 
     private fun commitSelection() {

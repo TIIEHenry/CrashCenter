@@ -4,14 +4,14 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.fragment.app.viewModels
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import nota.android.crash.xp.app.R
 import nota.android.crash.xp.app.common.ui.configureBottomSheetAppearance
-import nota.android.crash.xp.app.data.CrashDetailLoader
 import nota.android.crash.xp.app.data.FileCrashLogRepository
 import nota.android.crash.xp.app.databinding.BottomSheetCrashDetailBinding
 import nota.android.crash.xp.app.view.CrashLogViewerClient
@@ -22,6 +22,15 @@ class CrashDetailBottomSheet : BottomSheetDialogFragment() {
     private val binding get() = checkNotNull(_binding) { "Binding accessed after onDestroyView" }
 
     private var viewer: CrashLogViewerClient? = null
+
+    private val viewModel: CrashDetailViewModel by viewModels {
+        val crashId = arguments?.getString(ARG_CRASH_ID).orEmpty()
+        CrashDetailViewModel.Factory(
+            crashId = crashId,
+            repository = FileCrashLogRepository(requireContext()),
+            contextProvider = { requireContext() },
+        )
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -36,7 +45,7 @@ class CrashDetailBottomSheet : BottomSheetDialogFragment() {
         super.onViewCreated(view, savedInstanceState)
         binding.btnClose.setOnClickListener { dismiss() }
         viewer = CrashLogViewerClient.attach(requireContext(), binding.viewerContainer)
-        loadContent()
+        observeViewModel()
     }
 
     override fun onStart() {
@@ -50,7 +59,7 @@ class CrashDetailBottomSheet : BottomSheetDialogFragment() {
         _binding = null
     }
 
-    private fun loadContent() {
+    private fun observeViewModel() {
         val args = requireArguments()
         val rawStack = args.getString(ARG_STACK_TRACE)
         if (!rawStack.isNullOrBlank()) {
@@ -69,20 +78,21 @@ class CrashDetailBottomSheet : BottomSheetDialogFragment() {
         }
 
         binding.tvTitle.text = getString(R.string.crash_history_loading)
-        lifecycleScope.launch {
-            val event = withContext(Dispatchers.IO) {
-                FileCrashLogRepository(requireContext()).getById(crashId)
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.uiState.collect { state ->
+                    when (state) {
+                        is CrashDetailUiState.Loading -> {
+                            binding.tvTitle.text = getString(R.string.crash_history_loading)
+                        }
+                        is CrashDetailUiState.Success -> {
+                            if (_binding == null) return@collect
+                            binding.tvTitle.text = state.title
+                            viewer?.showStackTrace(state.stackTrace)
+                        }
+                    }
+                }
             }
-            val stackTrace = withContext(Dispatchers.IO) {
-                CrashDetailLoader.loadStackTraceById(requireContext(), crashId)
-                    ?: getString(R.string.crash_detail_not_found, crashId)
-            }
-            val title = event?.shortExceptionClass
-                ?: titleFromStackTrace(stackTrace)
-                ?: getString(R.string.crash_info_title)
-            if (_binding == null) return@launch
-            binding.tvTitle.text = title
-            viewer?.showStackTrace(stackTrace)
         }
     }
 

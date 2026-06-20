@@ -4,4 +4,6 @@
     <attr name="statusBannerInactiveBackground" format="color" />
     <attr name="statusBannerActiveTextColor" format="color" />
     <attr name="statusBannerInactiveTextColor" format="color" />
+    <attr name="colorSurface" format="color" />
+    <attr name="dividerColor" format="color" />
 </resources>

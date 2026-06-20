@@ -6,6 +6,8 @@ import android.widget.TextView
 import androidx.annotation.DrawableRes
 import com.google.android.material.button.MaterialButton
 import nota.android.crash.xp.app.R
+import nota.android.crash.xp.app.databinding.ViewEmptyStateActionBinding
+import nota.android.crash.xp.app.databinding.ViewEmptyStateBinding
 
 object EmptyState {
 
@@ -35,26 +37,35 @@ object EmptyState {
     ) {
         when (root) {
             is TextView -> root.text = message
-            else -> root.findViewById<TextView>(R.id.emptyMessage)?.text = message
+            else -> {
+                val actionBinding = ViewEmptyStateActionBinding.bind(root)
+                actionBinding.emptyMessage.text = message
+                bindIcon(actionBinding.emptyIcon, iconRes)
+                bindAction(actionBinding.emptyAction, actionLabel, onAction)
+            }
         }
-        bindIcon(root, iconRes)
-        val actionButton = root.findViewById<MaterialButton>(R.id.emptyAction)
-        if (actionButton == null || actionLabel == null || onAction == null) {
-            actionButton?.visibility = View.GONE
-            return
-        }
-        actionButton.visibility = View.VISIBLE
-        actionButton.text = actionLabel
-        actionButton.setOnClickListener { onAction() }
     }
 
-    private fun bindIcon(root: View, @DrawableRes iconRes: Int?) {
-        val icon = root.findViewById<ImageView>(R.id.emptyIcon) ?: return
+    private fun bindIcon(icon: ImageView, @DrawableRes iconRes: Int?) {
         if (iconRes == null) {
             icon.visibility = View.GONE
             return
         }
         icon.visibility = View.VISIBLE
         icon.setImageResource(iconRes)
+    }
+
+    private fun bindAction(
+        actionButton: MaterialButton,
+        actionLabel: CharSequence?,
+        onAction: (() -> Unit)?,
+    ) {
+        if (actionLabel == null || onAction == null) {
+            actionButton.visibility = View.GONE
+            return
+        }
+        actionButton.visibility = View.VISIBLE
+        actionButton.text = actionLabel
+        actionButton.setOnClickListener { onAction() }
     }
 }

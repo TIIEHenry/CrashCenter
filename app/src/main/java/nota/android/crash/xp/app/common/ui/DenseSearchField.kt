@@ -4,11 +4,11 @@ import android.text.Editable
 import android.text.TextWatcher
 import android.view.View
 import android.widget.EditText
-import nota.android.crash.xp.app.R
+import nota.android.crash.xp.app.databinding.ViewDenseSearchFieldBinding
 
 object DenseSearchField {
 
-    fun editText(root: View): EditText = root.findViewById(R.id.searchInput)
+    fun editText(root: View): EditText = ViewDenseSearchFieldBinding.bind(root).searchInput
 
     fun setOnQueryChangeListener(root: View, listener: (String) -> Unit) {
         editText(root).addTextChangedListener(object : TextWatcher {
