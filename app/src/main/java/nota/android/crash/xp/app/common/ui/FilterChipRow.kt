@@ -4,26 +4,26 @@ import android.view.View
 import android.widget.TextView
 import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
-import nota.android.crash.xp.app.R
 
 object FilterChipRow {
 
-    fun chipGroup(root: View): ChipGroup = root.findViewById(R.id.chipGroup)
+    fun chipGroup(root: View, chipGroupId: Int): ChipGroup = root.findViewById(chipGroupId)
 
-    fun chip(root: View, chipId: Int): Chip? = chipGroup(root).findViewById(chipId)
+    fun chip(root: View, chipGroupId: Int, chipId: Int): Chip? = chipGroup(root, chipGroupId).findViewById(chipId)
 
-    fun setCountLabel(root: View, text: CharSequence) {
-        root.findViewById<TextView>(R.id.countLabel)?.text = text
+    fun setCountLabel(root: View, countLabelId: Int, text: CharSequence) {
+        root.findViewById<TextView>(countLabelId)?.text = text
     }
 
     fun setOnSingleSelectionChangeListener(
         root: View,
+        chipGroupId: Int,
         listener: ChipGroup.OnCheckedStateChangeListener,
     ) {
-        chipGroup(root).setOnCheckedStateChangeListener(listener)
+        chipGroup(root, chipGroupId).setOnCheckedStateChangeListener(listener)
     }
 
-    fun setChipChecked(root: View, chipId: Int, checked: Boolean) {
-        chip(root, chipId)?.isChecked = checked
+    fun setChipChecked(root: View, chipGroupId: Int, chipId: Int, checked: Boolean) {
+        chip(root, chipGroupId, chipId)?.isChecked = checked
     }
 }

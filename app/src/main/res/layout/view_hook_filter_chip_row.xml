@@ -15,14 +15,14 @@
         android:scrollbars="none">
 
         <com.google.android.material.chip.ChipGroup
-            android:id="@+id/chipGroup"
+            android:id="@+id/hook_chipGroup"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             app:singleLine="true"
             app:singleSelection="true">
 
             <com.google.android.material.chip.Chip
-                android:id="@+id/chipAll"
+                android:id="@+id/hook_chipAll"
                 style="@style/AppTheme.Chip"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -30,14 +30,14 @@
                 android:text="@string/item_all" />
 
             <com.google.android.material.chip.Chip
-                android:id="@+id/chipOn"
+                android:id="@+id/hook_chipOn"
                 style="@style/AppTheme.Chip"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/item_selected" />
 
             <com.google.android.material.chip.Chip
-                android:id="@+id/chipOff"
+                android:id="@+id/hook_chipOff"
                 style="@style/AppTheme.Chip"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -48,7 +48,7 @@
     </HorizontalScrollView>
 
     <TextView
-        android:id="@+id/countLabel"
+        android:id="@+id/hook_countLabel"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="@dimen/spacing_sm"

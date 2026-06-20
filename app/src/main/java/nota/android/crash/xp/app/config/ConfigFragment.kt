@@ -200,20 +200,20 @@ class ConfigFragment : Fragment() {
 
     private fun setupSettingsChips() {
         val row = binding.settingChipRow.root
-        FilterChipRow.chip(row, R.id.chipScopeMode)?.setOnLongClickListener {
+        FilterChipRow.chip(row, R.id.setting_chipGroup, R.id.chipScopeMode)?.setOnLongClickListener {
             MaterialAlertDialogBuilder(requireContext())
                 .setTitle(R.string.item_scope_mode)
                 .setMessage(R.string.scope_mode_description)
                 .show()
             true
         }
-        FilterChipRow.chip(row, R.id.chipScopeMode)?.setOnCheckedChangeListener { _, isChecked ->
+        FilterChipRow.chip(row, R.id.setting_chipGroup, R.id.chipScopeMode)?.setOnCheckedChangeListener { _, isChecked ->
             if (!suppressChipCallbacks) viewModel.setScopeMode(isChecked)
         }
-        FilterChipRow.chip(row, R.id.chipHandleSystem)?.setOnCheckedChangeListener { _, isChecked ->
+        FilterChipRow.chip(row, R.id.setting_chipGroup, R.id.chipHandleSystem)?.setOnCheckedChangeListener { _, isChecked ->
             if (!suppressChipCallbacks) viewModel.setHandleSystem(isChecked)
         }
-        FilterChipRow.chip(row, R.id.chipShowSystem)?.setOnCheckedChangeListener { _, isChecked ->
+        FilterChipRow.chip(row, R.id.setting_chipGroup, R.id.chipShowSystem)?.setOnCheckedChangeListener { _, isChecked ->
             if (!suppressChipCallbacks) viewModel.setShowSystemUi(isChecked)
         }
     }
@@ -223,10 +223,10 @@ class ConfigFragment : Fragment() {
     }
 
     private fun setupManagedFilterChips() {
-        FilterChipRow.setOnSingleSelectionChangeListener(binding.managedFilterChipRow.root) { _, checkedIds ->
+        FilterChipRow.setOnSingleSelectionChangeListener(binding.managedFilterChipRow.root, R.id.managed_chipGroup) { _, checkedIds ->
             val filter = when (checkedIds.firstOrNull()) {
-                R.id.chipEnabled -> ManagedFilter.ENABLED
-                R.id.chipPending -> ManagedFilter.PENDING
+                R.id.managed_chipEnabled -> ManagedFilter.ENABLED
+                R.id.managed_chipPending -> ManagedFilter.PENDING
                 else -> ManagedFilter.ALL
             }
             viewModel.setManagedFilter(filter)
@@ -234,10 +234,10 @@ class ConfigFragment : Fragment() {
     }
 
     private fun setupLegacyFilterChips() {
-        FilterChipRow.setOnSingleSelectionChangeListener(binding.hookFilterChipRow.root) { _, checkedIds ->
+        FilterChipRow.setOnSingleSelectionChangeListener(binding.hookFilterChipRow.root, R.id.hook_chipGroup) { _, checkedIds ->
             val filter = when (checkedIds.firstOrNull()) {
-                R.id.chipOn -> HookFilter.ON
-                R.id.chipOff -> HookFilter.OFF
+                R.id.hook_chipOn -> HookFilter.ON
+                R.id.hook_chipOff -> HookFilter.OFF
                 else -> HookFilter.ALL
             }
             viewModel.setHookFilter(filter)
@@ -247,9 +247,9 @@ class ConfigFragment : Fragment() {
     private fun renderState(state: ConfigUiState) {
         suppressChipCallbacks = true
         val settingsRow = binding.settingChipRow.root
-        FilterChipRow.setChipChecked(settingsRow, R.id.chipScopeMode, state.scopeMode)
-        FilterChipRow.setChipChecked(settingsRow, R.id.chipHandleSystem, state.handleSystem)
-        FilterChipRow.setChipChecked(settingsRow, R.id.chipShowSystem, state.showSystemUi)
+        FilterChipRow.setChipChecked(settingsRow, R.id.setting_chipGroup, R.id.chipScopeMode, state.scopeMode)
+        FilterChipRow.setChipChecked(settingsRow, R.id.setting_chipGroup, R.id.chipHandleSystem, state.handleSystem)
+        FilterChipRow.setChipChecked(settingsRow, R.id.setting_chipGroup, R.id.chipShowSystem, state.showSystemUi)
         suppressChipCallbacks = false
 
         state.packageVisibility?.let { permissionBannerRenderer.render(it) }

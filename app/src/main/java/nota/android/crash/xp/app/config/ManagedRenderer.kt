@@ -16,6 +16,7 @@ class ManagedRenderer(
         val count = state.visibleManagedApps.size
         FilterChipRow.setCountLabel(
             binding.managedFilterChipRow.root,
+            R.id.managed_countLabel,
             binding.root.context.resources.getQuantityString(R.plurals.app_count, count, count),
         )
         return count
