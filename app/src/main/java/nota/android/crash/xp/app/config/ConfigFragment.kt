@@ -19,16 +19,11 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import nota.android.crash.xp.PrefManager
-import nota.android.crash.xp.app.ModuleActivation
-import nota.android.crash.xp.app.PackageVisibilityHelper
 import nota.android.crash.xp.app.R
 import nota.android.crash.xp.app.common.ui.DenseSearchField
 import nota.android.crash.xp.app.common.ui.FilterChipRow
 import nota.android.crash.xp.app.common.ui.LoadingState
 import nota.android.crash.xp.app.databinding.FragmentConfigBinding
-import androidx.core.content.edit
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import nota.android.crash.xp.app.di.ServiceLocator
 
 class ConfigFragment : Fragment() {
@@ -48,6 +43,8 @@ class ConfigFragment : Fragment() {
     private lateinit var managedRenderer: ManagedRenderer
     private lateinit var permissionBannerRenderer: PermissionBannerRenderer
     private lateinit var emptyStateRenderer: EmptyStateRenderer
+    private lateinit var optionsMenuHelper: ConfigOptionsMenuHelper
+    private lateinit var dialogHelper: ConfigDialogHelper
     private var returningFromPermissionSettings = false
     private var suppressChipCallbacks = false
     private var xposedDialogShown = false
@@ -74,6 +71,7 @@ class ConfigFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        setupHelpers()
         setupList()
         setupSettingsChips()
         setupSearch()
@@ -81,7 +79,7 @@ class ConfigFragment : Fragment() {
         setupLegacyFilterChips()
         legacyRenderer = LegacyRenderer(binding, legacyAdapter)
         managedRenderer = ManagedRenderer(binding, managedAdapter)
-        permissionBannerRenderer = PermissionBannerRenderer(binding, ::showPermissionRationaleDialog)
+        permissionBannerRenderer = PermissionBannerRenderer(binding, ::openPermissionRationaleDialog)
         emptyStateRenderer = EmptyStateRenderer(binding, ::showAddManagedAppSheet)
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -109,73 +107,34 @@ class ConfigFragment : Fragment() {
     }
 
     fun prepareOptionsMenu(menu: Menu) {
-        val legacy = viewModel.uiState.value.isLegacyMode
-        menu.findItem(R.id.item_select_all)?.isVisible = legacy
-        menu.findItem(R.id.item_cancel_all)?.isVisible = legacy
-        menu.findItem(R.id.item_add_managed_app)?.isVisible = !legacy
+        optionsMenuHelper.prepareOptionsMenu(menu, viewModel.uiState.value.isLegacyMode)
     }
 
     fun handleOptionsItem(item: MenuItem): Boolean {
-        return when (item.itemId) {
-            R.id.item_add_managed_app -> {
-                showAddManagedAppSheet()
-                true
-            }
-            R.id.item_cancel_all -> {
-                viewModel.selectAll(enabled = false)
-                true
-            }
-            R.id.item_select_all -> {
-                viewModel.selectAll(enabled = true)
-                true
-            }
-            R.id.item_help -> {
-                MaterialAlertDialogBuilder(requireContext())
-                    .setTitle(getString(R.string.using_warning_title))
-                    .setMessage(getString(R.string.using_warning))
-                    .show()
-                true
-            }
-            R.id.item_test -> {
-                Toast.makeText(requireContext(), R.string.test_hint, Toast.LENGTH_LONG).show()
-                lifecycleScope.launch {
-                    delay(2000)
-                    throw RuntimeException("just for test")
-                }
-                true
-            }
-            R.id.item_sort_by_name -> {
-                item.isChecked = true
-                viewModel.setSortMode(SortMode.NAME_ASC)
-                true
-            }
-            R.id.item_sort_by_name_reverse -> {
-                item.isChecked = true
-                viewModel.setSortMode(SortMode.NAME_DESC)
-                true
-            }
-            R.id.item_sort_by_install_time -> {
-                item.isChecked = true
-                viewModel.setSortMode(SortMode.INSTALL_TIME_ASC)
-                true
-            }
-            R.id.item_sort_by_install_time_reverse -> {
-                item.isChecked = true
-                viewModel.setSortMode(SortMode.INSTALL_TIME_DESC)
-                true
-            }
-            R.id.item_sort_by_update_time -> {
-                item.isChecked = true
-                viewModel.setSortMode(SortMode.UPDATE_TIME_ASC)
-                true
-            }
-            R.id.item_sort_by_update_time_reverse -> {
-                item.isChecked = true
-                viewModel.setSortMode(SortMode.UPDATE_TIME_DESC)
-                true
-            }
-            else -> false
+        return optionsMenuHelper.handleOptionsItem(item)
+    }
+
+    internal fun showTestToastAndCrash() {
+        Toast.makeText(requireContext(), R.string.test_hint, Toast.LENGTH_LONG).show()
+        lifecycleScope.launch {
+            delay(2000)
+            throw RuntimeException("just for test")
         }
+    }
+
+    private fun setupHelpers() {
+        optionsMenuHelper = ConfigOptionsMenuHelper(
+            showTestToastAndCrash = ::showTestToastAndCrash,
+            viewModel = viewModel,
+            showAddManagedAppSheet = ::showAddManagedAppSheet,
+            showHelpDialog = { dialogHelper.showHelpDialog() },
+        )
+        dialogHelper = ConfigDialogHelper(
+            context = requireContext(),
+            onPermissionSettingsOpened = {
+                returningFromPermissionSettings = true
+            },
+        )
     }
 
     private fun setupList() {
@@ -201,10 +160,7 @@ class ConfigFragment : Fragment() {
     private fun setupSettingsChips() {
         val row = binding.settingChipRow.root
         FilterChipRow.chip(row, R.id.setting_chipGroup, R.id.chipScopeMode)?.setOnLongClickListener {
-            MaterialAlertDialogBuilder(requireContext())
-                .setTitle(R.string.item_scope_mode)
-                .setMessage(R.string.scope_mode_description)
-                .show()
+            dialogHelper.showHelpDialog()
             true
         }
         FilterChipRow.chip(row, R.id.setting_chipGroup, R.id.chipScopeMode)?.setOnCheckedChangeListener { _, isChecked ->
@@ -271,8 +227,7 @@ class ConfigFragment : Fragment() {
         emptyStateRenderer.render(state, listCount)
 
         if (!state.isLoading && !xposedDialogShown) {
-            xposedDialogShown = true
-            showXposedInactiveDialogIfNeeded()
+            xposedDialogShown = dialogHelper.showXposedInactiveDialogIfNeeded(xposedDialogShown)
         }
 
         activity?.invalidateOptionsMenu()
@@ -292,34 +247,8 @@ class ConfigFragment : Fragment() {
         )
     }
 
-    private fun showXposedInactiveDialogIfNeeded() {
-        val context = requireContext()
-        val prefs = context.getSharedPreferences(PrefManager.PREF_NAME, Context.MODE_PRIVATE)
-        if (prefs.getBoolean(PrefManager.PREF_XPOSED_DIALOG_DISMISSED, false)) return
-        if (ModuleActivation.isModuleActive()) return
-
-        MaterialAlertDialogBuilder(context)
-            .setTitle(R.string.xposed_not_active)
-            .setMessage(R.string.xposed_hint)
-            .setNeutralButton(R.string.btn_dont_show_again) { _, _ ->
-                prefs.edit { putBoolean(PrefManager.PREF_XPOSED_DIALOG_DISMISSED, true) }
-            }
-            .show()
-    }
-
-    private fun showPermissionRationaleDialog() {
-        MaterialAlertDialogBuilder(requireContext())
-            .setTitle(R.string.permission_rationale_title)
-            .setMessage(R.string.permission_rationale_message)
-            .setPositiveButton(R.string.permission_open_settings) { _, _ ->
-                returningFromPermissionSettings = true
-                if (!PackageVisibilityHelper.openAppSettings(requireContext())) {
-                    returningFromPermissionSettings = false
-                    Toast.makeText(requireContext(), R.string.permission_settings_failed, Toast.LENGTH_SHORT).show()
-                }
-            }
-            .setNegativeButton(android.R.string.cancel, null)
-            .show()
+    private fun openPermissionRationaleDialog() {
+        dialogHelper.showPermissionRationaleDialog()
     }
 
     companion object {
