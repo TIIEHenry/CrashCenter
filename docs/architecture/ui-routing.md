@@ -3,7 +3,7 @@ title: "界面路由与导航图"
 type: architecture
 status: accepted
 phase: 4
-updated: 2026-06-19
+updated: 2026-06-20
 summary: "MainShellActivity、ConfigFragment、ObserveHost 与详情 Activity 的路由表、Intent 兼容参数、返回栈与 Phase 4C+ Navigation 图"
 ---
 
@@ -21,7 +21,7 @@ CrashCenter UI 路由按 **壳层深度** 分为四层：
 | 层级 | 载体 | 典型内容 |
 |------|------|----------|
 | **L0 外部入口** | 系统 / 其他 app Intent | 桌面、通知、SAF |
-| **L1 应用壳层** | `MainShellActivity`（4C+）或当前 `ActivityMain` | Toolbar、状态条、底栏 配置 \| 观测、WindowInsets |
+| **L1 应用壳层** | `MainShellActivity` | Toolbar、状态条、底栏 配置 \| 观测、WindowInsets |
 | **L2 壳内子页** | `Fragment` + 可选内层 `TabLayout` | 配置列表、历史、统计 |
 | **L3 任务页** | 独立 `Activity` 或全屏 `Fragment` | 详情、单应用观测、logcat 导入 |
 
@@ -43,22 +43,73 @@ CrashCenter UI 路由按 **壳层深度** 分为四层：
 | 壳内（历史 / 单应用 / 统计下钻） | `CrashDetailBottomSheet` | `crash_detail_sheet` | Draggable Half Sheet + `CrashLogViewerClient`；复用 `AddManagedAppBottomSheet` 模式 |
 | 外部（通知 / 深链 / 跨任务栈） | `ActivityCrashInfo` / `CrashLogDetailActivity` | `crash_detail` | 全屏 Activity；兼容旧 `Exception` extra |
  
-Phase 4C 路由迁移的核心是：`ActivityMain` 的页面内容变成 `ConfigFragment`，Launcher 入口变为 `MainShellActivity`，详情 Activity 继续兼容旧通知 extra。
+Phase 4C 路由迁移的核心：`ActivityMain` 单体已移除；Launcher 入口为 `MainShellActivity`，配置内容在 `ConfigFragment`，详情 Activity 继续兼容旧通知 extra。
 
 ---
 
-## 当前实现（Phase 3）
+## As-built（2026-06）
+
+Manifest 与源码 as-built（2026-06-20）：
 
 ### Manifest Activity
+
+| Activity | 类名 | `launchMode` | `exported` | 入口 |
+|----------|------|--------------|------------|------|
+| 主壳层 | `nota.android.crash.xp.app.shell.MainShellActivity` | `singleTask` | `true` | `MAIN` + `LAUNCHER`；`VIEW` |
+| 干预编辑 | `nota.android.crash.xp.app.config.AppInterventionEditActivity` | `standard` | `false` | 显式 `startActivity` |
+| 崩溃详情 | `nota.android.crash.ActivityCrashInfo` | `singleTask` | `true` | 显式 Component；`VIEW` |
+
+namespace / applicationId：`nota.android.crash.xp.app`。`ActivityMain` **已不在 Manifest**。
+
+### 壳层与 Fragment
+
+| 组件 | 类 | 说明 |
+|------|-----|------|
+| L1 壳层 | `MainShellActivity` | Toolbar、Xposed 状态条、`BottomNavigationView`（配置 \| 观测） |
+| 配置 tab | `ConfigFragment` | 原 `ActivityMain` 列表/菜单/Chip；`ConfigViewModel` + `AppRepository` |
+| 观测 tab | `ObserveHostFragment` | 观测域宿主；**当前仅嵌入** `CrashHistoryFragment`（Paging3 历史列表） |
+| 详情 | `ActivityCrashInfo` | 通知 → 全屏 stack；壳内历史 → `CrashDetailBottomSheet`（`crash_id`） |
+
+底栏由 `ShellTabController` + `ShellNavigator` 管理 Fragment 切换（**非** Navigation Component graph）。
+
+### As-built 路由图
+
+```mermaid
+flowchart TB
+    Launcher[LAUNCHER] --> Shell[MainShellActivity]
+    Shell --> Config[ConfigFragment]
+    Shell --> Observe[ObserveHostFragment]
+    Observe --> History[CrashHistoryFragment]
+    History --> Sheet[CrashDetailBottomSheet crash_id]
+    Notif[通知 PendingIntent] --> CrashInfo[ActivityCrashInfo Exception extra]
+    Config --> AppEdit[AppInterventionEditActivity]
+    Config --> AddApp[AddManagedAppBottomSheet]
+```
+
+| 路由 | 触发 | 参数 | 返回行为 |
+|------|------|------|----------|
+| → `MainShellActivity` | Launcher、`am start` | 无 | 系统 HOME |
+| → `ConfigFragment` / `ObserveHostFragment` | 底栏切换 | — | 保留 tab Fragment 状态 |
+| → `CrashHistoryFragment` | 观测 tab 默认子页 | — | 同 tab 内 |
+| → `CrashDetailBottomSheet` | 历史列表点击 | `crash_id` | dismiss → 回到列表 |
+| → `ActivityCrashInfo` | 通知点击 | `Exception` String | `finish()` |
+
+**尚未 as-built**：观测内层 TabLayout（历史 \| 统计）、`PerAppCrashActivity`、`LogcatImportActivity`、通知 `crash_id` extra。
+
+---
+
+## Legacy Phase 3（已 superseded）
+
+> 历史参考：`ActivityMain` 单体 + 零 Fragment。2026-06 起 Launcher 已迁至 `MainShellActivity`。
+
+### Manifest Activity（旧）
 
 | Activity | 类名 | `launchMode` | `exported` | 入口 |
 |----------|------|--------------|------------|------|
 | 主界面 | `nota.android.crash.xp.app.ActivityMain` | `singleTask` | `true` | `MAIN` + `LAUNCHER`；`VIEW` |
 | 崩溃详情 | `nota.android.crash.ActivityCrashInfo` | `singleTask` | `true` | 显式 Component；`VIEW` |
 
-namespace / applicationId：`nota.android.crash.xp.app`。
-
-### 当前路由图
+### 旧路由图
 
 ```mermaid
 flowchart LR
@@ -73,9 +124,9 @@ flowchart LR
 | → `ActivityMain` | Launcher、`am start` | 无 | 系统 HOME |
 | → `ActivityCrashInfo` | 通知点击（跨包 Component） | `Exception` String（stack） | `finish()` / navigate up |
 
-**缺口**：无观测历史/统计；详情仅 Intent extra，无 `crash_id`；主界面无 deep link。
+**旧缺口**：无观测历史/统计；详情仅 Intent extra，无 `crash_id`；主界面无 deep link。
 
-### 壳内「伪路由」（非 Navigation 组件）
+### 壳内「伪路由」（旧 ActivityMain）
 
 | 交互 | 实现 | 路由类型 |
 |------|------|----------|
@@ -230,15 +281,8 @@ Extra: crash_id = <uuid>
 
 ```text
 Action: MAIN + category LAUNCHER
-→ MainShellActivity / ActivityMain
-```
-
-Phase 4C 后：
-
-```text
-Action: MAIN + category LAUNCHER
-→ MainShellActivity
-startDestination: config
+→ MainShellActivity（as-built）
+默认 tab：配置（ConfigFragment）
 ```
 
 ### 可选 Deep Link（P3）
@@ -312,9 +356,9 @@ logcat_import_activity
 
 | 阶段 | Activity 数 | Fragment | 外部入口 |
 |------|-------------|----------|----------|
-| **Phase 3（现）** | 2 | 0 | Launcher、通知 → `ActivityCrashInfo` |
+| **Phase 3（Legacy）** | 2 | 0 | Launcher → `ActivityMain`；通知 → `ActivityCrashInfo` |
 | **4B** | 2 | 0 | 同上 |
-| **4C-α** | 3（+`MainShell`，`ActivityMain` 降级/兼容） | 2（配置 + 观测宿主） | Launcher → Shell；通知仍可走旧详情 extra |
+| **4C-α（as-built）** | 3（+`AppInterventionEdit`） | 2（配置 + 观测宿主→历史） | Launcher → `MainShellActivity`；通知仍 → `ActivityCrashInfo` |
 | **4C-β** | 3 | 3（配置 + 观测宿主 + 历史） | 历史 → `CrashDetailBottomSheet`（`crash_id`）；通知仍 → Activity |
 | **4D** | 4（+`PerAppCrash`） | 3（+统计） | 配置菜单 → 单应用 |
 | **4E** | 4 | 3 | 通知改 `crash_id`；SAF 导出 |
@@ -357,9 +401,11 @@ logcat_import_activity
 - [crash-notification.md](crash-notification.md) — 通知 PendingIntent
 - [crash-stats-ui.md](crash-stats-ui.md) — 统计与单应用页入口
 - [crash-history-ui.md](crash-history-ui.md) — 历史列表 → `CrashDetailBottomSheet`
+- [crash-event-timeline-ui.md](crash-event-timeline-ui.md) — `crash_history` 时间线呈现与预筛参数
 - [design-system.md](design-system.md) — `CrashDetailBottomSheet` 与 Draggable Half Sheet 规范
 - [adb-logcat-analysis.md](adb-logcat-analysis.md) — logcat 导入页
 - [configuration-ui.md](configuration-ui.md) — 配置 tab 布局
 - [ADR-005](../decisions/005-settings-information-architecture.md) — 配置单屏约束
 - [ADR-006](../decisions/006-material3-toolchain.md) — Navigation 组件 defer
 - [ADR-009](../decisions/009-ui-shell-design-system.md) — Shell / Design System / Domain Page / Feature State
+- [dev/plans/architecture-decision-backlog.md](../../dev/plans/architecture-decision-backlog.md) — §3.1 as-built 文档同步清单

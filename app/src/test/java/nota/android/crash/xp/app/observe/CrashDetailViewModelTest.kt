@@ -3,13 +3,11 @@ package nota.android.crash.xp.app.observe
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
-import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import nota.android.crash.xp.app.data.CrashEvent
-import nota.android.crash.xp.app.data.CrashLogRepository
 import nota.android.crash.xp.app.data.FakeCrashLogRepository
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -18,28 +16,19 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
-import org.robolectric.RuntimeEnvironment
-import java.io.File
 
 @RunWith(RobolectricTestRunner::class)
 @OptIn(ExperimentalCoroutinesApi::class)
 class CrashDetailViewModelTest {
 
     private val testDispatcher = StandardTestDispatcher()
-    private val testScope = TestScope(testDispatcher)
 
     private lateinit var repository: FakeCrashLogRepository
-    private lateinit var context: android.content.Context
 
     @Before
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
         repository = FakeCrashLogRepository()
-        context = RuntimeEnvironment.getApplication()
-
-        // Clean up any previous test files
-        val logDir = File(context.filesDir, "crash_logs")
-        logDir.deleteRecursively()
     }
 
     @After
@@ -51,21 +40,14 @@ class CrashDetailViewModelTest {
         return CrashDetailViewModel(
             crashId = crashId,
             repository = repository,
-            contextProvider = { context },
+            ioDispatcher = testDispatcher,
         )
-    }
-
-    private fun writeEventToFile(event: CrashEvent) {
-        val logDir = File(context.filesDir, "crash_logs")
-        logDir.mkdirs()
-        val eventsFile = File(logDir, "events.jsonl")
-        eventsFile.appendText(event.toJsonLine() + "\n")
     }
 
     // ─── Initial State ───
 
     @Test
-    fun `initial state is Loading`() = testScope.runTest {
+    fun `initial state is Loading`() = runTest(testDispatcher) {
         val viewModel = createViewModel("crash-1")
         val state = viewModel.uiState.value
         assertTrue(state is CrashDetailUiState.Loading)
@@ -74,7 +56,7 @@ class CrashDetailViewModelTest {
     // ─── Loading Crash Detail ───
 
     @Test
-    fun `loadCrashDetail with event in file uses shortExceptionClass as title`() = testScope.runTest {
+    fun `loadCrashDetail with event in repository uses shortExceptionClass as title`() = runTest(testDispatcher) {
         val event = CrashEvent(
             id = "crash-1",
             timestampMs = 1000L,
@@ -83,7 +65,6 @@ class CrashDetailViewModelTest {
             stackTrace = "java.lang.NullPointerException: oops\n    at com.example.Foo.bar(Foo.java:42)",
         )
         repository.addEvent(event)
-        writeEventToFile(event)
 
         val viewModel = createViewModel("crash-1")
         advanceUntilIdle()
@@ -96,7 +77,7 @@ class CrashDetailViewModelTest {
     }
 
     @Test
-    fun `loadCrashDetail with event only in repository uses shortExceptionClass and fallback stack trace`() = testScope.runTest {
+    fun `loadCrashDetail with event only in repository uses stack trace from event`() = runTest(testDispatcher) {
         val event = CrashEvent(
             id = "crash-2",
             timestampMs = 2000L,
@@ -105,7 +86,6 @@ class CrashDetailViewModelTest {
             stackTrace = "java.lang.IllegalStateException: Bad state\n    at com.example.Foo.bar(Foo.java:42)",
         )
         repository.addEvent(event)
-        // NOT writing to file
 
         val viewModel = createViewModel("crash-2")
         advanceUntilIdle()
@@ -114,11 +94,11 @@ class CrashDetailViewModelTest {
         assertTrue(state is CrashDetailUiState.Success)
         val success = state as CrashDetailUiState.Success
         assertEquals("IllegalStateException", success.title)
-        assertEquals("Crash detail not found: crash-2", success.stackTrace)
+        assertTrue(success.stackTrace.contains("IllegalStateException: Bad state"))
     }
 
     @Test
-    fun `loadCrashDetail with unknown crashId shows not found message`() = testScope.runTest {
+    fun `loadCrashDetail with unknown crashId shows not found message`() = runTest(testDispatcher) {
         val viewModel = createViewModel("nonexistent-id")
         advanceUntilIdle()
 
@@ -130,7 +110,7 @@ class CrashDetailViewModelTest {
     }
 
     @Test
-    fun `loadCrashDetail with nested exception class extracts simple name`() = testScope.runTest {
+    fun `loadCrashDetail with nested exception class extracts simple name`() = runTest(testDispatcher) {
         val event = CrashEvent(
             id = "crash-5",
             timestampMs = 5000L,
@@ -139,7 +119,6 @@ class CrashDetailViewModelTest {
             stackTrace = "android.database.sqlite.SQLiteException: no such table\n    at com.example.Db.query(Db.java:10)",
         )
         repository.addEvent(event)
-        writeEventToFile(event)
 
         val viewModel = createViewModel("crash-5")
         advanceUntilIdle()
@@ -151,7 +130,7 @@ class CrashDetailViewModelTest {
     }
 
     @Test
-    fun `loadCrashDetail with message in exceptionClass includes message in short name`() = testScope.runTest {
+    fun `loadCrashDetail with message in exceptionClass includes message in short name`() = runTest(testDispatcher) {
         val event = CrashEvent(
             id = "crash-6",
             timestampMs = 6000L,
@@ -160,7 +139,6 @@ class CrashDetailViewModelTest {
             stackTrace = "java.lang.IllegalArgumentException: Invalid parameter\n    at com.example.Test.validate(Test.java:20)",
         )
         repository.addEvent(event)
-        writeEventToFile(event)
 
         val viewModel = createViewModel("crash-6")
         advanceUntilIdle()
@@ -172,7 +150,7 @@ class CrashDetailViewModelTest {
     }
 
     @Test
-    fun `loadCrashDetail transitions from Loading to Success`() = testScope.runTest {
+    fun `loadCrashDetail transitions from Loading to Success`() = runTest(testDispatcher) {
         val event = CrashEvent(
             id = "crash-7",
             timestampMs = 7000L,
@@ -181,7 +159,6 @@ class CrashDetailViewModelTest {
             stackTrace = "Trace",
         )
         repository.addEvent(event)
-        writeEventToFile(event)
 
         val viewModel = createViewModel("crash-7")
 
@@ -195,7 +172,7 @@ class CrashDetailViewModelTest {
     }
 
     @Test
-    fun `loadCrashDetail with empty stack trace uses event exceptionClass`() = testScope.runTest {
+    fun `loadCrashDetail with empty stack trace uses fallback from event`() = runTest(testDispatcher) {
         val event = CrashEvent(
             id = "crash-4",
             timestampMs = 4000L,
@@ -204,7 +181,6 @@ class CrashDetailViewModelTest {
             stackTrace = "",
         )
         repository.addEvent(event)
-        writeEventToFile(event)
 
         val viewModel = createViewModel("crash-4")
         advanceUntilIdle()
@@ -213,10 +189,12 @@ class CrashDetailViewModelTest {
         assertTrue(state is CrashDetailUiState.Success)
         val success = state as CrashDetailUiState.Success
         assertEquals("RuntimeException", success.title)
+        assertTrue(success.stackTrace.contains("java.lang.RuntimeException"))
+        assertTrue(success.stackTrace.contains("package=com.example.app"))
     }
 
     @Test
-    fun `factory creates correct ViewModel`() = testScope.runTest {
+    fun `loadCrashDetail with Error class extracts simple name from stack trace`() = runTest(testDispatcher) {
         val event = CrashEvent(
             id = "crash-8",
             timestampMs = 8000L,
@@ -225,16 +203,8 @@ class CrashDetailViewModelTest {
             stackTrace = "java.lang.Error: Fatal\n    at com.example.Main.main(Main.java:1)",
         )
         repository.addEvent(event)
-        writeEventToFile(event)
 
-        val factory = CrashDetailViewModel.Factory(
-            crashId = "crash-8",
-            repository = repository,
-            contextProvider = { context },
-        )
-
-        @Suppress("UNCHECKED_CAST")
-        val viewModel = factory.create(CrashDetailViewModel::class.java) as CrashDetailViewModel
+        val viewModel = createViewModel("crash-8")
         advanceUntilIdle()
 
         val state = viewModel.uiState.value
@@ -244,7 +214,7 @@ class CrashDetailViewModelTest {
     }
 
     @Test
-    fun `loadCrashDetail with blank exceptionClass uses empty title`() = testScope.runTest {
+    fun `loadCrashDetail with blank exceptionClass uses empty title`() = runTest(testDispatcher) {
         val event = CrashEvent(
             id = "crash-3",
             timestampMs = 3000L,
@@ -253,7 +223,6 @@ class CrashDetailViewModelTest {
             stackTrace = "java.lang.RuntimeException: Something went wrong\n    at com.example.Test.run(Test.java:10)",
         )
         repository.addEvent(event)
-        writeEventToFile(event)
 
         val viewModel = createViewModel("crash-3")
         advanceUntilIdle()

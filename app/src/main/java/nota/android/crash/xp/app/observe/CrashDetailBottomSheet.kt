@@ -30,7 +30,6 @@ class CrashDetailBottomSheet : BottomSheetDialogFragment() {
             CrashDetailViewModel(
                 crashId = crashId,
                 repository = ServiceLocator.crashLogRepository(requireContext()),
-                contextProvider = { requireContext() },
             )
         }
     }

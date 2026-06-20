@@ -13,6 +13,14 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
 import nota.android.crash.xp.PrefManager
 
+private fun safeLog(message: String) {
+    try {
+        XposedBridge.log(message)
+    } catch (_: Throwable) {
+        // XposedBridge may not be available in test environments or when the module is not active
+    }
+}
+
 /**
  * Hook-side crash log coordinator (4B-α).
  * Phase 2 parallel: Provider + DirectFs + TargetRelay (RootSu deferred to 4B-β).
@@ -48,7 +56,7 @@ object CrashLogCoordinator {
                 )
                 runPhase2Parallel(hookContext, event)
             } catch (t: Throwable) {
-                XposedBridge.log("CrashLogCoordinator failed: ${t.message}")
+                safeLog("CrashLogCoordinator failed: ${t.message}")
             }
         }
     }
@@ -72,7 +80,7 @@ object CrashLogCoordinator {
                                 is AppendResult.Failure -> null
                             }
                         } catch (t: Throwable) {
-                            XposedBridge.log("CrashLog ${backend.id.wireName} failed: ${t.message}")
+                            safeLog("CrashLog ${backend.id.wireName} failed: ${t.message}")
                             null
                         }
                     }
@@ -84,7 +92,7 @@ object CrashLogCoordinator {
         }
 
         if (written.isEmpty()) {
-            XposedBridge.log("CrashLog: all Phase 2 backends failed for ${event.id}")
+            safeLog("CrashLog: all Phase 2 backends failed for ${event.id}")
         }
     }
 

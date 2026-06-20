@@ -2,6 +2,7 @@ package nota.android.crash.xp.app.config
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -17,6 +18,7 @@ data class AppInterventionEditUiState(
 class AppInterventionEditViewModel(
     private val packageName: String,
     private val repository: AppRepositoryInterface,
+    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(AppInterventionEditUiState())
@@ -24,7 +26,7 @@ class AppInterventionEditViewModel(
 
     init {
         viewModelScope.launch {
-            val profile = withContext(Dispatchers.IO) {
+            val profile = withContext(ioDispatcher) {
                 repository.getProfile(packageName)
             }
             val catchAll = profile.rules.firstOrNull { it.type == InterventionRuleType.CATCH_ALL }
@@ -68,7 +70,7 @@ class AppInterventionEditViewModel(
     }
 
     fun removeManagedApp() {
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch(ioDispatcher) {
             repository.removeManagedPackage(packageName)
         }
     }
@@ -84,7 +86,7 @@ class AppInterventionEditViewModel(
     }
 
     private fun saveProfile() {
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch(ioDispatcher) {
             repository.saveProfile(packageName, _uiState.value.profile)
             withContext(Dispatchers.Main) {
                 _uiState.value = _uiState.value.copy(saved = true)

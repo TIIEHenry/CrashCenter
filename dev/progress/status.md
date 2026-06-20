@@ -3,8 +3,8 @@ title: "项目进度状态"
 type: progress
 status: active
 phase: N/A
-updated: 2026-06-19
-summary: "Phase 3/4 UI marathon 已提交：Shell、3G、暗色、4B scaffold、验收报告"
+updated: 2026-06-20
+summary: "Phase 3/4 UI + 4B-α/4C-β as-built 文档同步；ADR-017 proposed；IS 矩阵待验"
 ---
 
 # 项目进度状态
@@ -13,11 +13,12 @@ summary: "Phase 3/4 UI marathon 已提交：Shell、3G、暗色、4B scaffold、
 
 | 项 | 状态 |
 |---|------|
-| 活跃 Phase | [Phase 3 — 配置 UI 重设计](../roadmap/active/phase3_ui_redesign.md) 🔄（Shell/受管/暗色 **已提交**） |
+| 活跃 Phase | [Phase 3](../roadmap/active/phase3_ui_redesign.md) 🔄（LSPosed 手动 smoke 收尾） |
 | Phase 2 | [文档工具与验收](../roadmap/active/phase2_documentation_tooling.md) — 近完成（待 LSPosed 真机报告） |
-| 下一 Phase | [Phase 4 — 崩溃可观测性](../roadmap/active/phase4_crash_observability.md) 🔄 **4B scaffold** 已编码；CodeEditor 详情待建 |
-| 阻塞 | LSPosed 手动项（Test 拦截、Switch→hook、激活状态条绿/无弹窗） |
-| 验证基线 | `461QYGDD2226C` **2026-06-19**：consolidated smoke **PASS**；dark mode QA **PASS**（Meizu；AOSP defer） |
+| 下一 Phase | [Phase 4](../roadmap/active/phase4_crash_observability.md) 🔄 **4B-α + 4C-β as-built**；**ADR-017** proposed；IS 矩阵待验 |
+| 阻塞 | LSPosed 手动项（Test 拦截、Switch→hook、激活状态条）；4B IS-1~IS-6 写路径 |
+| 验证基线 | `461QYGDD2226C` **2026-06-19**：consolidated smoke **PASS**；dark mode Meizu **PASS** |
+| 文档 | as-built 同步：ui-routing、crash-data-layer、overview、crash-history-ui、app-di-and-module-boundaries |
 
 ### 已完成
 
@@ -32,17 +33,25 @@ summary: "Phase 3/4 UI marathon 已提交：Shell、3G、暗色、4B scaffold、
 - **M2** permission banner compact；**M5** Add sheet 28dp 圆角 + DragHandle + peekHeight 50%
 - **Legacy backlog**：删 `activity_main`、OnBackPressed、sheet EmptyState、i18n/a11y/tint、ScopePolicy 澄清
 - **P0/P1 修复**：`ModuleActivation`、BNV StackOverflow、`PrefMigrator` fresh install、Observe 空态 copy、`ArrayUtil` 可见性
+- **文档 as-built 同步（2026-06-20）**：ui-routing、crash-data-layer、crash-history-ui、overview、architecture-optimization §9.3；新建 app-di-and-module-boundaries、**ADR-017** proposed
 
 ### 待办
 
 - **3A**：LSPosed 手动 smoke → 补全 `dev/verification/smoke_20260619.md`
-- **4C-β 收尾**：Gradle CodeEditor + 详情页；**4B scaffold** 已编码 — 真机验历史行（IS-1/2、跨包直写）
-- **暗色**：AOSP 模拟器 API 30/34/36；Permission banner compact 稳定复现；CrashEventRow（待 4B 真机数据）
-- Phase 2 归档；Phase 4B-α 多后端 / Provider / retention 待建
+- **4B-β**：按 [ADR-017](../../docs/decisions/017-root-ingest-and-dedupe.md) 实施 RootSu + ingest dedupe；**IS-1~IS-6** 真机矩阵
+- **4D**：StatsAggregator、观测统计 tab、Repository clear/retention（ADR-019 待立项）
+- **暗色**：AOSP 模拟器 API 30/34/36；CodeEditor `setDark(night)`
+- Phase 2 归档（待 LSPosed smoke 报告）
 
 ---
 
 ## Recent Sessions
+
+### 2026-06-20 — 架构文档 as-built 同步 + ADR-017 proposed
+
+- **文档**：修订 ui-routing / crash-data-layer / crash-history-ui / architecture-optimization §9.3；新建 [app-di-and-module-boundaries.md](../../docs/architecture/app-di-and-module-boundaries.md)、[ADR-017](../../docs/decisions/017-root-ingest-and-dedupe.md)（4B-β root ingest + dedupe，待 IS 矩阵 accepted）
+- **backlog**：[architecture-decision-backlog.md](../plans/architecture-decision-backlog.md) §3.1 多数已勾选
+- **下一步**：LSPosed IS-1~IS-6 → verification 报告 → ADR-017 accepted → 4B-β 编码
 
 ### 2026-06-19 — M7 empty state icon polish（461QYGDD2226C）
 

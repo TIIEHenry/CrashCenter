@@ -1,13 +1,14 @@
 package nota.android.crash.xp.app.observe
 
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import nota.android.crash.xp.app.data.CrashDetailLoader
-import nota.android.crash.xp.app.data.CrashEvent
 import nota.android.crash.xp.app.data.CrashLogRepository
 
 sealed class CrashDetailUiState {
@@ -21,7 +22,7 @@ sealed class CrashDetailUiState {
 class CrashDetailViewModel(
     private val crashId: String,
     private val repository: CrashLogRepository,
-    private val contextProvider: () -> android.content.Context,
+    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<CrashDetailUiState>(CrashDetailUiState.Loading)
@@ -33,12 +34,11 @@ class CrashDetailViewModel(
 
     private fun loadCrashDetail() {
         viewModelScope.launch {
-            val event = repository.getById(crashId)
-            val stackTrace = try {
-                CrashDetailLoader.loadStackTraceById(contextProvider(), crashId)
-            } catch (_: Exception) {
-                null
-            } ?: "Crash detail not found: $crashId"
+            val event = withContext(ioDispatcher) {
+                repository.getById(crashId)
+            }
+            val stackTrace = event?.let { CrashDetailLoader.stackTraceFrom(it) }
+                ?: "Crash detail not found: $crashId"
             val title = event?.shortExceptionClass
                 ?: titleFromStackTrace(stackTrace)
                 ?: "Crash Info"
@@ -51,16 +51,5 @@ class CrashDetailViewModel(
         if (firstLine.isEmpty()) return null
         val exceptionToken = firstLine.substringBefore(':').trim()
         return exceptionToken.substringAfterLast('.').ifBlank { exceptionToken }
-    }
-
-    class Factory(
-        private val crashId: String,
-        private val repository: CrashLogRepository,
-        private val contextProvider: () -> android.content.Context,
-    ) : ViewModelProvider.Factory {
-        @Suppress("UNCHECKED_CAST")
-        override fun <T : ViewModel> create(modelClass: Class<T>): T {
-            return CrashDetailViewModel(crashId, repository, contextProvider) as T
-        }
     }
 }

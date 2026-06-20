@@ -3,7 +3,7 @@ title: "导航与信息架构"
 type: architecture
 status: accepted
 phase: 4
-updated: 2026-06-19
+updated: 2026-06-20
 summary: "分阶段导航：Phase 3/4B 无 tab；Phase 4C+ 双底栏（配置 | 观测），观测内 TabLayout（历史 | 统计）；路由表见 ui-routing.md"
 ---
 
@@ -197,6 +197,7 @@ Design System 来自 Phase 3 已落地的 Fluent/AppSnapShotor token，但应从
 - [ADR-005: 设置信息架构](../decisions/005-settings-information-architecture.md)
 - [ADR-006: Material 3 工具链](../decisions/006-material3-toolchain.md)
 - [crash-history-ui.md](crash-history-ui.md) — 历史列表与半屏详情导航
+- [crash-event-timeline-ui.md](crash-event-timeline-ui.md) — 历史子页的 CrashEvent 时间线呈现
 - [code-editor-porting.md](code-editor-porting.md) — `CrashLogViewerClient` 与 Sheet/Activity 双载体
 - [design-system.md](design-system.md) — `CrashDetailBottomSheet` 观测域组件
 - [phase4_crash_observability.md](../../dev/roadmap/active/phase4_crash_observability.md)

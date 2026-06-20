@@ -3,7 +3,7 @@ title: "文档索引"
 type: concept
 status: accepted
 phase: N/A
-updated: 2026-06-19
+updated: 2026-06-20
 summary: "docs/ + dev/ 完整导航索引（自动生成）"
 ---
 
@@ -31,15 +31,17 @@ summary: "docs/ + dev/ 完整导航索引（自动生成）"
 | 文档 | 内容 |
 |------|------|
 | [adb-logcat-analysis.md](architecture/adb-logcat-analysis.md) | 通过 PC adb 或本机 root 读取 logcat 辅助验收与崩溃分析；与 JSONL 观测层互补，非 SSOT 替代 |
+| [app-di-and-module-boundaries.md](architecture/app-di-and-module-boundaries.md) | ServiceLocator 手动 DI、ViewModelFactory、hook 包禁止依赖 xp.app 的门禁与测试替身 |
 | [app-management-ui.md](architecture/app-management-ui.md) | 配置域受管应用策展 + 行内 Switch 快捷干预 + 编辑页干预规则；Half Sheet 添加；无规则可添加 |
 | [architecture-optimization.md](architecture/architecture-optimization.md) | 现状债务清单、目标分层与包结构、Phase 4 落地映射；prescriptive 演进路线图 |
 | [code-editor-porting.md](architecture/code-editor-porting.md) | 参照 celestailruler CodeEditor 三模块，在 observe/detail 域替换 TextView 详情页并支撑 Phase 4 崩溃历史浏览 |
 | [configuration-ui.md](architecture/configuration-ui.md) | 配置域从 ActivityMain 单体演进为 MainShellActivity + ConfigFragment + ConfigUiState；复用 Fluent Design System 与 Phase 3 单屏 IA |
 | [crash-capture-pipeline.md](architecture/crash-capture-pipeline.md) | hook 侧单入口 CrashCapturePipeline：构建 CrashEvent → 并行投递 CrashLogCoordinator 与 CrashFeedbackFacade；失败域隔离 |
-| [crash-data-layer.md](architecture/crash-data-layer.md) | CrashLogRepository 作为 UI 唯一读口；StatsAggregator 聚合统计；retention 轮转与清空策略 |
+| [crash-data-layer.md](architecture/crash-data-layer.md) | CrashLogRepository 读口 as-built（Paging3 + LRU）；StatsAggregator 与 retention/clear 为 4D 目标 |
+| [crash-event-timeline-ui.md](architecture/crash-event-timeline-ui.md) | CrashHistoryFragment 的时间线呈现规范：按时间组织 CrashEvent、复用 Repository/详情路由，不新增独立页面或第三个 tab |
 | [crash-export-retention.md](architecture/crash-export-retention.md) | Phase 4E SAF 导出 JSONL/zip、通知 crash_id Intent、retention 配置 UI 与轮转策略 |
 | [crash-handler.md](architecture/crash-handler.md) | 通过 Looper 续命与 UncaughtExceptionHandler 替换拦截崩溃 |
-| [crash-history-ui.md](architecture/crash-history-ui.md) | Phase 4C-β CrashHistoryFragment：时间倒序列表、字段、筛选、空态、CrashLogRepository 读取契约 |
+| [crash-history-ui.md](architecture/crash-history-ui.md) | Phase 4C-β CrashHistoryFragment：时间倒序列表、时间线呈现、筛选、空态、CrashLogRepository 读取契约 |
 | [crash-intelligent-analysis.md](architecture/crash-intelligent-analysis.md) | 在 JSONL 观测层之上做规则分类、签名聚类与诊断建议；默认端侧离线，不自动修复目标 app |
 | [crash-log-backends.md](architecture/crash-log-backends.md) | CrashLogBackend 抽象、4B-α Phase 2 并行写入已实现；root / ingest defer 4B-β；canonical JSONL 为 SSOT |
 | [crash-logging.md](architecture/crash-logging.md) | hook 侧异步持久化全量拦截崩溃；4B-α 部分 MVP 已实现；多后端编排见 crash-log-backends.md |
@@ -50,7 +52,7 @@ summary: "docs/ + dev/ 完整导航索引（自动生成）"
 | [design-system.md](architecture/design-system.md) | 桥接 docs/design/ 视觉语言与 CrashCenter res/ 实现：Fluent token、共享 UI 组件、域复用规则 |
 | [framework-injection-feasibility.md](architecture/framework-injection-feasibility.md) | 参照 celestailruler 评估 System Framework 注入对 CrashCenter 的价值；结论：不采用为主架构，保留 ADR-007 app 级 + Provider，可选 parseQueries 补丁 |
 | [navigation-ia.md](architecture/navigation-ia.md) | 分阶段导航：Phase 3/4B 无 tab；Phase 4C+ 双底栏（配置 | 观测），观测内 TabLayout（历史 | 统计）；路由表见 ui-routing.md |
-| [overview.md](architecture/overview.md) | Xposed 异常拦截模块的整体架构与数据流；4B-α 观测层部分 MVP 已实现；演进见 architecture-optimization.md |
+| [overview.md](architecture/overview.md) | Xposed 异常拦截模块的整体架构与数据流；4B-α 观测 + 4C-α UI Shell as-built；演进见 architecture-optimization.md |
 | [scope-and-prefs.md](architecture/scope-and-prefs.md) | SharedPreferences 键、scope 模式与跨进程同步；legacy tiiehenry.xp.grapcrash 迁移 |
 | [ui-routing.md](architecture/ui-routing.md) | MainShellActivity、ConfigFragment、ObserveHost 与详情 Activity 的路由表、Intent 兼容参数、返回栈与 Phase 4C+ Navigation 图 |
 | [xposed-entry.md](architecture/xposed-entry.md) | XposedEntry 薄入口：ScopePolicy 过滤、CrashHandler 安装、委托 CrashCapturePipeline |
@@ -76,6 +78,7 @@ summary: "docs/ + dev/ 完整导航索引（自动生成）"
 | [013-notification-crash-id-intent.md](decisions/013-notification-crash-id-intent.md) | Phase 4E 起 Notification PendingIntent 传 crash_id UUID 替代整段 stack extra，详情页从 Repository 加载；保留 Exception extra 兼容过渡 |  |
 | [014-legacy-prefs-migration.md](decisions/014-legacy-prefs-migration.md) | PrefMigrator 首次启动从 tiiehenry.xp.grapcrash / grapcrash.xml 一次性导入配置到 crash.xml，标记 KEY_MIGRATED 后不再读旧路径 |  |
 | [015-managed-apps-intervention-rules.md](decisions/015-managed-apps-intervention-rules.md) | 配置域改为 managed_packages 策展列表 + intervention_rules JSON；无规则不 hook；Legacy 哨兵保留 ADR-002 行为 |  |
+| [017-root-ingest-and-dedupe.md](decisions/017-root-ingest-and-dedupe.md) | 落实 ADR-008 Phase 1 RootSu + 模块 ingest merge；canonical 按 crash_id 去重；读路径可选防御性 dedupe |  |
 
 ---
 
@@ -125,13 +128,14 @@ summary: "docs/ + dev/ 完整导航索引（自动生成）"
 
 | 文档 | 内容 |
 |------|------|
+| [architecture-decision-backlog.md](../dev/plans/architecture-decision-backlog.md) | 待决 ADR、实现与架构文档漂移、需新建/修订的架构文档清单与推荐顺序 |
 | [ui-redesign-execution-plan.md](../dev/plans/ui-redesign-execution-plan.md) | Material v1 验收门禁 + 信息架构/体验/结构分层实施路径 |
 
 ### 进度追踪（`dev/progress/`）
 
 | 文档 | 内容 |
 |------|------|
-| [status.md](../dev/progress/status.md) | 4B-α 多后端写入 + Provider + retention 已编码；IS-1~6 待 LSPosed 真机 |
+| [status.md](../dev/progress/status.md) | Phase 3/4 UI + 4B-α/4C-β as-built 文档同步；ADR-017 proposed；IS 矩阵待验 |
 
 ### 设备验收（`dev/verification/`）
 
@@ -164,4 +168,4 @@ summary: "docs/ + dev/ 完整导航索引（自动生成）"
 
 ---
 
-*索引生成日期：2026-06-19*
+*索引生成日期：2026-06-20*

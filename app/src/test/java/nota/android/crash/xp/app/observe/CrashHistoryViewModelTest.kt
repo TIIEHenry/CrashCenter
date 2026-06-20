@@ -38,7 +38,7 @@ class CrashHistoryViewModelTest {
     }
 
     private fun createViewModel() {
-        viewModel = CrashHistoryViewModel(repository)
+        viewModel = CrashHistoryViewModel(repository, ioDispatcher = testDispatcher)
     }
 
     // ─── Initial State ───

@@ -3,8 +3,8 @@ title: "崩溃历史 UI 架构"
 type: architecture
 status: accepted
 phase: 4
-updated: 2026-06-19
-summary: "Phase 4C-β CrashHistoryFragment：时间倒序列表、字段、筛选、空态、CrashLogRepository 读取契约"
+updated: 2026-06-20
+summary: "Phase 4C-β CrashHistoryFragment：时间倒序列表、时间线呈现、筛选、空态、CrashLogRepository 读取契约"
 ---
 
 # 崩溃历史 UI 架构
@@ -28,6 +28,21 @@ MainShellActivity → 观测 tab → ObserveHostFragment
     └── TabLayout: [历史] | 统计(4D)
          └── CrashHistoryFragment (本文档)
 ```
+
+## As-built（2026-06-20）
+
+| 项 | 实现 |
+|----|------|
+| 宿主 | `ObserveHostFragment` 嵌入 `CrashHistoryFragment`（**无**内层统计 Tab，4D defer） |
+| 列表 | `CrashHistoryPagingAdapter` + **Paging3**（`PAGE_SIZE=50`） |
+| 数据源 | `CrashHistoryViewModel.pagingData` → `CrashEventPagingSource` → `CrashLogRepository.getAll` |
+| 行绑定 | `CrashEventBinder.bind(ViewCrashEventRowBinding, CrashEvent)` — 相对时间、图标、`source` badge |
+| 详情 | 行点击 → `CrashDetailBottomSheet`（`crash_id` argument） |
+| DI | `ViewModelFactory` + `ServiceLocator.crashLogRepository()` |
+| 刷新 | `onResume` → `loadEvents()` 更新 `eventCount`；**无** `observeChanges()` Flow |
+| 空/加载 | Paging `LoadState` + `EmptyState` / `LoadingState` |
+
+筛选 Chip / `DenseSearchField` 与 ViewModel `CrashFilter` 联动为 **4D+**；as-built 使用空 `CrashFilter()`。
 
 ## 列表 IA
 
@@ -94,16 +109,16 @@ MainShellActivity → 观测 tab → ObserveHostFragment
 
 ## Repository 契约
 
-`CrashHistoryFragment` 通过 ViewModel 调用 `CrashLogRepository`：
+`CrashHistoryFragment` 通过 ViewModel 调用 `CrashLogRepository`（as-built 见 [crash-data-layer.md §As-built](crash-data-layer.md#as-built2026-06)）：
 
-| 方法 | 返回 | 说明 |
-|------|------|------|
-| `getAll(filter, limit, offset)` | `List<CrashEvent>` | 分页加载；filter 含搜索词、时间范围、packageName |
-| `getById(id: String)` | `CrashEvent?` | Sheet / Activity 详情用 |
-| `getCount(filter)` | `Int` | 列表顶部计数 badge |
-| `observeChanges()` | `Flow<Unit>` | ingest 新增时通知 UI 刷新 |
+| 方法 | as-built | 说明 |
+|------|----------|------|
+| `getAll(filter, limit, offset)` | ✅ | `CrashEventPagingSource` 按页调用 |
+| `getById(id)` | ✅ | `CrashDetailBottomSheet` / Activity 详情 |
+| `getCount(filter)` | ✅ | `loadEvents()` 更新顶部计数 |
+| `observeChanges()` | ❌ 4D | ingest 后 Flow 刷新；当前靠 `onResume` + Paging invalidation defer |
 
-详见 [crash-data-layer.md](crash-data-layer.md)。
+筛选维度接入后，`CrashFilter` 须由 ViewModel 持有并传入 `CrashEventPagingSource` factory（4D）。
 
 ## Toolbar 操作（观测 tab 级）
 
@@ -117,13 +132,14 @@ MainShellActivity → 观测 tab → ObserveHostFragment
 
 ## 性能考虑
 
-- `events.jsonl` 全文件扫描；MVP 500 条上限下可接受（<100ms）
-- 列表使用 `RecyclerView` + `DiffUtil`
-- 应用图标按 `packageName` 缓存到 `LruCache`
-- 超限时考虑 sidecar 索引（4E）
+- Repository 每页扫描 JSONL（offset/limit）；500 条 retention 下可接受
+- 列表 **Paging3** + `CrashHistoryPagingAdapter`（非全量 DiffUtil 列表）
+- `CrashEventBinder` 内 `PackageManager` 按行加载图标（无全局 LruCache，4D 可优化）
+- 超 500 条或 sidecar 索引见 [crash-data-layer.md](crash-data-layer.md) §未来演进
 
 ## 相关文档
 
+- [crash-event-timeline-ui.md](crash-event-timeline-ui.md) — CrashHistoryFragment 的时间线呈现规范
 - [crash-data-layer.md](crash-data-layer.md) — Repository 与 StatsAggregator
 - [crash-logging.md](crash-logging.md) — CrashEvent 数据模型
 - [crash-stats-ui.md](crash-stats-ui.md) — 统计子 tab（4D）

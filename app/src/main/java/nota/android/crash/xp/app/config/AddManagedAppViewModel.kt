@@ -1,7 +1,6 @@
 package nota.android.crash.xp.app.config
 
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -50,14 +49,5 @@ class AddManagedAppViewModel(
                 app.packageName.lowercase(java.util.Locale.getDefault()).contains(normalized)
         }
         _uiState.value = current.copy(apps = visible, query = query)
-    }
-
-    class Factory(
-        private val repository: AppRepositoryInterface,
-    ) : ViewModelProvider.Factory {
-        @Suppress("UNCHECKED_CAST")
-        override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
-            return AddManagedAppViewModel(repository) as T
-        }
     }
 }

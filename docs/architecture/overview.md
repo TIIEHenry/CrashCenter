@@ -3,8 +3,8 @@ title: "CrashCenter 系统总览"
 type: architecture
 status: accepted
 phase: N/A
-updated: 2026-06-19
-summary: "Xposed 异常拦截模块的整体架构与数据流；4B-α 观测层部分 MVP 已实现；演进见 architecture-optimization.md"
+updated: 2026-06-20
+summary: "Xposed 异常拦截模块的整体架构与数据流；4B-α 观测 + 4C-α UI Shell as-built；演进见 architecture-optimization.md"
 ---
 
 # CrashCenter 系统总览
@@ -40,15 +40,28 @@ Xposed Framework
 | **干预层** | 吞异常、进程续命 | 已实现 |
 | **观测层** | 记录每次被拦截崩溃 | **4B-α 部分 MVP** — hook 侧 Phase 2 持久化；ingest / 统计 UI defer — [crash-logging.md](crash-logging.md) |
 | **分析层** | 分类、聚类、诊断建议（不修复 bug） | Phase 4G backlog — [crash-intelligent-analysis.md](crash-intelligent-analysis.md) |
-| **观测 UI** | 历史列表、统计、导出 | Phase 4C+ — [navigation-ia.md](navigation-ia.md) |
+| **观测 UI** | 历史列表、统计、导出 | **4C-α as-built** — MainShell 2-tab + Paging 历史；统计 defer 4D — [navigation-ia.md](navigation-ia.md) |
 
 跨进程写入方案见 [crash-log-backends.md](crash-log-backends.md)、[crash-log-ipc.md](crash-log-ipc.md)。
 
 **架构演进 / 优化**（prescriptive）：[architecture-optimization.md](architecture-optimization.md) — 现状债务、目标分层、包结构、Phase 4 落地映射。
 
-## As-built（4B-α，2026-06-19）
+## 技术栈
 
-hook 侧观测层 MVP 已落地，与干预层 / 反馈层解耦：
+| 项 | 值 |
+|---|---|
+| compileSdk / targetSdk | **37** |
+| minSdk | 21 |
+| Kotlin | 2.3 |
+| Java | 17 |
+| Xposed API | 82 |
+| Gradle / AGP | 9.2.1 / 9.0.0 |
+| 模块 DI | `ServiceLocator`（手动单例；Hilt defer — 见 D-05） |
+| 历史列表 | **Paging3** + `CrashEventPagingSource` + `FileCrashLogRepository` |
+
+## As-built（2026-06-20）
+
+hook 侧观测层 MVP 与模块 UI Shell 已落地：
 
 | 组件 | 包路径 | 职责 |
 |------|--------|------|
@@ -57,11 +70,18 @@ hook 侧观测层 MVP 已落地，与干预层 / 反馈层解耦：
 | `CrashLogBackendRegistry` | `nota.android.crash.log` | `ProviderBackend` / `DirectFsBackend` / `TargetRelayBackend` |
 | `CanonicalJsonlWriter` | `nota.android.crash.log` | canonical `events.jsonl` append + 500 条 / 8 MB retention |
 | `CrashLogProvider` | `nota.android.crash.xp.app` | exported Provider IPC（无 signature permission） |
-| `FileCrashLogRepository` | `nota.android.crash.xp.app.data` | 模块侧读 canonical（4C 历史 UI 已接入） |
+| `FileCrashLogRepository` | `nota.android.crash.xp.app.data` | 读 canonical：getAll/getById/getCount、LRU 200 |
+| `ServiceLocator` | `nota.android.crash.xp.app.di` | `AppRepository` + `CrashLogRepository` 单例 |
+| `MainShellActivity` | `nota.android.crash.xp.app.shell` | Launcher；底栏 配置 \| 观测 |
+| `ConfigFragment` | `nota.android.crash.xp.app.config` | 受管应用列表、scope、干预入口 |
+| `ObserveHostFragment` | `nota.android.crash.xp.app.observe` | 观测 tab；嵌入 `CrashHistoryFragment`（Paging3） |
+| `CrashEventPagingSource` | `nota.android.crash.xp.app.observe` | Paging3 分页读 Repository |
 
 **defer 4B-β**：`RootSuBackend` Phase 1、`CrashLogIngestCoordinator` relay harvest、dedupe / `ingestedFrom`。
 
-详见 [crash-logging.md § As-built](crash-logging.md#as-built4b-α2026-06-19)、[crash-capture-pipeline.md](crash-capture-pipeline.md)。
+**defer 4D**：`StatsAggregator`、观测统计 tab、Repository `clear` / `observeChanges`。
+
+详见 [crash-logging.md § As-built](crash-logging.md#as-built4b-α2026-06-19)、[ui-routing.md § As-built](ui-routing.md#as-built2026-06)、[crash-data-layer.md](crash-data-layer.md)。
 
 ## 模块地图
 
@@ -72,8 +92,11 @@ hook 侧观测层 MVP 已落地，与干预层 / 反馈层解耦：
 | 崩溃采集管道 | `capture/CrashCapturePipeline.kt` | hook 单入口：观测 + 反馈并行、失败域隔离 |
 | 日志协调 | `log/CrashLogCoordinator.kt` | hook 侧 Phase 2 多后端并行写入 |
 | 日志 Provider | `xp/app/CrashLogProvider.kt` | exported ContentProvider IPC append |
-| 日志读路径 | `xp/app/data/FileCrashLogRepository.kt` | canonical JSONL 读（历史 UI / 详情） |
-| 配置 UI | `ActivityMain.kt` | 应用列表、scope 开关、搜索排序、FilterChip 全局设置 |
+| 日志读路径 | `xp/app/data/FileCrashLogRepository.kt` | canonical JSONL 读；LRU 200；Paging3 消费方 |
+| UI 壳层 | `xp/app/shell/MainShellActivity.kt` | Launcher；BottomNav 配置 \| 观测 |
+| 配置 UI | `xp/app/config/ConfigFragment.kt` | 应用列表、scope 开关、搜索排序、FilterChip |
+| 观测 UI | `xp/app/observe/` | `ObserveHostFragment`、`CrashHistoryFragment`、Paging |
+| 模块 DI | `xp/app/di/ServiceLocator.kt` | Repository 单例（until Hilt） |
 | 崩溃详情 | `ActivityCrashInfo.java` | 通知点击后展示 stack trace |
 | 偏好常量 | `PrefManager.java` | scope + `crash_log_enabled` / backend toggle keys |
 | 偏好迁移 | `PrefMigrator.kt` | 一次性从 legacy `tiiehenry.xp.grapcrash` 导入配置 |
@@ -84,7 +107,7 @@ hook 侧观测层 MVP 已落地，与干预层 / 反馈层解耦：
 ## 跨进程配置同步
 
 ```
-ActivityMain (UI 进程)
+MainShellActivity / ConfigFragment (UI 进程)
   └── SharedPreferences "crash"
         ├── scope_mode
         ├── handle_system
@@ -107,6 +130,7 @@ CrashLogCoordinator (目标 app 进程)
 | 禁用列表（反向 toggle） | 默认全选 hook，关闭 = 排除 | [ADR-002](../decisions/002-inverted-package-toggle.md) |
 | XSharedPreferences | hook 侧读取 UI 配置 | [ADR-003](../decisions/003-xsharedpreferences-cross-process.md) |
 | JSONL + 多后端 | 崩溃事件 hook→模块；模块 root ingest | [ADR-007](../decisions/007-crash-log-cross-process-storage.md)、[ADR-008](../decisions/008-multi-backend-crash-log-storage.md) |
+| 4B-β dedupe / ingest | canonical 按 id 合并；ingest SSOT | [ADR-017](../decisions/017-root-ingest-and-dedupe.md)（proposed） |
 
 ## 相关文档
 
@@ -115,11 +139,14 @@ CrashLogCoordinator (目标 app 进程)
 - [crash-intelligent-analysis.md](crash-intelligent-analysis.md) — 规则分类、聚类与诊断建议（4G）
 - [adb-logcat-analysis.md](adb-logcat-analysis.md) — PC adb / 本机 logcat 崩溃分析（补充 JSONL）
 - [crash-stats-ui.md](crash-stats-ui.md) — 全局统计与单应用观测页需求
+- [crash-event-timeline-ui.md](crash-event-timeline-ui.md) — CrashHistoryFragment 时间线呈现
 - [crash-notification.md](crash-notification.md) — Toast / 通知 / 详情页流程
 - [crash-logging.md](crash-logging.md) — 观测层方案
 - [crash-log-backends.md](crash-log-backends.md) — 多后端编排与 ingest
 - [crash-log-ipc.md](crash-log-ipc.md) — 跨进程 IPC 与 FAQ
 - [navigation-ia.md](navigation-ia.md) — Phase 4+ 双 Tab 导航
+- [crash-data-layer.md](crash-data-layer.md) — Repository as-built 与 4D 读口目标
+- [app-di-and-module-boundaries.md](app-di-and-module-boundaries.md) — ServiceLocator 与 hook/UI 包门禁
 - [ui-routing.md](ui-routing.md) — 界面路由与外部 Intent
 - [xposed-entry.md](xposed-entry.md) — Xposed 入口与 hook 逻辑
 - [crash-handler.md](crash-handler.md) — 崩溃拦截机制

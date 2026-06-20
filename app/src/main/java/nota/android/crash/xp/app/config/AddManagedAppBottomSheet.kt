@@ -18,6 +18,7 @@ import nota.android.crash.xp.app.common.ui.EmptyState
 import nota.android.crash.xp.app.common.ui.LoadingState
 import nota.android.crash.xp.app.common.ui.configureBottomSheetAppearance
 import nota.android.crash.xp.app.di.ServiceLocator
+import nota.android.crash.xp.app.di.ViewModelFactory
 import nota.android.crash.xp.app.databinding.BottomSheetAddManagedAppBinding
 
 class AddManagedAppBottomSheet : BottomSheetDialogFragment() {
@@ -26,9 +27,9 @@ class AddManagedAppBottomSheet : BottomSheetDialogFragment() {
     private val binding get() = checkNotNull(_binding) { "Binding accessed after onDestroyView" }
 
     private val viewModel: AddManagedAppViewModel by viewModels {
-        AddManagedAppViewModel.Factory(
-            ServiceLocator.appRepository(requireContext()),
-        )
+        ViewModelFactory {
+            AddManagedAppViewModel(ServiceLocator.appRepository(requireContext()))
+        }
     }
 
     private lateinit var adapter: PickableAppAdapter

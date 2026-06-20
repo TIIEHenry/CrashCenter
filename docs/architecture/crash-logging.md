@@ -3,7 +3,7 @@ title: "崩溃日志采集与统计"
 type: architecture
 status: accepted
 phase: 4
-updated: 2026-06-19
+updated: 2026-06-20
 summary: "hook 侧异步持久化全量拦截崩溃；4B-α 部分 MVP 已实现；多后端编排见 crash-log-backends.md"
 ---
 
@@ -250,6 +250,7 @@ createPackageContext(MODULE_PKG, CONTEXT_IGNORE_SECURITY)
 - [crash-log-backends.md](crash-log-backends.md) — 多后端编排与 ingest
 - [crash-log-ipc.md](crash-log-ipc.md) — 跨进程通信机制对比与 FAQ
 - [overview.md](overview.md) — 系统总览
+- [crash-event-timeline-ui.md](crash-event-timeline-ui.md) — CrashEvent 时间线呈现
 - [crash-handler.md](crash-handler.md) — 拦截机制（未涵盖持久化）
 - [xposed-entry.md](xposed-entry.md) — 通知与单次详情
 - [scope-and-prefs.md](scope-and-prefs.md) — 配置模型

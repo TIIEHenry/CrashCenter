@@ -16,6 +16,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.withTimeout
 import nota.android.crash.xp.app.data.CrashEvent
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -30,6 +31,11 @@ import java.util.concurrent.atomic.AtomicInteger
 class CrashLogCoordinatorTest {
 
     private val context: Context = RuntimeEnvironment.getApplication()
+
+    @After
+    fun tearDown() {
+        CrashLogCoordinator.shutdown()
+    }
 
     // ---------- Fake Backends ----------
 

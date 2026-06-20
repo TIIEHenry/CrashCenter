@@ -3,7 +3,7 @@ title: "崩溃统计与单应用观测 UI 需求"
 type: architecture
 status: accepted
 phase: 4
-updated: 2026-06-19
+updated: 2026-06-20
 summary: "observe/detail 域中的全局统计页与单应用崩溃列表/统计页 IA、路由、指标和数据聚合需求（Phase 4D）"
 ---
 
@@ -310,6 +310,7 @@ events.jsonl (SSOT)
 
 - [navigation-ia.md](navigation-ia.md) — 观测 tab 与子 tab 壳层
 - [crash-logging.md](crash-logging.md) — CrashEvent、retention
+- [crash-event-timeline-ui.md](crash-event-timeline-ui.md) — 统计下钻到历史时间线的呈现规范
 - [crash-intelligent-analysis.md](crash-intelligent-analysis.md) — 分类、聚类与诊断建议（4G）
 - [code-editor-porting.md](code-editor-porting.md) — 详情阅读器
 - [ui-routing.md](ui-routing.md) — observe/detail 路由和参数兼容

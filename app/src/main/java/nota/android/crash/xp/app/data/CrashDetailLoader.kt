@@ -1,18 +1,19 @@
 package nota.android.crash.xp.app.data
 
-import android.content.Context
-
 object CrashDetailLoader {
 
-    fun loadStackTraceById(context: Context, crashId: String): String? {
+    fun loadStackTraceById(repository: CrashLogRepository, crashId: String): String? {
         if (crashId.isBlank()) return null
         return try {
-            val event = FileCrashLogRepository(context).getById(crashId) ?: return null
-            event.stackTrace.ifBlank { formatFallback(event) }
+            val event = repository.getById(crashId) ?: return null
+            stackTraceFrom(event)
         } catch (_: Exception) {
             null
         }
     }
+
+    fun stackTraceFrom(event: CrashEvent): String =
+        event.stackTrace.ifBlank { formatFallback(event) }
 
     private fun formatFallback(event: CrashEvent): String {
         val header = buildString {

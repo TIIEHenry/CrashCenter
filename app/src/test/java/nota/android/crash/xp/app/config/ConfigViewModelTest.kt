@@ -6,7 +6,6 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.test.StandardTestDispatcher
-import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -24,7 +23,6 @@ import org.junit.Test
 class ConfigViewModelTest {
 
     private val testDispatcher = StandardTestDispatcher()
-    private val testScope = TestScope(testDispatcher)
 
     private lateinit var repository: FakeAppRepository
     private lateinit var viewModel: ConfigViewModel
@@ -56,7 +54,7 @@ class ConfigViewModelTest {
     // ─── Initial State ───
 
     @Test
-    fun `initial state reflects repository values`() = testScope.runTest {
+    fun `initial state reflects repository values`() = runTest {
         repository._scopeMode = true
         repository._handleSystem = true
         repository._showSystemUi = true
@@ -80,7 +78,7 @@ class ConfigViewModelTest {
     }
 
     @Test
-    fun `initial state includes package visibility`() = testScope.runTest {
+    fun `initial state includes package visibility`() = runTest {
         val status = PackageVisibilityHelper.Status(
             hasFullVisibility = false,
             permissionGranted = false,
@@ -97,7 +95,7 @@ class ConfigViewModelTest {
     // ─── Loading Toggles ───
 
     @Test
-    fun `loadApps sets isLoading to true then false`() = testScope.runTest {
+    fun `loadApps sets isLoading to true then false`() = runTest {
         repository.installedApps = listOf(
             fakeAppItem("com.example.a", "App A"),
             fakeAppItem("com.example.b", "App B"),
@@ -114,7 +112,7 @@ class ConfigViewModelTest {
     }
 
     @Test
-    fun `loadApps in managed mode sets isLoading to true then false`() = testScope.runTest {
+    fun `loadApps in managed mode sets isLoading to true then false`() = runTest {
         repository.legacyMode = false
         repository.managedAppsList = listOf(
             fakeManagedApp("com.example.a", "App A"),
@@ -132,7 +130,7 @@ class ConfigViewModelTest {
     // ─── State Updates After loadApps ───
 
     @Test
-    fun `loadApps populates allApps and visibleApps in legacy mode`() = testScope.runTest {
+    fun `loadApps populates allApps and visibleApps in legacy mode`() = runTest {
         val apps = listOf(
             fakeAppItem("com.example.a", "Alpha"),
             fakeAppItem("com.example.b", "Beta"),
@@ -151,7 +149,7 @@ class ConfigViewModelTest {
     }
 
     @Test
-    fun `loadApps populates managedApps and visibleManagedApps in managed mode`() = testScope.runTest {
+    fun `loadApps populates managedApps and visibleManagedApps in managed mode`() = runTest {
         repository.legacyMode = false
         val apps = listOf(
             fakeManagedApp("com.example.a", "Alpha"),
@@ -171,7 +169,7 @@ class ConfigViewModelTest {
     }
 
     @Test
-    fun `loadApps does not reload if already loaded and forceReload is false`() = testScope.runTest {
+    fun `loadApps does not reload if already loaded and forceReload is false`() = runTest {
         val apps = listOf(fakeAppItem("com.example.a", "App A"))
         repository.installedApps = apps
         createViewModel()
@@ -193,7 +191,7 @@ class ConfigViewModelTest {
     }
 
     @Test
-    fun `loadApps with forceReload fetches new data`() = testScope.runTest {
+    fun `loadApps with forceReload fetches new data`() = runTest {
         val apps = listOf(fakeAppItem("com.example.a", "App A"))
         repository.installedApps = apps
         createViewModel()
@@ -215,7 +213,7 @@ class ConfigViewModelTest {
     // ─── Generation / Cancellation Logic ───
 
     @Test
-    fun `consecutive loadApps cancels previous generation`() = testScope.runTest {
+    fun `consecutive loadApps cancels previous generation`() = runTest {
         val apps1 = listOf(fakeAppItem("com.example.a", "App A"))
         val apps2 = listOf(
             fakeAppItem("com.example.b", "App B"),
@@ -242,7 +240,7 @@ class ConfigViewModelTest {
     }
 
     @Test
-    fun `loadApps handles exception gracefully`() = testScope.runTest {
+    fun `loadApps handles exception gracefully`() = runTest {
         // Use a repository that throws on loadInstalledApps
         val throwingRepo = object : AppRepositoryInterface {
             override fun isLegacyMode(): Boolean = true
@@ -281,7 +279,7 @@ class ConfigViewModelTest {
     // ─── State Mutations ───
 
     @Test
-    fun `setQuery updates query and filters visible apps`() = testScope.runTest {
+    fun `setQuery updates query and filters visible apps`() = runTest {
         repository.installedApps = listOf(
             fakeAppItem("com.example.alpha", "Alpha"),
             fakeAppItem("com.example.beta", "Beta"),
@@ -301,7 +299,7 @@ class ConfigViewModelTest {
     }
 
     @Test
-    fun `setHookFilter filters visible apps`() = testScope.runTest {
+    fun `setHookFilter filters visible apps`() = runTest {
         val apps = listOf(
             fakeAppItem("com.example.a", "App A", hookEnabled = true),
             fakeAppItem("com.example.b", "App B", hookEnabled = false),
@@ -320,7 +318,7 @@ class ConfigViewModelTest {
     }
 
     @Test
-    fun `toggleApp toggles hookEnabled and persists`() = testScope.runTest {
+    fun `toggleApp toggles hookEnabled and persists`() = runTest {
         val apps = listOf(
             fakeAppItem("com.example.a", "App A", hookEnabled = false),
         )
@@ -339,7 +337,7 @@ class ConfigViewModelTest {
     }
 
     @Test
-    fun `setScopeMode updates repository and state`() = testScope.runTest {
+    fun `setScopeMode updates repository and state`() = runTest {
         createViewModel()
         assertFalse(viewModel.uiState.value.scopeMode)
 
@@ -349,7 +347,7 @@ class ConfigViewModelTest {
     }
 
     @Test
-    fun `setHandleSystem updates repository and state`() = testScope.runTest {
+    fun `setHandleSystem updates repository and state`() = runTest {
         createViewModel()
         assertFalse(viewModel.uiState.value.handleSystem)
 
@@ -359,7 +357,7 @@ class ConfigViewModelTest {
     }
 
     @Test
-    fun `setShowSystemUi updates repository and state`() = testScope.runTest {
+    fun `setShowSystemUi updates repository and state`() = runTest {
         createViewModel()
         assertFalse(viewModel.uiState.value.showSystemUi)
 
@@ -369,7 +367,7 @@ class ConfigViewModelTest {
     }
 
     @Test
-    fun `selectAll sets all apps hookEnabled`() = testScope.runTest {
+    fun `selectAll sets all apps hookEnabled`() = runTest {
         val apps = listOf(
             fakeAppItem("com.example.a", "App A", hookEnabled = false),
             fakeAppItem("com.example.b", "App B", hookEnabled = false),
@@ -389,7 +387,7 @@ class ConfigViewModelTest {
     }
 
     @Test
-    fun `setSortMode sorts visible apps`() = testScope.runTest {
+    fun `setSortMode sorts visible apps`() = runTest {
         val apps = listOf(
             fakeAppItem("com.example.b", "Beta", installTime = 200, updateTime = 200),
             fakeAppItem("com.example.a", "Alpha", installTime = 100, updateTime = 100),
@@ -411,7 +409,7 @@ class ConfigViewModelTest {
     }
 
     @Test
-    fun `setManagedSwitch updates managed app in managed mode`() = testScope.runTest {
+    fun `setManagedSwitch updates managed app in managed mode`() = runTest {
         repository.legacyMode = false
         repository.setProfile("com.example.a", AppInterventionProfile(
             rules = listOf(InterventionRule.defaultCatchAll(enabled = false)),
@@ -434,7 +432,7 @@ class ConfigViewModelTest {
     }
 
     @Test
-    fun `addManagedPackages triggers force reload`() = testScope.runTest {
+    fun `addManagedPackages triggers force reload`() = runTest {
         repository.legacyMode = false
         repository.managedAppsList = listOf(fakeManagedApp("com.example.a", "App A"))
         createViewModel()

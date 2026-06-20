@@ -1,22 +1,25 @@
 package nota.android.crash.xp.app.observe
 
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import nota.android.crash.xp.app.data.CrashFilter
 import nota.android.crash.xp.app.data.CrashEvent
 import nota.android.crash.xp.app.data.CrashLogRepository
 
 class CrashHistoryViewModel(
     private val repository: CrashLogRepository,
+    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(CrashHistoryUiState())
@@ -35,7 +38,9 @@ class CrashHistoryViewModel(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
             try {
-                val count = repository.getCount(CrashFilter())
+                val count = withContext(ioDispatcher) {
+                    repository.getCount(CrashFilter())
+                }
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
                     eventCount = count,
@@ -43,15 +48,6 @@ class CrashHistoryViewModel(
             } catch (_: Exception) {
                 _uiState.value = _uiState.value.copy(isLoading = false)
             }
-        }
-    }
-
-    class Factory(
-        private val repository: CrashLogRepository,
-    ) : ViewModelProvider.Factory {
-        @Suppress("UNCHECKED_CAST")
-        override fun <T : ViewModel> create(modelClass: Class<T>): T {
-            return CrashHistoryViewModel(repository) as T
         }
     }
 

@@ -3,7 +3,7 @@ title: "Design System 架构"
 type: architecture
 status: accepted
 phase: 4
-updated: 2026-06-19
+updated: 2026-06-20
 summary: "桥接 docs/design/ 视觉语言与 CrashCenter res/ 实现：Fluent token、共享 UI 组件、域复用规则"
 ---
 
@@ -129,6 +129,7 @@ docs/architecture/design-system.md   # ← 本文档（CrashCenter 落地）
 - [crash-history-ui.md](crash-history-ui.md) — 历史列表与半屏详情
 - [code-editor-porting.md](code-editor-porting.md) — `CrashLogViewerClient` 双载体
 - [ui-routing.md](ui-routing.md) — `crash_detail_sheet` 路由
+- [crash-event-timeline-ui.md](crash-event-timeline-ui.md) — 时间线中的 `CrashEventRow` 与状态组件使用
 - [crash-stats-ui.md](crash-stats-ui.md) — 统计页
 - [navigation-ia.md](navigation-ia.md) — 观测/配置 tab IA
 - [ADR-009](../decisions/009-ui-shell-design-system.md) — Shell + Design System 决策
