@@ -259,10 +259,9 @@ class FileCrashLogRepositoryTest {
         val e1 = event(id = "cache-del", message = "cached")
         writeEvent(e1)
         repo.getById("cache-del") // populate cache
-        eventsFile.delete() // file gone, but cache still has it
 
-        // Before deleteById, cache would still serve the event
-        repo.deleteById("cache-del")
+        // After deleteById, cache should be cleared and event gone
+        assertTrue(repo.deleteById("cache-del"))
         assertNull(repo.getById("cache-del"))
     }
 
