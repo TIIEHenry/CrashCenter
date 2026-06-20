@@ -2,8 +2,13 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
     
+    <permission
+        android:name="nota.android.crash.xp.app.permission.CRASH_LOG"
+        android:protectionLevel="signature" />
+
     <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES"
         tools:ignore="QueryAllPackagesPermission" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <application
         android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"
@@ -37,7 +42,8 @@
         <provider
             android:name=".CrashLogProvider"
             android:authorities="nota.android.crash.xp.app.crashlog"
-            android:exported="true" />
+            android:exported="true"
+            android:permission="nota.android.crash.xp.app.permission.CRASH_LOG" />
 
         <meta-data
             android:name="xposedmodule"

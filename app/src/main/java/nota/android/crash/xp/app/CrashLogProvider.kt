@@ -71,17 +71,32 @@ class CrashLogProvider : ContentProvider() {
         return packages.contains(claimedPackage)
     }
 
+    private val rateLock = Any()
+
     private fun checkRateLimit(): Boolean {
         val callingUid = Binder.getCallingUid()
         val now = System.currentTimeMillis()
-        val windowStart = rateWindowStart.compute(callingUid) { _, existing ->
-            if (existing == null || now - existing > RATE_WINDOW_MS) now else existing
-        } ?: now
-        if (now - windowStart > RATE_WINDOW_MS) {
-            rateWindowStart[callingUid] = now
-            rateCounts[callingUid] = 0
+        val windowStart = synchronized(rateLock) {
+            val existing = rateWindowStart[callingUid]
+            if (existing == null || now - existing > RATE_WINDOW_MS) {
+                rateWindowStart[callingUid] = now
+                rateCounts[callingUid] = 0
+                now
+            } else {
+                existing
+            }
         }
-        val count = rateCounts.merge(callingUid, 1) { old, inc -> old + inc } ?: 1
+        if (now - windowStart > RATE_WINDOW_MS) {
+            synchronized(rateLock) {
+                rateWindowStart[callingUid] = now
+                rateCounts[callingUid] = 0
+            }
+        }
+        val count = synchronized(rateLock) {
+            val newCount = (rateCounts[callingUid] ?: 0) + 1
+            rateCounts[callingUid] = newCount
+            newCount
+        }
         return count <= MAX_INSERTS_PER_WINDOW
     }
 

@@ -69,6 +69,17 @@ object CrashFeedbackFacade {
         appInfo: ApplicationInfo,
         throwable: Throwable,
     ) {
+        val notificationManager =
+            application.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            try {
+                if (!notificationManager.areNotificationsEnabled()) return
+            } catch (_: SecurityException) {
+                return
+            }
+        }
+
         val intent = Intent(Intent.ACTION_VIEW).apply {
             component = ComponentName(PrefManager.PACKAGE_NAME, CRASH_INFO_CLASS)
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED
@@ -83,8 +94,6 @@ object CrashFeedbackFacade {
             }
         }
 
-        val notificationManager =
-            application.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         val moduleContext = AndroidAppHelper.currentApplication()
             .createPackageContext(pkgName, Context.CONTEXT_IGNORE_SECURITY)
 
