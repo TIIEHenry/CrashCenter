@@ -10,8 +10,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.withContext
-import java.util.Locale
-
 import kotlin.coroutines.CoroutineContext
 
 class ConfigViewModel(
@@ -194,25 +192,14 @@ class ConfigViewModel(
 
     private fun applyLegacyFiltersAndSort(preserveSort: Boolean) {
         val current = _uiState.value
-        val query = current.query.lowercase(Locale.getDefault())
-        val filtered = current.allApps.filter { app ->
-            val systemMatch = current.showSystemUi && app.isSystemApp ||
-                !current.showSystemUi && !app.isSystemApp
-            if (!systemMatch) return@filter false
+        val filtered = AppFilterEngine.filterLegacyApps(
+            current.allApps,
+            current.query,
+            current.hookFilter,
+            current.showSystemUi,
+        ).toMutableList()
 
-            val hookMatch = when (current.hookFilter) {
-                HookFilter.ON -> app.hookEnabled
-                HookFilter.OFF -> !app.hookEnabled
-                HookFilter.ALL -> true
-            }
-            if (!hookMatch) return@filter false
-
-            if (query.isEmpty()) return@filter true
-            app.name.lowercase(Locale.getDefault()).contains(query) ||
-                app.packageName.lowercase(Locale.getDefault()).contains(query)
-        }.toMutableList()
-
-        sortList(filtered, current.sortMode, { it.name }, { it.installTime }, { it.updateTime })
+        AppFilterEngine.sort(filtered, current.sortMode, { it.name }, { it.installTime }, { it.updateTime })
 
         emitState {
             copy(
@@ -224,21 +211,13 @@ class ConfigViewModel(
 
     private fun applyManagedFiltersAndSort(preserveSort: Boolean) {
         val current = _uiState.value
-        val query = current.query.lowercase(Locale.getDefault())
-        val filtered = current.managedApps.filter { app ->
-            val filterMatch = when (current.managedFilter) {
-                ManagedFilter.ENABLED -> app.interventionStatus == InterventionStatus.ENABLED
-                ManagedFilter.PENDING -> app.interventionStatus == InterventionStatus.PENDING
-                ManagedFilter.ALL -> true
-            }
-            if (!filterMatch) return@filter false
+        val filtered = AppFilterEngine.filterManagedApps(
+            current.managedApps,
+            current.query,
+            current.managedFilter,
+        ).toMutableList()
 
-            if (query.isEmpty()) return@filter true
-            app.label.lowercase(Locale.getDefault()).contains(query) ||
-                app.packageName.lowercase(Locale.getDefault()).contains(query)
-        }.toMutableList()
-
-        sortList(filtered, current.sortMode, { it.label }, { it.installTime }, { it.updateTime })
+        AppFilterEngine.sort(filtered, current.sortMode, { it.label }, { it.installTime }, { it.updateTime })
 
         val emptyMessage = when {
             filtered.isNotEmpty() -> null
@@ -254,24 +233,7 @@ class ConfigViewModel(
         }
     }
 
-    private fun <T> sortList(
-        list: MutableList<T>,
-        mode: SortMode,
-        nameExtractor: (T) -> String,
-        installTimeExtractor: (T) -> Long,
-        updateTimeExtractor: (T) -> Long,
-    ) {
-        when (mode) {
-            SortMode.NAME_ASC -> list.sortWith(compareBy { nameExtractor(it) })
-            SortMode.NAME_DESC -> list.sortWith(compareByDescending { nameExtractor(it) })
-            SortMode.INSTALL_TIME_ASC -> list.sortWith(compareBy { installTimeExtractor(it) })
-            SortMode.INSTALL_TIME_DESC -> list.sortWith(compareByDescending { installTimeExtractor(it) })
-            SortMode.UPDATE_TIME_ASC -> list.sortWith(compareBy { updateTimeExtractor(it) })
-            SortMode.UPDATE_TIME_DESC -> list.sortWith(compareByDescending { updateTimeExtractor(it) })
-        }
-    }
-
-    private inline fun emitState(block: ConfigUiState.() -> ConfigUiState) {
+    private fun emitState(block: ConfigUiState.() -> ConfigUiState) {
         _uiState.value = _uiState.value.block()
     }
 

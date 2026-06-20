@@ -1,11 +1,16 @@
 package nota.android.crash.xp.app.config
 
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.view.View
 import android.widget.Toast
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import kotlinx.coroutines.launch
 import nota.android.crash.xp.app.R
 import nota.android.crash.xp.app.SystemBars
 import nota.android.crash.xp.app.common.ui.ToolbarHeaderInsets
@@ -14,12 +19,12 @@ import nota.android.crash.xp.app.databinding.ActivityAppInterventionEditBinding
 class AppInterventionEditActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityAppInterventionEditBinding
-    private lateinit var repository: AppRepository
     private lateinit var packageName: String
-
-    private var profile: AppInterventionProfile = AppInterventionProfile.EMPTY
-    private var catchAllRule: InterventionRule? = null
     private var suppressNotifyCallbacks = false
+
+    private val viewModel: AppInterventionEditViewModel by viewModels {
+        AppInterventionEditViewModelFactory(packageName, AppRepository(this))
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -29,7 +34,6 @@ class AppInterventionEditActivity : AppCompatActivity() {
                 return
             }
 
-        repository = AppRepository(this)
         binding = ActivityAppInterventionEditBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
@@ -41,9 +45,19 @@ class AppInterventionEditActivity : AppCompatActivity() {
         binding.toolbar.setNavigationOnClickListener { finish() }
 
         loadAppHeader()
-        loadProfile()
         setupRuleControls()
         setupActions()
+
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.uiState.collect { state ->
+                    renderProfile(state)
+                    if (state.saved) {
+                        Toast.makeText(this@AppInterventionEditActivity, R.string.rule_saved, Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+        }
     }
 
     private fun loadAppHeader() {
@@ -60,13 +74,10 @@ class AppInterventionEditActivity : AppCompatActivity() {
         binding.tvPackageName.text = packageName
     }
 
-    private fun loadProfile() {
-        profile = repository.getProfile(packageName)
-        catchAllRule = profile.rules.firstOrNull { it.type == InterventionRuleType.CATCH_ALL }
-        renderProfile()
-    }
+    private fun renderProfile(state: AppInterventionEditUiState) {
+        val profile = state.profile
+        val catchAllRule = state.catchAllRule
 
-    private fun renderProfile() {
         val enabledCount = profile.enabledRuleCount
         binding.tvStatusSummary.text = if (profile.hasEnabledRule) {
             resources.getQuantityString(R.plurals.intervention_status_enabled, enabledCount, enabledCount)
@@ -82,7 +93,7 @@ class AppInterventionEditActivity : AppCompatActivity() {
             binding.swRuleEnabled.setOnCheckedChangeListener(null)
             binding.swRuleEnabled.isChecked = rule.enabled
             binding.swRuleEnabled.setOnCheckedChangeListener { _, isChecked ->
-                updateCatchAllRule(rule.copy(enabled = isChecked))
+                viewModel.toggleRuleEnabled(isChecked)
             }
             bindNotifyTriState(rule.showNotify)
         }
@@ -102,28 +113,20 @@ class AppInterventionEditActivity : AppCompatActivity() {
     private fun setupRuleControls() {
         binding.notifyChipGroup.setOnCheckedStateChangeListener { _, checkedIds ->
             if (suppressNotifyCallbacks) return@setOnCheckedStateChangeListener
-            val rule = catchAllRule ?: return@setOnCheckedStateChangeListener
             val notifyValue = when (checkedIds.firstOrNull()) {
                 R.id.chipNotifyOn -> true
                 R.id.chipNotifyOff -> false
                 else -> null
             }
-            updateCatchAllRule(rule.copy(showNotify = notifyValue))
+            viewModel.updateShowNotify(notifyValue)
         }
 
         binding.btnAddRule.setOnClickListener {
-            val newRule = InterventionRule.defaultCatchAll(enabled = true)
-            catchAllRule = newRule
-            profile = profile.copy(rules = listOf(newRule))
-            persistProfile()
-            renderProfile()
+            viewModel.addCatchAllRule()
         }
 
         binding.btnDeleteRule.setOnClickListener {
-            catchAllRule = null
-            profile = AppInterventionProfile.EMPTY
-            persistProfile()
-            renderProfile()
+            viewModel.deleteCatchAllRule()
         }
     }
 
@@ -133,7 +136,7 @@ class AppInterventionEditActivity : AppCompatActivity() {
                 .setTitle(R.string.remove_managed_app_confirm_title)
                 .setMessage(R.string.remove_managed_app_confirm_message)
                 .setPositiveButton(R.string.remove_managed_app) { _, _ ->
-                    repository.removeManagedPackage(packageName)
+                    viewModel.removeManagedApp()
                     Toast.makeText(this, R.string.remove_managed_app_success, Toast.LENGTH_SHORT).show()
                     setResult(RESULT_OK)
                     finish()
@@ -143,20 +146,17 @@ class AppInterventionEditActivity : AppCompatActivity() {
         }
     }
 
-    private fun updateCatchAllRule(updatedRule: InterventionRule) {
-        catchAllRule = updatedRule
-        val otherRules = profile.rules.filter { it.type != InterventionRuleType.CATCH_ALL }
-        profile = profile.copy(rules = otherRules + updatedRule)
-        persistProfile()
-        renderProfile()
-    }
-
-    private fun persistProfile() {
-        repository.saveProfile(packageName, profile)
-        Toast.makeText(this, R.string.rule_saved, Toast.LENGTH_SHORT).show()
-    }
-
     companion object {
         const val EXTRA_PACKAGE_NAME = "packageName"
+    }
+}
+
+class AppInterventionEditViewModelFactory(
+    private val packageName: String,
+    private val repository: AppRepositoryInterface,
+) : androidx.lifecycle.ViewModelProvider.Factory {
+    @Suppress("UNCHECKED_CAST")
+    override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
+        return AppInterventionEditViewModel(packageName, repository) as T
     }
 }

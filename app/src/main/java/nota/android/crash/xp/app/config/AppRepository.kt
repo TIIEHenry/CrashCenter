@@ -117,10 +117,11 @@ class AppRepository(context: Context) : AppRepositoryInterface {
             return
         }
 
-        val disabled = HashSet<String>()
-        for (app in apps) {
-            if (!app.hookEnabled) {
-                disabled.add(app.packageName)
+        val disabled = buildSet {
+            for (app in apps) {
+                if (!app.hookEnabled) {
+                    add(app.packageName)
+                }
             }
         }
         prefs.edit { putStringSet(PREF_PACKAGE_LIST, disabled) }
@@ -130,7 +131,9 @@ class AppRepository(context: Context) : AppRepositoryInterface {
 
     override fun readManagedPackageNames(): Set<String>? {
         if (isLegacyMode()) return null
-        return HashSet(prefs.getStringSet(PREF_MANAGED_PACKAGES, emptySet()) ?: emptySet())
+        return buildSet {
+            addAll(prefs.getStringSet(PREF_MANAGED_PACKAGES, emptySet()) ?: emptySet())
+        }
     }
 
     override fun loadManagedApps(): List<ManagedApp> {
@@ -139,39 +142,39 @@ class AppRepository(context: Context) : AppRepositoryInterface {
 
         val profiles = readAllProfiles()
         val packageManager = appContext.packageManager
-        val apps = mutableListOf<ManagedApp>()
 
-        for (packageName in managedPackages) {
-            if (packageName == ITSELF) continue
-            val packageInfo = try {
-                packageManager.getPackageInfo(packageName, 0)
-            } catch (_: PackageManager.NameNotFoundException) {
-                continue
+        return buildList {
+            for (packageName in managedPackages) {
+                if (packageName == ITSELF) continue
+                val packageInfo = try {
+                    packageManager.getPackageInfo(packageName, 0)
+                } catch (_: PackageManager.NameNotFoundException) {
+                    continue
+                }
+                val appInfo = packageInfo.applicationInfo ?: continue
+                val profile = profiles[packageName] ?: AppInterventionProfile.EMPTY
+                val enabledCount = profile.enabledRuleCount
+                val switchChecked = profile.hasEnabledRule
+                add(
+                    ManagedApp(
+                        packageName = packageName,
+                        label = appInfo.loadLabel(packageManager).toString(),
+                        icon = appInfo.loadIcon(packageManager),
+                        isSystem = appInfo.flags and ApplicationInfo.FLAG_SYSTEM != 0,
+                        interventionStatus = if (switchChecked) {
+                            InterventionStatus.ENABLED
+                        } else {
+                            InterventionStatus.PENDING
+                        },
+                        switchChecked = switchChecked,
+                        enabledRuleCount = enabledCount,
+                        summary = if (switchChecked) CATCH_ALL_SUMMARY else null,
+                        updateTime = packageInfo.lastUpdateTime,
+                        installTime = packageInfo.firstInstallTime,
+                    ),
+                )
             }
-            val appInfo = packageInfo.applicationInfo ?: continue
-            val profile = profiles[packageName] ?: AppInterventionProfile.EMPTY
-            val enabledCount = profile.enabledRuleCount
-            val switchChecked = profile.hasEnabledRule
-            apps.add(
-                ManagedApp(
-                    packageName = packageName,
-                    label = appInfo.loadLabel(packageManager).toString(),
-                    icon = appInfo.loadIcon(packageManager),
-                    isSystem = appInfo.flags and ApplicationInfo.FLAG_SYSTEM != 0,
-                    interventionStatus = if (switchChecked) {
-                        InterventionStatus.ENABLED
-                    } else {
-                        InterventionStatus.PENDING
-                    },
-                    switchChecked = switchChecked,
-                    enabledRuleCount = enabledCount,
-                    summary = if (switchChecked) CATCH_ALL_SUMMARY else null,
-                    updateTime = packageInfo.lastUpdateTime,
-                    installTime = packageInfo.firstInstallTime,
-                ),
-            )
         }
-        return apps
     }
 
     override fun loadPickableApps(): List<PickableApp> {
@@ -180,72 +183,63 @@ class AppRepository(context: Context) : AppRepositoryInterface {
         val packageManager = appContext.packageManager
         val installedPackages = PackageVisibilityHelper.getInstalledPackagesCompat(packageManager)
 
-        val apps = mutableListOf<PickableApp>()
-        for (packageInfo in installedPackages) {
-            val packageName = packageInfo.packageName
-            if (packageName == ITSELF || packageName in managedPackages) continue
-            val appInfo = packageInfo.applicationInfo ?: continue
-            val isSystem = appInfo.flags and ApplicationInfo.FLAG_SYSTEM != 0
-            if (isSystem && !showSystemUi) continue
-            apps.add(
-                PickableApp(
-                    packageName = packageName,
-                    label = appInfo.loadLabel(packageManager).toString(),
-                    icon = appInfo.loadIcon(packageManager),
-                    isSystem = isSystem,
-                ),
-            )
+        return buildList {
+            for (packageInfo in installedPackages) {
+                val packageName = packageInfo.packageName
+                if (packageName == ITSELF || packageName in managedPackages) continue
+                val appInfo = packageInfo.applicationInfo ?: continue
+                val isSystem = appInfo.flags and ApplicationInfo.FLAG_SYSTEM != 0
+                if (isSystem && !showSystemUi) continue
+                add(
+                    PickableApp(
+                        packageName = packageName,
+                        label = appInfo.loadLabel(packageManager).toString(),
+                        icon = appInfo.loadIcon(packageManager),
+                        isSystem = isSystem,
+                    ),
+                )
+            }
         }
-        return apps
     }
 
     override fun addManagedPackages(packages: Collection<String>) {
         if (packages.isEmpty()) return
-        val current = readManagedPackageNames()?.toMutableSet() ?: mutableSetOf()
-        var changed = false
-        for (packageName in packages) {
-            if (packageName == ITSELF) continue
-            if (current.add(packageName)) {
-                changed = true
-            }
-        }
-        if (!changed) return
-        ensureManagedModelActive(current)
+        val current = readManagedPackageNames() ?: emptySet()
+        val newPackages = packages.filter { it != ITSELF && it !in current }
+        if (newPackages.isEmpty()) return
+        val merged = current + newPackages
+        ensureManagedModelActive(merged)
     }
 
     override fun removeManagedPackage(packageName: String) {
-        val current = readManagedPackageNames()?.toMutableSet() ?: return
-        if (!current.remove(packageName)) return
-        writeManagedPackages(current)
-        val profiles = readAllProfiles().toMutableMap()
-        profiles.remove(packageName)
-        writeProfiles(profiles)
+        val current = readManagedPackageNames() ?: return
+        if (packageName !in current) return
+        val updated = current - packageName
+        writeManagedPackages(updated)
+        val profiles = readAllProfiles()
+        writeProfiles(profiles - packageName)
     }
 
     override fun pruneUninstalled(): Int {
-        val managedPackages = readManagedPackageNames()?.toMutableSet() ?: return 0
+        val managedPackages = readManagedPackageNames() ?: return 0
         if (managedPackages.isEmpty()) return 0
 
         val packageManager = appContext.packageManager
-        val removed = managedPackages.filterTo(mutableSetOf()) { packageName ->
-            try {
-                packageManager.getPackageInfo(packageName, 0)
-                true
-            } catch (_: PackageManager.NameNotFoundException) {
-                false
+        val installed = buildSet {
+            for (packageName in managedPackages) {
+                try {
+                    packageManager.getPackageInfo(packageName, 0)
+                    add(packageName)
+                } catch (_: PackageManager.NameNotFoundException) {
+                }
             }
         }
-        val prunedCount = managedPackages.size - removed.size
+        val prunedCount = managedPackages.size - installed.size
         if (prunedCount == 0) return 0
 
-        writeManagedPackages(removed)
-        val profiles = readAllProfiles().toMutableMap()
-        for (packageName in managedPackages) {
-            if (packageName !in removed) {
-                profiles.remove(packageName)
-            }
-        }
-        writeProfiles(profiles)
+        writeManagedPackages(installed)
+        val profiles = readAllProfiles()
+        writeProfiles(profiles.filterKeys { it in installed })
         return prunedCount
     }
 
@@ -255,13 +249,13 @@ class AppRepository(context: Context) : AppRepositoryInterface {
         readAllProfiles()[packageName] ?: AppInterventionProfile.EMPTY
 
     override fun saveProfile(packageName: String, profile: AppInterventionProfile) {
-        val profiles = readAllProfiles().toMutableMap()
-        if (profile.rules.isEmpty()) {
-            profiles.remove(packageName)
+        val profiles = readAllProfiles()
+        val updated = if (profile.rules.isEmpty()) {
+            profiles - packageName
         } else {
-            profiles[packageName] = profile.copy(updatedAt = System.currentTimeMillis())
+            profiles + (packageName to profile.copy(updatedAt = System.currentTimeMillis()))
         }
-        writeProfiles(profiles)
+        writeProfiles(updated)
     }
 
     override fun setInterventionEnabled(packageName: String, enabled: Boolean) {
@@ -320,11 +314,11 @@ class AppRepository(context: Context) : AppRepositoryInterface {
     }
 
     private fun writeManagedPackages(packages: Set<String>) {
-        prefs.edit { putStringSet(PREF_MANAGED_PACKAGES, HashSet(packages)) }
+        prefs.edit { putStringSet(PREF_MANAGED_PACKAGES, packages.toSet()) }
     }
 
     private fun ensureManagedModelActive(packages: Set<String>) {
-        prefs.edit { putStringSet(PREF_MANAGED_PACKAGES, HashSet(packages)) }
+        prefs.edit { putStringSet(PREF_MANAGED_PACKAGES, packages.toSet()) }
     }
 
     companion object {
