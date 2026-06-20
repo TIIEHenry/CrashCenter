@@ -60,7 +60,11 @@ object CrashFeedbackFacade {
                 ).show()
                 showNotification(packageName, application, appInfo, throwable, crashId)
             } catch (t: Throwable) {
-                XposedBridge.log(t)
+                try {
+                    XposedBridge.log(t)
+                } catch (_: Throwable) {
+                    Log.e("CrashFeedbackFacade", "Error showing crash feedback", t)
+                }
             }
         }
     }
@@ -97,8 +101,12 @@ object CrashFeedbackFacade {
             }
         }
 
-        val moduleContext = AndroidAppHelper.currentApplication()
-            .createPackageContext(pkgName, Context.CONTEXT_IGNORE_SECURITY)
+        val moduleContext = try {
+            AndroidAppHelper.currentApplication()
+                .createPackageContext(pkgName, Context.CONTEXT_IGNORE_SECURITY)
+        } catch (_: Throwable) {
+            application
+        }
 
         var pendingFlags = PendingIntent.FLAG_CANCEL_CURRENT
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
@@ -106,7 +114,11 @@ object CrashFeedbackFacade {
         }
         val contentIntent = PendingIntent.getActivity(application, 0, intent, pendingFlags)
 
-        val title = moduleContext.getString(R.string.crash_tip) + " - " + appName
+        val title = try {
+            moduleContext.getString(R.string.crash_tip) + " - " + appName
+        } catch (_: Throwable) {
+            appName
+        }
         val bigText = (throwable.localizedMessage ?: "") + "\n-----\n" + stackTrace
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -128,10 +140,10 @@ object CrashFeedbackFacade {
 
     private fun crashTipPrefix(packageName: String): String {
         return try {
-            val context = AndroidAppHelper.currentApplication()
-                .createPackageContext(packageName, Context.CONTEXT_IGNORE_SECURITY)
+            val currentApp = AndroidAppHelper.currentApplication() ?: return ""
+            val context = currentApp.createPackageContext(packageName, Context.CONTEXT_IGNORE_SECURITY)
             context.getString(R.string.crash_tip) + ": "
-        } catch (_: PackageManager.NameNotFoundException) {
+        } catch (_: Throwable) {
             ""
         }
     }

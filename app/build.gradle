@@ -84,4 +84,5 @@ dependencies {
     testImplementation libs.json
     testImplementation libs.robolectric
     testImplementation libs.kotlinx.coroutines.test
+    testImplementation libs.xposed.api
 }
