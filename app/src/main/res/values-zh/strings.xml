@@ -108,27 +108,21 @@
 
 	<!-- Plurals -->
 	<plurals name="app_count">
-		<item quantity="one">共 %1$d 个应用</item>
 		<item quantity="other">共 %1$d 个应用</item>
 	</plurals>
 	<plurals name="crash_history_count">
-		<item quantity="one">共 %1$d 条崩溃记录</item>
 		<item quantity="other">共 %1$d 条崩溃记录</item>
 	</plurals>
 	<plurals name="add_managed_success_count">
-		<item quantity="one">已添加 %1$d 个应用</item>
 		<item quantity="other">已添加 %1$d 个应用</item>
 	</plurals>
 	<plurals name="intervention_status_enabled">
-		<item quantity="one">已启用 %1$d 条规则</item>
 		<item quantity="other">已启用 %1$d 条规则</item>
 	</plurals>
 	<plurals name="permission_list_partial">
-		<item quantity="one">当前仅显示 %1$d 个可见应用，授权后可查看完整列表</item>
 		<item quantity="other">当前仅显示 %1$d 个可见应用，授权后可查看完整列表</item>
 	</plurals>
 	<plurals name="permission_list_partial_compact">
-		<item quantity="one">仅 %1$d 个可见 · 点击授权</item>
 		<item quantity="other">仅 %1$d 个可见 · 点击授权</item>
 	</plurals>
 
