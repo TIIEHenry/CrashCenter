@@ -27,6 +27,7 @@ import nota.android.crash.xp.app.common.ui.DenseSearchField
 import nota.android.crash.xp.app.common.ui.FilterChipRow
 import nota.android.crash.xp.app.common.ui.LoadingState
 import nota.android.crash.xp.app.databinding.FragmentConfigBinding
+import androidx.core.content.edit
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 
 class ConfigFragment : Fragment() {
@@ -301,7 +302,7 @@ class ConfigFragment : Fragment() {
             .setTitle(R.string.xposed_not_active)
             .setMessage(R.string.xposed_hint)
             .setNeutralButton(R.string.btn_dont_show_again) { _, _ ->
-                prefs.edit().putBoolean(PrefManager.PREF_XPOSED_DIALOG_DISMISSED, true).apply()
+                prefs.edit { putBoolean(PrefManager.PREF_XPOSED_DIALOG_DISMISSED, true) }
             }
             .show()
     }

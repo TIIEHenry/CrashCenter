@@ -5,6 +5,7 @@ import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.os.Build
 import android.util.Xml
+import androidx.core.content.edit
 import nota.android.crash.xp.app.config.AppInterventionProfile
 import nota.android.crash.xp.app.config.InterventionRule
 import nota.android.crash.xp.app.config.InterventionRulesCodec
@@ -43,15 +44,15 @@ object PrefMigrator {
         val snapshot = readLegacySnapshot(context)
         val importHadData = snapshot != null && snapshot.hasData()
         if (importHadData) {
-            val editor = dest.edit()
-            snapshot.booleans.forEach { (key, value) -> editor.putBoolean(key, value) }
-            snapshot.stringSets.forEach { (key, value) ->
-                editor.putStringSet(key, HashSet(value))
+            dest.edit {
+                snapshot.booleans.forEach { (key, value) -> putBoolean(key, value) }
+                snapshot.stringSets.forEach { (key, value) ->
+                    putStringSet(key, HashSet(value))
+                }
             }
-            editor.apply()
         }
 
-        dest.edit().putBoolean(KEY_MIGRATED, true).apply()
+        dest.edit { putBoolean(KEY_MIGRATED, true) }
         return LegacyPrefState(hadPriorSession = false, importHadData = importHadData)
     }
 
@@ -65,7 +66,7 @@ object PrefMigrator {
             return
         }
         if (prefs.contains(PrefManager.PREF_MANAGED_PACKAGES)) {
-            prefs.edit().putBoolean(PrefManager.PREF_MANAGED_MODEL_MIGRATED, true).apply()
+            prefs.edit { putBoolean(PrefManager.PREF_MANAGED_MODEL_MIGRATED, true) }
             return
         }
 
@@ -115,11 +116,11 @@ object PrefMigrator {
     }
 
     private fun activateEmptyManagedModel(prefs: SharedPreferences) {
-        prefs.edit()
-            .putStringSet(PrefManager.PREF_MANAGED_PACKAGES, HashSet())
-            .putString(PrefManager.PREF_INTERVENTION_RULES, "{}")
-            .putBoolean(PrefManager.PREF_MANAGED_MODEL_MIGRATED, true)
-            .apply()
+        prefs.edit {
+            putStringSet(PrefManager.PREF_MANAGED_PACKAGES, HashSet())
+            putString(PrefManager.PREF_INTERVENTION_RULES, "{}")
+            putBoolean(PrefManager.PREF_MANAGED_MODEL_MIGRATED, true)
+        }
     }
 
     private fun migrateLegacyManagedModel(context: Context, prefs: SharedPreferences) {
@@ -145,14 +146,14 @@ object PrefMigrator {
             )
         }
 
-        prefs.edit()
-            .putStringSet(PrefManager.PREF_MANAGED_PACKAGES, HashSet(managed))
-            .putString(
+        prefs.edit {
+            putStringSet(PrefManager.PREF_MANAGED_PACKAGES, HashSet(managed))
+            putString(
                 PrefManager.PREF_INTERVENTION_RULES,
                 InterventionRulesCodec.encode(rules),
             )
-            .putBoolean(PrefManager.PREF_MANAGED_MODEL_MIGRATED, true)
-            .apply()
+            putBoolean(PrefManager.PREF_MANAGED_MODEL_MIGRATED, true)
+        }
     }
 
     data class LegacyPrefState(
@@ -169,7 +170,7 @@ object PrefMigrator {
 
     private fun readLegacySnapshot(context: Context): Snapshot? {
         readViaPackageContext(context)?.takeIf { it.hasData() }?.let { return it }
-        readViaRoot()?.takeIf { it.hasData() }?.let { return it }
+        readViaRoot(context)?.takeIf { it.hasData() }?.let { return it }
         return null
     }
 
@@ -203,8 +204,8 @@ object PrefMigrator {
         return Snapshot(booleans, stringSets)
     }
 
-    private fun readViaRoot(): Snapshot? {
-        val path = "/data/data/$LEGACY_PACKAGE/shared_prefs/$LEGACY_PREF_FILE.xml"
+    private fun readViaRoot(context: Context): Snapshot? {
+        val path = "${context.filesDir.parentFile}/$LEGACY_PACKAGE/shared_prefs/$LEGACY_PREF_FILE.xml"
         val xml = execSuCat(path) ?: return null
         return parsePrefsXml(xml)
     }

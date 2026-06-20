@@ -11,6 +11,9 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import kotlinx.coroutines.launch
+import androidx.core.view.get
+import androidx.core.view.size
+
 import nota.android.crash.xp.PrefMigrator
 import nota.android.crash.xp.XposedManagerLauncher
 import nota.android.crash.xp.app.ModuleActivation
@@ -80,8 +83,8 @@ class MainShellActivity : AppCompatActivity() {
                     ?.prepareOptionsMenu(menu)
             }
             ShellTab.OBSERVE -> {
-                for (index in 0 until menu.size()) {
-                    menu.getItem(index).isEnabled = false
+                for (index in 0 until menu.size) {
+                    menu[index].isEnabled = false
                 }
             }
             else -> Unit

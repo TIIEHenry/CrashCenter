@@ -11,6 +11,7 @@ import nota.android.crash.xp.PrefManager.PREF_NAME
 import nota.android.crash.xp.PrefManager.PREF_PACKAGE_LIST
 import nota.android.crash.xp.PrefManager.PREF_SCOPE_MODE
 import nota.android.crash.xp.PrefManager.PREF_SHOW_SYSTEM_UI
+import androidx.core.content.edit
 import nota.android.crash.xp.app.PackageVisibilityHelper
 
 class AppRepository(context: Context) {
@@ -31,15 +32,15 @@ class AppRepository(context: Context) {
     fun readShowSystemUi(): Boolean = prefs.getBoolean(PREF_SHOW_SYSTEM_UI, false)
 
     fun setScopeMode(enabled: Boolean) {
-        prefs.edit().putBoolean(PREF_SCOPE_MODE, enabled).apply()
+        prefs.edit { putBoolean(PREF_SCOPE_MODE, enabled) }
     }
 
     fun setHandleSystem(enabled: Boolean) {
-        prefs.edit().putBoolean(PREF_HANDLE_SYSTEM, enabled).apply()
+        prefs.edit { putBoolean(PREF_HANDLE_SYSTEM, enabled) }
     }
 
     fun setShowSystemUi(enabled: Boolean) {
-        prefs.edit().putBoolean(PREF_SHOW_SYSTEM_UI, enabled).apply()
+        prefs.edit { putBoolean(PREF_SHOW_SYSTEM_UI, enabled) }
     }
 
     // ─── Package visibility ───
@@ -99,7 +100,7 @@ class AppRepository(context: Context) {
                 disabled.add(app.packageName)
             }
         }
-        prefs.edit().putStringSet(PREF_PACKAGE_LIST, disabled).apply()
+        prefs.edit { putStringSet(PREF_PACKAGE_LIST, disabled) }
     }
 
     // ─── Managed mode: managed apps ───
@@ -290,21 +291,17 @@ class AppRepository(context: Context) {
     }
 
     private fun writeProfiles(profiles: Map<String, AppInterventionProfile>) {
-        prefs.edit()
-            .putString(PREF_INTERVENTION_RULES, InterventionRulesCodec.encode(profiles))
-            .apply()
+        prefs.edit {
+            putString(PREF_INTERVENTION_RULES, InterventionRulesCodec.encode(profiles))
+        }
     }
 
     private fun writeManagedPackages(packages: Set<String>) {
-        prefs.edit()
-            .putStringSet(PREF_MANAGED_PACKAGES, HashSet(packages))
-            .apply()
+        prefs.edit { putStringSet(PREF_MANAGED_PACKAGES, HashSet(packages)) }
     }
 
     private fun ensureManagedModelActive(packages: Set<String>) {
-        prefs.edit()
-            .putStringSet(PREF_MANAGED_PACKAGES, HashSet(packages))
-            .apply()
+        prefs.edit { putStringSet(PREF_MANAGED_PACKAGES, HashSet(packages)) }
     }
 
     companion object {
