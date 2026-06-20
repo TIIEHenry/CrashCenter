@@ -4,6 +4,7 @@ import android.content.Context
 import java.io.BufferedReader
 import java.io.File
 import java.io.FileReader
+import java.io.FileWriter
 import java.util.Collections
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.locks.ReentrantReadWriteLock
@@ -14,6 +15,8 @@ interface CrashLogRepository {
     fun getAll(filter: CrashFilter, limit: Int, offset: Int): List<CrashEvent>
     fun getById(id: String): CrashEvent?
     fun getCount(filter: CrashFilter): Int
+    fun deleteById(id: String): Boolean
+    fun clear()
 }
 
 class FileCrashLogRepository(context: Context) : CrashLogRepository {
@@ -86,6 +89,56 @@ class FileCrashLogRepository(context: Context) : CrashLogRepository {
                 true // always continue for count (no early termination possible unless we had a max)
             }
             count
+        }
+    }
+
+    override fun deleteById(id: String): Boolean {
+        return lock.write {
+            if (!eventsFile.isFile) return@write false
+
+            val tempFile = File(eventsFile.parentFile, "${eventsFile.name}.tmp")
+            var deleted = false
+
+            BufferedReader(FileReader(eventsFile)).use { reader ->
+                java.io.FileWriter(tempFile).use { writer ->
+                    reader.lineSequence().forEach { line ->
+                        val trimmed = line.trim()
+                        if (trimmed.isEmpty()) return@forEach
+
+                        val event = CrashEvent.fromJson(trimmed)
+                        if (event != null && event.id == id) {
+                            deleted = true
+                            return@forEach // skip this line
+                        }
+                        writer.write(line)
+                        writer.write("\n")
+                    }
+                }
+            }
+
+            if (deleted) {
+                if (tempFile.length() == 0L) {
+                    eventsFile.delete()
+                } else {
+                    tempFile.renameTo(eventsFile)
+                }
+                cache.clear()
+                lastFileModified.set(0L)
+                lastFileLength.set(0L)
+            } else {
+                tempFile.delete()
+            }
+
+            deleted
+        }
+    }
+
+    override fun clear() {
+        lock.write {
+            eventsFile.delete()
+            cache.clear()
+            lastFileModified.set(0L)
+            lastFileLength.set(0L)
         }
     }
 

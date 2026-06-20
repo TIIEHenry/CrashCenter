@@ -12,10 +12,41 @@ import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import kotlinx.coroutines.launch
 import nota.android.crash.xp.app.R
 import nota.android.crash.xp.app.common.ui.configureBottomSheetAppearance
+import nota.android.crash.xp.app.data.CrashDetailLoader
 import nota.android.crash.xp.app.di.ServiceLocator
 import nota.android.crash.xp.app.di.ViewModelFactory
 import nota.android.crash.xp.app.databinding.BottomSheetCrashDetailBinding
 import nota.android.crash.xp.app.view.CrashLogViewerClient
+
+sealed class CrashDetailArgs {
+    abstract fun toBundle(): Bundle
+
+    data class FromId(val crashId: String) : CrashDetailArgs() {
+        override fun toBundle(): Bundle = Bundle().apply { putString(ARG_CRASH_ID, crashId) }
+    }
+
+    data class FromStackTrace(val stackTrace: String, val title: String? = null) : CrashDetailArgs() {
+        override fun toBundle(): Bundle = Bundle().apply {
+            putString(ARG_STACK_TRACE, stackTrace)
+            title?.let { putString(ARG_TITLE, it) }
+        }
+    }
+
+    companion object {
+        private const val ARG_CRASH_ID = CrashHistoryFragment.EXTRA_CRASH_ID
+        private const val ARG_STACK_TRACE = "stack_trace"
+        private const val ARG_TITLE = "title"
+
+        fun fromBundle(bundle: Bundle): CrashDetailArgs {
+            val rawStack = bundle.getString(ARG_STACK_TRACE)
+            return if (!rawStack.isNullOrBlank()) {
+                FromStackTrace(rawStack, bundle.getString(ARG_TITLE))
+            } else {
+                FromId(bundle.getString(ARG_CRASH_ID).orEmpty())
+            }
+        }
+    }
+}
 
 class CrashDetailBottomSheet : BottomSheetDialogFragment() {
 
@@ -24,14 +55,21 @@ class CrashDetailBottomSheet : BottomSheetDialogFragment() {
 
     private var viewer: CrashLogViewerClient? = null
 
+    private lateinit var args: CrashDetailArgs
+
     private val viewModel: CrashDetailViewModel by viewModels {
-        val crashId = arguments?.getString(ARG_CRASH_ID).orEmpty()
+        val crashId = (args as? CrashDetailArgs.FromId)?.crashId.orEmpty()
         ViewModelFactory {
             CrashDetailViewModel(
                 crashId = crashId,
                 repository = ServiceLocator.crashLogRepository(requireContext()),
             )
         }
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        args = CrashDetailArgs.fromBundle(requireArguments())
     }
 
     override fun onCreateView(
@@ -62,35 +100,33 @@ class CrashDetailBottomSheet : BottomSheetDialogFragment() {
     }
 
     private fun observeViewModel() {
-        val args = requireArguments()
-        val rawStack = args.getString(ARG_STACK_TRACE)
-        if (!rawStack.isNullOrBlank()) {
-            binding.tvTitle.text = args.getString(ARG_TITLE)
-                ?: titleFromStackTrace(rawStack)
-                ?: getString(R.string.crash_info_title)
-            viewer?.showStackTrace(rawStack)
-            return
-        }
-
-        val crashId = args.getString(ARG_CRASH_ID).orEmpty()
-        if (crashId.isBlank()) {
-            viewer?.showStackTrace("")
-            binding.tvTitle.text = getString(R.string.crash_info_title)
-            return
-        }
-
-        binding.tvTitle.text = getString(R.string.crash_history_loading)
-        viewLifecycleOwner.lifecycleScope.launch {
-            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.uiState.collect { state ->
-                    when (state) {
-                        is CrashDetailUiState.Loading -> {
-                            binding.tvTitle.text = getString(R.string.crash_history_loading)
-                        }
-                        is CrashDetailUiState.Success -> {
-                            if (_binding == null) return@collect
-                            binding.tvTitle.text = state.title
-                            viewer?.showStackTrace(state.stackTrace)
+        when (val a = args) {
+            is CrashDetailArgs.FromStackTrace -> {
+                binding.tvTitle.text = a.title
+                    ?: CrashDetailLoader.titleFromStackTrace(a.stackTrace)
+                    ?: getString(R.string.crash_info_title)
+                viewer?.showStackTrace(a.stackTrace)
+            }
+            is CrashDetailArgs.FromId -> {
+                if (a.crashId.isBlank()) {
+                    viewer?.showStackTrace("")
+                    binding.tvTitle.text = getString(R.string.crash_info_title)
+                    return
+                }
+                binding.tvTitle.text = getString(R.string.crash_history_loading)
+                viewLifecycleOwner.lifecycleScope.launch {
+                    viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                        viewModel.uiState.collect { state ->
+                            when (state) {
+                                is CrashDetailUiState.Loading -> {
+                                    binding.tvTitle.text = getString(R.string.crash_history_loading)
+                                }
+                                is CrashDetailUiState.Success -> {
+                                    if (_binding == null) return@collect
+                                    binding.tvTitle.text = state.title
+                                    viewer?.showStackTrace(state.stackTrace)
+                                }
+                            }
                         }
                     }
                 }
@@ -98,32 +134,16 @@ class CrashDetailBottomSheet : BottomSheetDialogFragment() {
         }
     }
 
-    private fun titleFromStackTrace(stackTrace: String): String? {
-        val firstLine = stackTrace.lineSequence().firstOrNull()?.trim().orEmpty()
-        if (firstLine.isEmpty()) return null
-        val exceptionToken = firstLine.substringBefore(':').trim()
-        return exceptionToken.substringAfterLast('.').ifBlank { exceptionToken }
-    }
-
     companion object {
         const val TAG = "crash_detail_sheet"
-        const val ARG_CRASH_ID = CrashHistoryFragment.EXTRA_CRASH_ID
-        const val ARG_STACK_TRACE = "stack_trace"
-        const val ARG_TITLE = "title"
+
+        fun newInstance(args: CrashDetailArgs): CrashDetailBottomSheet =
+            CrashDetailBottomSheet().apply { arguments = args.toBundle() }
 
         fun newInstance(crashId: String): CrashDetailBottomSheet =
-            CrashDetailBottomSheet().apply {
-                arguments = Bundle().apply {
-                    putString(ARG_CRASH_ID, crashId)
-                }
-            }
+            newInstance(CrashDetailArgs.FromId(crashId))
 
         fun newInstanceStackTrace(stackTrace: String, title: String? = null): CrashDetailBottomSheet =
-            CrashDetailBottomSheet().apply {
-                arguments = Bundle().apply {
-                    putString(ARG_STACK_TRACE, stackTrace)
-                    title?.let { putString(ARG_TITLE, it) }
-                }
-            }
+            newInstance(CrashDetailArgs.FromStackTrace(stackTrace, title))
     }
 }

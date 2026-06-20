@@ -40,16 +40,9 @@ class CrashDetailViewModel(
             val stackTrace = event?.let { CrashDetailLoader.stackTraceFrom(it) }
                 ?: "Crash detail not found: $crashId"
             val title = event?.shortExceptionClass
-                ?: titleFromStackTrace(stackTrace)
+                ?: CrashDetailLoader.titleFromStackTrace(stackTrace)
                 ?: "Crash Info"
             _uiState.value = CrashDetailUiState.Success(title, stackTrace)
         }
-    }
-
-    private fun titleFromStackTrace(stackTrace: String): String? {
-        val firstLine = stackTrace.lineSequence().firstOrNull()?.trim().orEmpty()
-        if (firstLine.isEmpty()) return null
-        val exceptionToken = firstLine.substringBefore(':').trim()
-        return exceptionToken.substringAfterLast('.').ifBlank { exceptionToken }
     }
 }

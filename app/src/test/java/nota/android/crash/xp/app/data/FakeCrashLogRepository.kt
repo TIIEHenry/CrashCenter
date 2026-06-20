@@ -20,7 +20,13 @@ class FakeCrashLogRepository : CrashLogRepository {
         events = events + event
     }
 
-    fun clear() {
+    override fun deleteById(id: String): Boolean {
+        val original = events.size
+        events = events.filter { it.id != id }
+        return events.size < original
+    }
+
+    override fun clear() {
         events = emptyList()
         throwOnGetAll = false
     }

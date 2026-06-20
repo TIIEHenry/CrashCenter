@@ -25,4 +25,11 @@ object CrashDetailLoader {
         }
         return header
     }
+
+    fun titleFromStackTrace(stackTrace: String): String? {
+        val firstLine = stackTrace.lineSequence().firstOrNull()?.trim().orEmpty()
+        if (firstLine.isEmpty()) return null
+        val exceptionToken = firstLine.substringBefore(':').trim()
+        return exceptionToken.substringAfterLast('.').ifBlank { exceptionToken }
+    }
 }

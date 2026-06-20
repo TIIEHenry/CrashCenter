@@ -4,7 +4,7 @@ type: architecture
 status: accepted
 phase: 4
 updated: 2026-06-20
-summary: "CrashLogRepository 读口 as-built（Paging3 + LRU）；StatsAggregator 与 retention/clear 为 4D 目标"
+summary: "CrashLogRepository 读口 as-built（Paging3 + LRU + clear/deleteById）；StatsAggregator 与 retention UI 为 4D 目标"
 ---
 
 # 崩溃数据层架构
@@ -39,7 +39,7 @@ CrashLogIngestCoordinator (defer 4B-β)
            CrashHistoryFragment / CrashHistoryPagingAdapter
 ```
 
-**4D 目标** — StatsAggregator、`observeChanges` Flow、`clear` / retention API（见 §4D 目标）。
+**4D 目标** — StatsAggregator、`observeChanges` Flow、`applyRetention` 与用户可调 pref（见 §4D 目标）；`clear` / `deleteById` 已在 as-built。
 
 ## As-built（2026-06）
 
@@ -47,7 +47,7 @@ CrashLogIngestCoordinator (defer 4B-β)
 
 | 项 | as-built |
 |----|----------|
-| 接口 | `getAll(filter, limit, offset)`、`getById(id)`、`getCount(filter)` **仅三方法** |
+| 接口 | `getAll`、`getById`、`getCount`、`deleteById(id): Boolean`、`clear()` |
 | 实现 | `FileCrashLogRepository` — 顺序读 `events.jsonl`，逐行 JSON parse |
 | 缓存 | LRU **200** 条（`CACHE_CAPACITY`）；`lastModified` + 文件长度变更时 invalidate |
 | 并发 | `ReentrantReadWriteLock`；无 `FileObserver` / 无 `Flow` |

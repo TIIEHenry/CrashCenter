@@ -4,7 +4,7 @@ type: progress
 status: active
 phase: N/A
 updated: 2026-06-20
-summary: "Phase 3/4 UI + 4B-α/4C-β as-built 文档同步；ADR-017 proposed；IS 矩阵待验"
+summary: "Repository clear/deleteById + CrashDetailArgs 重构；4D Toolbar 清空 UI defer"
 ---
 
 # 项目进度状态
@@ -34,18 +34,25 @@ summary: "Phase 3/4 UI + 4B-α/4C-β as-built 文档同步；ADR-017 proposed；
 - **Legacy backlog**：删 `activity_main`、OnBackPressed、sheet EmptyState、i18n/a11y/tint、ScopePolicy 澄清
 - **P0/P1 修复**：`ModuleActivation`、BNV StackOverflow、`PrefMigrator` fresh install、Observe 空态 copy、`ArrayUtil` 可见性
 - **文档 as-built 同步（2026-06-20）**：ui-routing、crash-data-layer、crash-history-ui、overview、architecture-optimization §9.3；新建 app-di-and-module-boundaries、**ADR-017** proposed
+- **Repository 扩展（2026-06-20）**：`CrashLogRepository.deleteById/clear` + 单测；`CrashDetailArgs`；`CrashDetailLoader.titleFromStackTrace`；删 legacy `CrashHistoryAdapter`
 
 ### 待办
 
 - **3A**：LSPosed 手动 smoke → 补全 `dev/verification/smoke_20260619.md`
 - **4B-β**：按 [ADR-017](../../docs/decisions/017-root-ingest-and-dedupe.md) 实施 RootSu + ingest dedupe；**IS-1~IS-6** 真机矩阵
-- **4D**：StatsAggregator、观测统计 tab、Repository clear/retention（ADR-019 待立项）
+- **4D**：StatsAggregator、观测统计 tab、Toolbar 清空 UI（`Repository.clear()` API 已有，UI defer ADR-019）
 - **暗色**：AOSP 模拟器 API 30/34/36；CodeEditor `setDark(night)`
 - Phase 2 归档（待 LSPosed smoke 报告）
 
 ---
 
 ## Recent Sessions
+
+### 2026-06-20 — Repository clear/delete + CrashDetail 详情重构
+
+- **实现**：`CrashLogRepository.deleteById/clear`（temp-file rewrite + cache invalidate）；`CrashDetailArgs` sealed class；`titleFromStackTrace` 统一到 `CrashDetailLoader`；`CrashEventViewHolder` 并入 `CrashHistoryPagingAdapter`；删 `CrashHistoryAdapter`
+- **测试**：`FileCrashLogRepositoryTest` +7（含并发 delete）；`:app:assembleDebug` OK
+- **文档**：crash-data-layer as-built 同步
 
 ### 2026-06-20 — 架构文档 as-built 同步 + ADR-017 proposed
 

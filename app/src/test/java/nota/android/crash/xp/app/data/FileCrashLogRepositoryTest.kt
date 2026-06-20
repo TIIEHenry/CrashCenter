@@ -227,6 +227,96 @@ class FileCrashLogRepositoryTest {
     }
 
     @Test
+    fun deleteByIdRemovesEvent() {
+        writeEvent(event(id = "1"))
+        writeEvent(event(id = "2"))
+        writeEvent(event(id = "3"))
+
+        assertTrue(repo.deleteById("2"))
+        assertEquals(2, repo.getCount(CrashFilter()))
+        assertNull(repo.getById("2"))
+        assertNotNull(repo.getById("1"))
+        assertNotNull(repo.getById("3"))
+    }
+
+    @Test
+    fun deleteByIdReturnsFalseWhenNotFound() {
+        writeEvent(event(id = "1"))
+        assertFalse(repo.deleteById("99"))
+        assertEquals(1, repo.getCount(CrashFilter()))
+    }
+
+    @Test
+    fun deleteByIdDeletesFileWhenLastEventRemoved() {
+        writeEvent(event(id = "1"))
+        assertTrue(repo.deleteById("1"))
+        assertFalse(eventsFile.exists())
+        assertEquals(0, repo.getCount(CrashFilter()))
+    }
+
+    @Test
+    fun deleteByIdInvalidatesCache() {
+        val e1 = event(id = "cache-del", message = "cached")
+        writeEvent(e1)
+        repo.getById("cache-del") // populate cache
+        eventsFile.delete() // file gone, but cache still has it
+
+        // Before deleteById, cache would still serve the event
+        repo.deleteById("cache-del")
+        assertNull(repo.getById("cache-del"))
+    }
+
+    @Test
+    fun clearRemovesAllEvents() {
+        writeEvent(event(id = "1"))
+        writeEvent(event(id = "2"))
+
+        repo.clear()
+        assertEquals(0, repo.getCount(CrashFilter()))
+        assertNull(repo.getById("1"))
+        assertFalse(eventsFile.exists())
+    }
+
+    @Test
+    fun clearInvalidatesCache() {
+        val e1 = event(id = "cache-clr", message = "cached")
+        writeEvent(e1)
+        repo.getById("cache-clr") // populate cache
+        eventsFile.delete() // file gone
+
+        repo.clear()
+        assertNull(repo.getById("cache-clr"))
+    }
+
+    @Test
+    fun threadSafetyUnderConcurrentDeletes() {
+        repeat(50) { i ->
+            writeEvent(event(id = "del-$i", timestampMs = i.toLong()))
+        }
+
+        val executor = Executors.newFixedThreadPool(10)
+        val latch = CountDownLatch(50)
+        val errors = AtomicInteger(0)
+
+        repeat(50) { i ->
+            executor.submit {
+                try {
+                    repo.deleteById("del-$i")
+                } catch (e: Throwable) {
+                    errors.incrementAndGet()
+                } finally {
+                    latch.countDown()
+                }
+            }
+        }
+
+        assertTrue("Timed out waiting for threads", latch.await(10, TimeUnit.SECONDS))
+        assertEquals("Concurrent delete errors occurred", 0, errors.get())
+        assertEquals(0, repo.getCount(CrashFilter()))
+        executor.shutdown()
+    }
+
+    @Test
     fun invalidJsonLinesAreSkipped() {
         eventsFile.parentFile?.mkdirs()
         eventsFile.writeText("{\"id\":\"1\",\"timestampMs\":100,\"packageName\":\"a\",\"exceptionClass\":\"E\"}\n")
