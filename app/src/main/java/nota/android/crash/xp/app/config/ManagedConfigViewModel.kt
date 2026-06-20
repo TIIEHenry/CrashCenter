@@ -1,26 +1,13 @@
 package nota.android.crash.xp.app.config
 
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 internal class ManagedConfigViewModel(
-    private val repository: AppRepositoryInterface,
-    private val scope: CoroutineScope,
-) : ConfigViewModelDelegate {
-
-    private val _uiState = MutableStateFlow(
-        ConfigUiState(
-            isLegacyMode = false,
-            scopeMode = repository.readScopeMode(),
-            handleSystem = repository.readHandleSystem(),
-            showSystemUi = repository.readShowSystemUi(),
-            packageVisibility = repository.detectPackageVisibility(),
-        )
-    )
-    override val uiState: StateFlow<ConfigUiState> = _uiState
+    repository: AppRepositoryInterface,
+    scope: CoroutineScope,
+) : BaseConfigViewModel(repository, scope, isLegacyMode = false) {
 
     override fun loadApps(forceReload: Boolean) {
         val current = _uiState.value
@@ -48,38 +35,9 @@ internal class ManagedConfigViewModel(
         }
     }
 
-    override fun setQuery(query: String) {
-        emitState { copy(query = query) }
-        applyFilters(preserveSort = true)
-    }
-
-    override fun setHookFilter(filter: HookFilter) {
-        // No-op in managed mode
-    }
-
     override fun setManagedFilter(filter: ManagedFilter) {
         emitState { copy(managedFilter = filter) }
         applyFilters(preserveSort = true)
-    }
-
-    override fun setScopeMode(enabled: Boolean) {
-        repository.setScopeMode(enabled)
-        emitState { copy(scopeMode = enabled) }
-    }
-
-    override fun setHandleSystem(enabled: Boolean) {
-        repository.setHandleSystem(enabled)
-        emitState { copy(handleSystem = enabled) }
-    }
-
-    override fun setShowSystemUi(enabled: Boolean) {
-        repository.setShowSystemUi(enabled)
-        emitState { copy(showSystemUi = enabled) }
-        applyFilters(preserveSort = true)
-    }
-
-    override fun toggleApp(packageName: String) {
-        // No-op in managed mode
     }
 
     override fun setManagedSwitch(packageName: String, enabled: Boolean) {
@@ -112,19 +70,7 @@ internal class ManagedConfigViewModel(
         loadApps(forceReload = true)
     }
 
-    override fun selectAll(enabled: Boolean) {
-        // No-op in managed mode
-    }
-
-    override fun setSortMode(mode: SortMode) {
-        emitState { copy(sortMode = mode) }
-        applyFilters(preserveSort = true)
-    }
-
-    private suspend fun reloadManagedApp(packageName: String): ManagedApp? =
-        repository.loadManagedApps().first().firstOrNull { it.packageName == packageName }
-
-    private fun applyFilters(preserveSort: Boolean) {
+    override fun applyFilters(preserveSort: Boolean) {
         val current = _uiState.value
         val filtered = AppFilterEngine.filterManagedApps(
             current.managedApps,
@@ -148,7 +94,6 @@ internal class ManagedConfigViewModel(
         }
     }
 
-    private fun emitState(block: ConfigUiState.() -> ConfigUiState) {
-        _uiState.value = _uiState.value.block()
-    }
+    private suspend fun reloadManagedApp(packageName: String): ManagedApp? =
+        repository.loadManagedApps().first().firstOrNull { it.packageName == packageName }
 }

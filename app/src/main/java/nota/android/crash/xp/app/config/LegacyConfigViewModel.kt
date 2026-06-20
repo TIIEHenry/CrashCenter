@@ -1,25 +1,12 @@
 package nota.android.crash.xp.app.config
 
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
 internal class LegacyConfigViewModel(
-    private val repository: AppRepositoryInterface,
-    private val scope: CoroutineScope,
-) : ConfigViewModelDelegate {
-
-    private val _uiState = MutableStateFlow(
-        ConfigUiState(
-            isLegacyMode = true,
-            scopeMode = repository.readScopeMode(),
-            handleSystem = repository.readHandleSystem(),
-            showSystemUi = repository.readShowSystemUi(),
-            packageVisibility = repository.detectPackageVisibility(),
-        )
-    )
-    override val uiState: StateFlow<ConfigUiState> = _uiState
+    repository: AppRepositoryInterface,
+    scope: CoroutineScope,
+) : BaseConfigViewModel(repository, scope, isLegacyMode = true) {
 
     override fun loadApps(forceReload: Boolean) {
         val current = _uiState.value
@@ -46,33 +33,8 @@ internal class LegacyConfigViewModel(
         }
     }
 
-    override fun setQuery(query: String) {
-        emitState { copy(query = query) }
-        applyFilters(preserveSort = true)
-    }
-
     override fun setHookFilter(filter: HookFilter) {
         emitState { copy(hookFilter = filter) }
-        applyFilters(preserveSort = true)
-    }
-
-    override fun setManagedFilter(filter: ManagedFilter) {
-        // No-op in legacy mode
-    }
-
-    override fun setScopeMode(enabled: Boolean) {
-        repository.setScopeMode(enabled)
-        emitState { copy(scopeMode = enabled) }
-    }
-
-    override fun setHandleSystem(enabled: Boolean) {
-        repository.setHandleSystem(enabled)
-        emitState { copy(handleSystem = enabled) }
-    }
-
-    override fun setShowSystemUi(enabled: Boolean) {
-        repository.setShowSystemUi(enabled)
-        emitState { copy(showSystemUi = enabled) }
         applyFilters(preserveSort = true)
     }
 
@@ -90,14 +52,6 @@ internal class LegacyConfigViewModel(
         applyFilters(preserveSort = true)
     }
 
-    override fun setManagedSwitch(packageName: String, enabled: Boolean) {
-        // No-op in legacy mode
-    }
-
-    override fun addManagedPackages(packages: Collection<String>) {
-        // No-op in legacy mode
-    }
-
     override fun selectAll(enabled: Boolean) {
         val updated = _uiState.value.allApps.map { it.copy(hookEnabled = enabled) }
         emitState { copy(allApps = updated) }
@@ -105,12 +59,7 @@ internal class LegacyConfigViewModel(
         applyFilters(preserveSort = true)
     }
 
-    override fun setSortMode(mode: SortMode) {
-        emitState { copy(sortMode = mode) }
-        applyFilters(preserveSort = true)
-    }
-
-    private fun applyFilters(preserveSort: Boolean) {
+    override fun applyFilters(preserveSort: Boolean) {
         val current = _uiState.value
         val filtered = AppFilterEngine.filterLegacyApps(
             current.allApps,
@@ -127,9 +76,5 @@ internal class LegacyConfigViewModel(
                 emptyMessage = if (filtered.isEmpty()) ConfigViewModel.EMPTY_FILTER else null,
             )
         }
-    }
-
-    private fun emitState(block: ConfigUiState.() -> ConfigUiState) {
-        _uiState.value = _uiState.value.block()
     }
 }

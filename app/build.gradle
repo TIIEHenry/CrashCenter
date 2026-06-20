@@ -80,6 +80,7 @@ dependencies {
     implementation project(':CodeEditor')
     implementation project(':CodeEditorClient')
 
+    testImplementation libs.androidx.test.core
     testImplementation libs.junit
     testImplementation libs.json
     testImplementation libs.robolectric

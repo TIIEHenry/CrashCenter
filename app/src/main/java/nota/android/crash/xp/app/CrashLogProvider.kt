@@ -64,7 +64,7 @@ class CrashLogProvider : ContentProvider() {
         selectionArgs: Array<out String>?,
     ): Int = 0
 
-    private fun validateCaller(claimedPackage: String): Boolean {
+    internal fun validateCaller(claimedPackage: String): Boolean {
         val callingUid = Binder.getCallingUid()
         if (callingUid == android.os.Process.myUid()) return true
         val packages = context?.packageManager?.getPackagesForUid(callingUid) ?: return false
@@ -73,7 +73,7 @@ class CrashLogProvider : ContentProvider() {
 
     private val rateLock = Any()
 
-    private fun checkRateLimit(): Boolean {
+    internal fun checkRateLimit(): Boolean {
         val callingUid = Binder.getCallingUid()
         val now = System.currentTimeMillis()
         val windowStart = synchronized(rateLock) {

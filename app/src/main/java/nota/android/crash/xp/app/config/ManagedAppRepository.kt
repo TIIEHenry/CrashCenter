@@ -1,10 +1,8 @@
 package nota.android.crash.xp.app.config
 
 import android.content.Context
-import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import androidx.core.content.edit
-import nota.android.crash.xp.PrefManager.ITSELF
 import nota.android.crash.xp.PrefManager.PREF_INTERVENTION_RULES
 import nota.android.crash.xp.PrefManager.PREF_MANAGED_PACKAGES
 import nota.android.crash.xp.PrefManager.PREF_NAME
@@ -40,22 +38,18 @@ class ManagedAppRepository(context: Context) {
 
         return buildList {
             for (packageName in managedPackages) {
-                if (packageName == ITSELF) continue
-                val packageInfo = try {
-                    packageManager.getPackageInfo(packageName, 0)
-                } catch (_: PackageManager.NameNotFoundException) {
-                    continue
-                }
-                val appInfo = packageInfo.applicationInfo ?: continue
+                if (PackageInfoLoader.isItself(packageName)) continue
+                val (packageInfo, appInfo) = PackageInfoLoader.loadAppInfo(packageManager, packageName)
+                    ?: continue
                 val profile = profiles[packageName] ?: AppInterventionProfile.EMPTY
                 val enabledCount = profile.enabledRuleCount
                 val switchChecked = profile.hasEnabledRule
                 add(
                     ManagedApp(
                         packageName = packageName,
-                        label = appInfo.loadLabel(packageManager).toString(),
+                        label = PackageInfoLoader.loadLabel(packageManager, appInfo),
                         appInfo = appInfo,
-                        isSystem = appInfo.flags and ApplicationInfo.FLAG_SYSTEM != 0,
+                        isSystem = PackageInfoLoader.isSystemApp(appInfo),
                         interventionStatus = if (switchChecked) {
                             InterventionStatus.ENABLED
                         } else {
@@ -80,14 +74,14 @@ class ManagedAppRepository(context: Context) {
         return buildList {
             for (packageInfo in installedPackages) {
                 val packageName = packageInfo.packageName
-                if (packageName == ITSELF || packageName in managedPackages) continue
+                if (PackageInfoLoader.isItself(packageName) || packageName in managedPackages) continue
                 val appInfo = packageInfo.applicationInfo ?: continue
-                val isSystem = appInfo.flags and ApplicationInfo.FLAG_SYSTEM != 0
+                val isSystem = PackageInfoLoader.isSystemApp(appInfo)
                 if (isSystem && !showSystemUi) continue
                 add(
                     PickableApp(
                         packageName = packageName,
-                        label = appInfo.loadLabel(packageManager).toString(),
+                        label = PackageInfoLoader.loadLabel(packageManager, appInfo),
                         appInfo = appInfo,
                         isSystem = isSystem,
                     ),
@@ -99,7 +93,7 @@ class ManagedAppRepository(context: Context) {
     fun addManagedPackages(packages: Collection<String>) {
         if (packages.isEmpty()) return
         val current = readManagedPackageNames() ?: emptySet()
-        val newPackages = packages.filter { it != ITSELF && it !in current }
+        val newPackages = packages.filter { !PackageInfoLoader.isItself(it) && it !in current }
         if (newPackages.isEmpty()) return
         val merged = current + newPackages
         ensureManagedModelActive(merged)
@@ -120,10 +114,8 @@ class ManagedAppRepository(context: Context) {
 
         val installed = buildSet {
             for (packageName in managedPackages) {
-                try {
-                    packageManager.getPackageInfo(packageName, 0)
+                if (PackageInfoLoader.loadAppInfo(packageManager, packageName) != null) {
                     add(packageName)
-                } catch (_: PackageManager.NameNotFoundException) {
                 }
             }
         }

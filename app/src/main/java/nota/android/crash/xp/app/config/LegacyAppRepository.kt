@@ -49,15 +49,15 @@ class LegacyAppRepository(context: Context) {
         return installedPackages.map { packageInfo ->
             val appInfo = packageInfo.applicationInfo ?: return@map null
             AppItem(
-                name = appInfo.loadLabel(packageManager).toString(),
+                name = PackageInfoLoader.loadLabel(packageManager, appInfo),
                 appInfo = appInfo,
                 hookEnabled = prefWhiteList == null || !prefWhiteList.contains(packageInfo.packageName),
                 packageName = packageInfo.packageName,
-                isSystemApp = appInfo.flags and ApplicationInfo.FLAG_SYSTEM != 0,
+                isSystemApp = PackageInfoLoader.isSystemApp(appInfo),
                 updateTime = packageInfo.lastUpdateTime,
                 installTime = packageInfo.firstInstallTime,
             )
-        }.filterNotNull().filter { app -> app.packageName != ITSELF }
+        }.filterNotNull().filter { app -> !PackageInfoLoader.isItself(app.packageName) }
     }
 
     fun persistHookStates(apps: List<AppItem>) {
@@ -78,7 +78,7 @@ class LegacyAppRepository(context: Context) {
         fun isSystemPackage(context: Context, packageName: String): Boolean {
             return try {
                 val appInfo = context.packageManager.getApplicationInfo(packageName, 0)
-                appInfo.flags and ApplicationInfo.FLAG_SYSTEM != 0
+                PackageInfoLoader.isSystemApp(appInfo)
             } catch (_: PackageManager.NameNotFoundException) {
                 false
             }
@@ -88,7 +88,7 @@ class LegacyAppRepository(context: Context) {
             val packageManager = context.packageManager
             val installedPackages = PackageVisibilityHelper.getInstalledPackagesCompat(packageManager)
             return installedPackages.map { it.packageName }
-                .filter { packageName -> packageName != ITSELF }
+                .filter { packageName -> !PackageInfoLoader.isItself(packageName) }
                 .toSet()
         }
     }

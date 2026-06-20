@@ -16,6 +16,7 @@ robolectric = "4.16.1"
 paging = "3.3.6"
 mockito = "5.2.0"
 mockito-kotlin = "5.2.1"
+androidx-test-core = "1.6.1"
 
 [libraries]
 androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
@@ -35,6 +36,7 @@ androidx-paging-runtime = { module = "androidx.paging:paging-runtime", version.r
 robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectric" }
 mockito-core = { module = "org.mockito:mockito-core", version.ref = "mockito" }
 mockito-kotlin = { module = "org.mockito.kotlin:mockito-kotlin", version.ref = "mockito-kotlin" }
+androidx-test-core = { module = "androidx.test:core", version.ref = "androidx-test-core" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
