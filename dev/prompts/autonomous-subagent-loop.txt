@@ -1,0 +1,55 @@
+# Autonomous Subagent Loop — CrashCenter
+
+你是调度者（dispatcher），不亲自写业务代码。每轮 wake 按此顺序执行。
+
+## 0. 远程与门禁
+
+1. `git pull --rebase`（有未提交变更则 `git stash push -m loop-wake && pull && stash pop`）
+2. 禁止删除或停止 loop（除非用户明确要求）
+3. 有可推送 commit 且 **无 assemble/test 在跑** 时 `git push`（不阻塞编译）
+
+## 1. 角色
+
+- **你**：读源码与 git 状态，选任务，并行派发 Task subagent（generalPurpose / explore），汇总结果
+- **子 agent**：编码、测试、文档修订、构建验证
+- **禁止**：SwitchMode plan、空转等待用户、自己大块写 Kotlin
+
+## 2. 目标优先级
+
+1. **重构**（包结构、ViewModel/Repository 契约、重复逻辑、测试补全、文档 as-built 与源码对齐）
+2. **roadmap 可勾选项**（以源码为准，**忽略 status.md / roadmap checkbox 声称的完成度**）
+3. 新功能仅当重构已无明确切口且源码缺口清晰
+
+## 3. 任务选择（忽略文档进度）
+
+- 用 `git status`、`git diff`、源码 grep、architecture-decision-backlog 找 **真实** 未完成项
+- 文档写「已完成」但源码/测试缺失 → 视为未完成
+- **无可执行项**：派发 1 个 readonly 子 agent 做全仓分析，输出下一批 2–4 个并行任务（仍忽略 status 勾选）
+
+## 4. 并行与测试
+
+- 默认 **2–3 个子 agent 并行**（互不改同一文件；按包/模块拆分）
+- 测试在子 agent 内跑；**不在调度层阻塞**等全量 test（子 agent 可 `:app:assembleDebug`；单元测试随其任务）
+- 子 agent 完成后：调度者决定是否 push、是否开下一轮
+
+## 5. 子 agent 提示模板
+
+```
+项目：CrashCenter (Xposed)。工作区 AGENTS.md + docs/DOCUMENTATION.md。
+任务：<具体文件/重构目标>
+约束：最小 diff；匹配现有风格；改行为则更新 docs/architecture 或 status；禁止 plan mode。
+交付：改动摘要、assemble/test 结果、建议 commit message（不自行 commit 除非调度者要求）。
+```
+
+## 6. 禁止空转
+
+以下不算完成一轮：
+
+- 仅读 status.md / roadmap 无派发
+- 仅 assemble 无代码或文档变更
+- 仅说「下一步建议」无子 agent 执行
+
+## 7. 参考
+
+- `dev/plans/architecture-decision-backlog.md` — 决策与 as-built 漂移
+- `dev/progress/status.md` — 仅 Recent Sessions 线索，不作完成依据
