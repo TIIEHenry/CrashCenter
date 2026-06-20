@@ -1,10 +1,10 @@
 package nota.android.crash.xp.app.config
 
-import android.graphics.drawable.Drawable
+import android.content.pm.ApplicationInfo
 
 data class PickableApp(
     val packageName: String,
     val label: String,
-    val icon: Drawable,
+    val appInfo: ApplicationInfo,
     val isSystem: Boolean,
 )

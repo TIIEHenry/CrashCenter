@@ -3,56 +3,47 @@ package nota.android.crash.xp.app.observe
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.Dispatchers
+import androidx.paging.Pager
+import androidx.paging.PagingConfig
+import androidx.paging.PagingData
+import androidx.paging.cachedIn
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import nota.android.crash.xp.app.data.CrashFilter
+import nota.android.crash.xp.app.data.CrashEvent
 import nota.android.crash.xp.app.data.CrashLogRepository
-
-import kotlin.coroutines.CoroutineContext
 
 class CrashHistoryViewModel(
     private val repository: CrashLogRepository,
-    private val ioDispatcher: CoroutineContext = Dispatchers.IO,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(CrashHistoryUiState())
     val uiState: StateFlow<CrashHistoryUiState> = _uiState
 
-    private var loadGeneration = 0
+    val pagingData: Flow<PagingData<CrashEvent>> = Pager(
+        config = PagingConfig(
+            pageSize = PAGE_SIZE,
+            prefetchDistance = PREFETCH_DISTANCE,
+            enablePlaceholders = false,
+        ),
+        pagingSourceFactory = { CrashEventPagingSource(repository, CrashFilter()) },
+    ).flow.cachedIn(viewModelScope)
 
-    fun loadEvents(forceReload: Boolean = false) {
-        val current = _uiState.value
-        if (!forceReload && !current.isLoading && current.events.isNotEmpty()) {
-            return
-        }
-
-        val generation = ++loadGeneration
-        emitState { copy(isLoading = true) }
-
+    fun loadEvents() {
         viewModelScope.launch {
-            val events = withContext(ioDispatcher) {
-                try {
-                    repository.getAll(CrashFilter(), Int.MAX_VALUE, 0)
-                } catch (_: Exception) {
-                    emptyList()
-                }
-            }
-            if (generation != loadGeneration) return@launch
-            emitState {
-                copy(
+            _uiState.value = _uiState.value.copy(isLoading = true)
+            try {
+                val count = repository.getCount(CrashFilter())
+                _uiState.value = _uiState.value.copy(
                     isLoading = false,
-                    events = events,
-                    eventCount = events.size,
+                    eventCount = count,
                 )
+            } catch (_: Exception) {
+                _uiState.value = _uiState.value.copy(isLoading = false)
             }
         }
-    }
-
-    private inline fun emitState(block: CrashHistoryUiState.() -> CrashHistoryUiState) {
-        _uiState.value = _uiState.value.block()
     }
 
     class Factory(
@@ -62,5 +53,10 @@ class CrashHistoryViewModel(
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             return CrashHistoryViewModel(repository) as T
         }
+    }
+
+    companion object {
+        const val PAGE_SIZE = 50
+        const val PREFETCH_DISTANCE = 50
     }
 }

@@ -1,11 +1,11 @@
 package nota.android.crash.xp.app.config
 
-import android.graphics.drawable.Drawable
+import android.content.pm.ApplicationInfo
 
 data class ManagedApp(
     val packageName: String,
     val label: String,
-    val icon: Drawable,
+    val appInfo: ApplicationInfo,
     val isSystem: Boolean,
     val interventionStatus: InterventionStatus,
     val switchChecked: Boolean,

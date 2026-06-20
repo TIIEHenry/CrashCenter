@@ -42,7 +42,7 @@ class AppToggleAdapter : BaseListAdapter<AppItem, AppToggleAdapter.VH>(
                 data.name,
                 data.packageName,
             )
-            binding.ivIcon.setImageDrawable(data.icon)
+            binding.ivIcon.setImageDrawable(data.appInfo.loadIcon(context.packageManager))
             binding.tvName.text = data.name
             binding.sw.contentDescription = context.getString(
                 if (data.hookEnabled) {

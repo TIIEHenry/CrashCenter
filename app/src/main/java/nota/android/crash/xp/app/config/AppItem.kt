@@ -1,10 +1,10 @@
 package nota.android.crash.xp.app.config
 
-import android.graphics.drawable.Drawable
+import android.content.pm.ApplicationInfo
 
 data class AppItem(
     val name: String,
-    val icon: Drawable,
+    val appInfo: ApplicationInfo,
     val hookEnabled: Boolean,
     val packageName: String,
     val isSystemApp: Boolean,

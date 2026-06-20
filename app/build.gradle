@@ -70,6 +70,8 @@ dependencies {
     implementation libs.androidx.lifecycle.viewmodel.ktx
     implementation libs.androidx.lifecycle.livedata.ktx
 
+    implementation libs.androidx.paging.runtime
+
     compileOnly libs.xposed.api
 
     implementation libs.serialization.json

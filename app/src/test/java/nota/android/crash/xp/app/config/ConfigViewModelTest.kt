@@ -1,5 +1,6 @@
 package nota.android.crash.xp.app.config
 
+import android.content.pm.ApplicationInfo
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -462,7 +463,10 @@ class ConfigViewModelTest {
         updateTime: Long = 0L,
     ): AppItem = AppItem(
         name = name,
-        icon = android.graphics.drawable.ColorDrawable(0),
+        appInfo = ApplicationInfo().apply {
+            this.packageName = packageName
+            flags = if (isSystemApp) ApplicationInfo.FLAG_SYSTEM else 0
+        },
         hookEnabled = hookEnabled,
         packageName = packageName,
         isSystemApp = isSystemApp,
@@ -480,7 +484,10 @@ class ConfigViewModelTest {
     ): ManagedApp = ManagedApp(
         packageName = packageName,
         label = label,
-        icon = android.graphics.drawable.ColorDrawable(0),
+        appInfo = ApplicationInfo().apply {
+            this.packageName = packageName
+            flags = if (isSystem) ApplicationInfo.FLAG_SYSTEM else 0
+        },
         isSystem = isSystem,
         interventionStatus = if (switchChecked) InterventionStatus.ENABLED else InterventionStatus.PENDING,
         switchChecked = switchChecked,

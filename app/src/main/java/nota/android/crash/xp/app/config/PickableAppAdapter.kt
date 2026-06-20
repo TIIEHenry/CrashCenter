@@ -58,7 +58,7 @@ class PickableAppAdapter : ListAdapter<PickableApp, PickableAppAdapter.VH>(DiffC
         }
 
         fun bind(data: PickableApp) {
-            binding.ivIcon.setImageDrawable(data.icon)
+            binding.ivIcon.setImageDrawable(data.appInfo.loadIcon(binding.root.context.packageManager))
             binding.tvName.text = data.label
             binding.tvPackageName.text = data.packageName
             binding.checkbox.isChecked = selectedPackages.contains(data.packageName)

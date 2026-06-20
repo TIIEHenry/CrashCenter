@@ -21,18 +21,18 @@ class AppRepositoryTest {
 
     @Test
     fun `passesSystemFilter returns true for non-system app`() {
-        assertTrue(AppRepository.passesSystemFilter(isSystemApp = false, handleSystem = false))
-        assertTrue(AppRepository.passesSystemFilter(isSystemApp = false, handleSystem = true))
+        assertTrue(LegacyAppRepository.passesSystemFilter(isSystemApp = false, handleSystem = false))
+        assertTrue(LegacyAppRepository.passesSystemFilter(isSystemApp = false, handleSystem = true))
     }
 
     @Test
     fun `passesSystemFilter returns true for system app when handleSystem is true`() {
-        assertTrue(AppRepository.passesSystemFilter(isSystemApp = true, handleSystem = true))
+        assertTrue(LegacyAppRepository.passesSystemFilter(isSystemApp = true, handleSystem = true))
     }
 
     @Test
     fun `passesSystemFilter returns false for system app when handleSystem is false`() {
-        assertFalse(AppRepository.passesSystemFilter(isSystemApp = true, handleSystem = false))
+        assertFalse(LegacyAppRepository.passesSystemFilter(isSystemApp = true, handleSystem = false))
     }
 
     @Test
@@ -49,7 +49,7 @@ class AppRepositoryTest {
             assertEquals(
                 "Failed for isSystemApp=$isSystemApp, handleSystem=$handleSystem",
                 expected,
-                AppRepository.passesSystemFilter(isSystemApp, handleSystem),
+                LegacyAppRepository.passesSystemFilter(isSystemApp, handleSystem),
             )
         }
     }

@@ -6,11 +6,13 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.paging.LoadState
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import nota.android.crash.xp.app.R
 import nota.android.crash.xp.app.common.ui.EmptyState
@@ -27,7 +29,7 @@ class CrashHistoryFragment : Fragment() {
         CrashHistoryViewModel.Factory(FileCrashLogRepository(requireContext()))
     }
 
-    private lateinit var adapter: CrashHistoryAdapter
+    private lateinit var adapter: CrashHistoryPagingAdapter
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -44,15 +46,20 @@ class CrashHistoryFragment : Fragment() {
         EmptyState.bind(binding.emptyState.root, getString(R.string.crash_history_empty), R.drawable.ic_tab_observe)
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.pagingData.collectLatest { adapter.submitData(it) }
+            }
+        }
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.uiState.collect { renderState(it) }
             }
         }
-        viewModel.loadEvents(forceReload = savedInstanceState == null)
+        viewModel.loadEvents()
     }
 
     override fun onResume() {
         super.onResume()
-        viewModel.loadEvents(forceReload = true)
+        adapter.refresh()
     }
 
     override fun onDestroyView() {
@@ -61,13 +68,37 @@ class CrashHistoryFragment : Fragment() {
     }
 
     private fun setupList() {
-        adapter = CrashHistoryAdapter()
-        adapter.onItemClick { _, event, _ ->
+        adapter = CrashHistoryPagingAdapter { event ->
             openDetail(event.id)
         }
         binding.recyclerView.apply {
             adapter = this@CrashHistoryFragment.adapter
             layoutManager = LinearLayoutManager(requireContext(), RecyclerView.VERTICAL, false)
+        }
+        adapter.addLoadStateListener { loadStates ->
+            val isLoading = loadStates.refresh is LoadState.Loading
+            val isEmpty = loadStates.refresh is LoadState.NotLoading && adapter.itemCount == 0
+            val hasError = loadStates.refresh is LoadState.Error
+
+            binding.loadingPanel.root.visibility = if (isLoading) View.VISIBLE else View.GONE
+            if (isLoading) {
+                LoadingState.bind(binding.loadingPanel.root, getString(R.string.crash_history_loading))
+            }
+
+            val hasEvents = !isLoading && adapter.itemCount > 0
+            binding.recyclerView.visibility = if (hasEvents) View.VISIBLE else View.GONE
+            binding.eventCount.visibility = if (hasEvents) View.VISIBLE else View.GONE
+
+            if (hasEvents) {
+                val count = adapter.itemCount
+                binding.eventCount.text = resources.getQuantityString(R.plurals.crash_history_count, count, count)
+            }
+
+            val empty = !isLoading && isEmpty
+            binding.emptyState.root.visibility = if (empty) View.VISIBLE else View.GONE
+            if (empty) {
+                EmptyState.bind(binding.emptyState.root, getString(R.string.crash_history_empty), R.drawable.ic_tab_observe)
+            }
         }
     }
 
@@ -77,24 +108,10 @@ class CrashHistoryFragment : Fragment() {
     }
 
     private fun renderState(state: CrashHistoryUiState) {
-        binding.loadingPanel.root.visibility = if (state.isLoading) View.VISIBLE else View.GONE
-        if (state.isLoading) {
-            LoadingState.bind(binding.loadingPanel.root, getString(R.string.crash_history_loading))
-        }
-
-        val hasEvents = !state.isLoading && state.events.isNotEmpty()
-        binding.recyclerView.visibility = if (hasEvents) View.VISIBLE else View.GONE
-        binding.eventCount.visibility = if (hasEvents) View.VISIBLE else View.GONE
-
-        if (hasEvents) {
+        // Event count is now shown via adapter load state listener
+        // but we also update from repository count for accuracy
+        if (state.eventCount > 0) {
             binding.eventCount.text = resources.getQuantityString(R.plurals.crash_history_count, state.eventCount, state.eventCount)
-            adapter.setData(state.events)
-        }
-
-        val empty = !state.isLoading && state.events.isEmpty()
-        binding.emptyState.root.visibility = if (empty) View.VISIBLE else View.GONE
-        if (empty) {
-            EmptyState.bind(binding.emptyState.root, getString(R.string.crash_history_empty), R.drawable.ic_tab_observe)
         }
     }
 

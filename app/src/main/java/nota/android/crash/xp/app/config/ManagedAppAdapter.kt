@@ -50,7 +50,7 @@ class ManagedAppAdapter : BaseListAdapter<ManagedApp, ManagedAppAdapter.VH>(
                 app.label,
                 app.packageName,
             )
-            binding.ivIcon.setImageDrawable(app.icon)
+            binding.ivIcon.setImageDrawable(app.appInfo.loadIcon(context.packageManager))
             binding.tvName.text = app.label
             binding.tvSubtitle.text = app.packageName
 
