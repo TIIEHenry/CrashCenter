@@ -1,11 +1,11 @@
 package nota.android.crash.xp.app.observe
 
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import nota.android.crash.xp.app.data.CrashFilter
@@ -15,13 +15,13 @@ class CrashHistoryViewModel(
     private val repository: CrashLogRepository,
 ) : ViewModel() {
 
-    private val _uiState = MutableLiveData(CrashHistoryUiState())
-    val uiState: LiveData<CrashHistoryUiState> = _uiState
+    private val _uiState = MutableStateFlow(CrashHistoryUiState())
+    val uiState: StateFlow<CrashHistoryUiState> = _uiState
 
     private var loadGeneration = 0
 
     fun loadEvents(forceReload: Boolean = false) {
-        val current = _uiState.value ?: CrashHistoryUiState()
+        val current = _uiState.value
         if (!forceReload && !current.isLoading && current.events.isNotEmpty()) {
             return
         }
@@ -49,8 +49,7 @@ class CrashHistoryViewModel(
     }
 
     private inline fun emitState(block: CrashHistoryUiState.() -> CrashHistoryUiState) {
-        val base = _uiState.value ?: CrashHistoryUiState()
-        _uiState.value = base.block()
+        _uiState.value = _uiState.value.block()
     }
 
     class Factory(

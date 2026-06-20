@@ -22,7 +22,7 @@ import java.util.Locale
 class AddManagedAppBottomSheet : BottomSheetDialogFragment() {
 
     private var _binding: BottomSheetAddManagedAppBinding? = null
-    private val binding get() = _binding!!
+    private val binding get() = checkNotNull(_binding) { "Binding accessed after onDestroyView" }
 
     private lateinit var repository: AppRepository
     private lateinit var adapter: PickableAppAdapter

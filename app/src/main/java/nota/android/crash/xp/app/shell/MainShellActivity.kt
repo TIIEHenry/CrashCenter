@@ -7,6 +7,10 @@ import android.view.MenuItem
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
+import kotlinx.coroutines.launch
 import nota.android.crash.xp.PrefMigrator
 import nota.android.crash.xp.XposedManagerLauncher
 import nota.android.crash.xp.app.ModuleActivation
@@ -41,11 +45,15 @@ class MainShellActivity : AppCompatActivity() {
 
         navigator = ShellNavigator(supportFragmentManager, R.id.fragmentContainer)
 
-        shellViewModel.uiState.observe(this) { state ->
-            updateXposedStatusBanner(state.xposedActive)
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                shellViewModel.uiState.collect { state ->
+                    updateXposedStatusBanner(state.xposedActive)
+                }
+            }
         }
 
-        val initialTab = shellViewModel.uiState.value?.selectedTab ?: ShellTab.CONFIG
+        val initialTab = shellViewModel.uiState.value.selectedTab
         selectTab(initialTab, fromUser = false)
 
         shellViewModel.refreshXposedStatus(isModuleActive())
@@ -57,7 +65,7 @@ class MainShellActivity : AppCompatActivity() {
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
-        when (shellViewModel.uiState.value?.selectedTab) {
+        when (shellViewModel.uiState.value.selectedTab) {
             ShellTab.CONFIG -> menuInflater.inflate(R.menu.menu_main, menu)
             ShellTab.OBSERVE -> menuInflater.inflate(R.menu.menu_observe_stub, menu)
             else -> menu.clear()
@@ -66,7 +74,7 @@ class MainShellActivity : AppCompatActivity() {
     }
 
     override fun onPrepareOptionsMenu(menu: Menu): Boolean {
-        when (shellViewModel.uiState.value?.selectedTab) {
+        when (shellViewModel.uiState.value.selectedTab) {
             ShellTab.CONFIG -> {
                 (navigator.findFragment(ShellTab.CONFIG) as? ConfigFragment)
                     ?.prepareOptionsMenu(menu)
@@ -103,7 +111,7 @@ class MainShellActivity : AppCompatActivity() {
     }
 
     private fun selectTab(tab: ShellTab, fromUser: Boolean) {
-        val currentTab = shellViewModel.uiState.value?.selectedTab
+        val currentTab = shellViewModel.uiState.value.selectedTab
         if (currentTab == tab && navigator.findFragment(tab) != null) {
             syncBottomNav(tab)
             return
@@ -150,7 +158,7 @@ class MainShellActivity : AppCompatActivity() {
             this,
             object : OnBackPressedCallback(true) {
                 override fun handleOnBackPressed() {
-                    if (shellViewModel.uiState.value?.selectedTab == ShellTab.OBSERVE) {
+                    if (shellViewModel.uiState.value.selectedTab == ShellTab.OBSERVE) {
                         selectTab(ShellTab.CONFIG, fromUser = true)
                         return
                     }

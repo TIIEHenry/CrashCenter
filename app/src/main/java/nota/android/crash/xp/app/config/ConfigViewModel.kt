@@ -1,11 +1,11 @@
 package nota.android.crash.xp.app.config
 
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.Locale
@@ -14,8 +14,8 @@ class ConfigViewModel(
     private val repository: AppRepository,
 ) : ViewModel() {
 
-    private val _uiState = MutableLiveData(ConfigUiState())
-    val uiState: LiveData<ConfigUiState> = _uiState
+    private val _uiState = MutableStateFlow(ConfigUiState())
+    val uiState: StateFlow<ConfigUiState> = _uiState
 
     private var appsLoadGeneration = 0
 
@@ -33,7 +33,7 @@ class ConfigViewModel(
     }
 
     fun loadApps(forceReload: Boolean = false) {
-        val current = _uiState.value ?: ConfigUiState()
+        val current = _uiState.value
         if (!forceReload) {
             if (current.isLegacyMode && current.allApps.isNotEmpty()) return
             if (!current.isLegacyMode && current.managedApps.isNotEmpty()) return
@@ -119,7 +119,7 @@ class ConfigViewModel(
     }
 
     fun toggleApp(packageName: String) {
-        val current = _uiState.value ?: return
+        val current = _uiState.value
         if (current.isLegacyMode) {
             val updated = current.allApps.map { app ->
                 if (app.packageName == packageName) {
@@ -135,7 +135,7 @@ class ConfigViewModel(
     }
 
     fun setManagedSwitch(packageName: String, enabled: Boolean) {
-        val current = _uiState.value ?: return
+        val current = _uiState.value
         if (current.isLegacyMode) return
 
         repository.setInterventionEnabled(packageName, enabled)
@@ -165,7 +165,7 @@ class ConfigViewModel(
     }
 
     fun selectAll(enabled: Boolean) {
-        val current = _uiState.value ?: return
+        val current = _uiState.value
         if (!current.isLegacyMode) return
         val updated = current.allApps.map { it.copy(hookEnabled = enabled) }
         emitState { copy(allApps = updated) }
@@ -182,7 +182,7 @@ class ConfigViewModel(
         repository.loadManagedApps().firstOrNull { it.packageName == packageName }
 
     private fun applyCurrentFilters(preserveSort: Boolean) {
-        val current = _uiState.value ?: return
+        val current = _uiState.value
         if (current.isLegacyMode) {
             applyLegacyFiltersAndSort(preserveSort)
         } else {
@@ -191,7 +191,7 @@ class ConfigViewModel(
     }
 
     private fun applyLegacyFiltersAndSort(preserveSort: Boolean) {
-        val current = _uiState.value ?: return
+        val current = _uiState.value
         val query = current.query.lowercase(Locale.getDefault())
         val filtered = current.allApps.filter { app ->
             val systemMatch = current.showSystemUi && app.isSystemApp ||
@@ -221,7 +221,7 @@ class ConfigViewModel(
     }
 
     private fun applyManagedFiltersAndSort(preserveSort: Boolean) {
-        val current = _uiState.value ?: return
+        val current = _uiState.value
         val query = current.query.lowercase(Locale.getDefault())
         val filtered = current.managedApps.filter { app ->
             val filterMatch = when (current.managedFilter) {
@@ -270,8 +270,7 @@ class ConfigViewModel(
     }
 
     private inline fun emitState(block: ConfigUiState.() -> ConfigUiState) {
-        val base = _uiState.value ?: ConfigUiState()
-        _uiState.value = base.block()
+        _uiState.value = _uiState.value.block()
     }
 
     class Factory(

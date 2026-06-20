@@ -19,7 +19,7 @@ class ObserveHostFragment : Fragment() {
         savedInstanceState: Bundle?,
     ): View {
         _binding = FragmentObserveHostBinding.inflate(inflater, container, false)
-        return _binding!!.root
+        return checkNotNull(_binding) { "Binding accessed after onDestroyView" }.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {

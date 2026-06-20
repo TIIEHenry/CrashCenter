@@ -1,16 +1,16 @@
 package nota.android.crash.xp.app.shell
 
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 
 class ShellViewModel(
     private val savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 
-    private val _uiState = MutableLiveData(restoredUiState())
-    val uiState: LiveData<ShellUiState> = _uiState
+    private val _uiState = MutableStateFlow(restoredUiState())
+    val uiState: StateFlow<ShellUiState> = _uiState
 
     fun setSelectedTab(tab: ShellTab) {
         savedStateHandle[KEY_SELECTED_TAB] = tab.name
@@ -28,8 +28,7 @@ class ShellViewModel(
     }
 
     private inline fun emit(block: ShellUiState.() -> ShellUiState) {
-        val base = _uiState.value ?: ShellUiState()
-        _uiState.value = base.block()
+        _uiState.value = _uiState.value.block()
     }
 
     companion object {

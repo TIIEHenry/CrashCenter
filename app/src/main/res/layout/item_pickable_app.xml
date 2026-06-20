@@ -24,6 +24,7 @@
         android:layout_width="@dimen/app_icon_size_compact"
         android:layout_height="@dimen/app_icon_size_compact"
         android:contentDescription="@null"
+        android:importantForAccessibility="no"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toEndOf="@id/checkbox"
         app:layout_constraintTop_toTopOf="parent"

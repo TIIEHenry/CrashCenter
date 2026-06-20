@@ -19,7 +19,7 @@ import nota.android.crash.xp.app.view.CrashLogViewerClient
 class CrashDetailBottomSheet : BottomSheetDialogFragment() {
 
     private var _binding: BottomSheetCrashDetailBinding? = null
-    private val binding get() = _binding!!
+    private val binding get() = checkNotNull(_binding) { "Binding accessed after onDestroyView" }
 
     private var viewer: CrashLogViewerClient? = null
 

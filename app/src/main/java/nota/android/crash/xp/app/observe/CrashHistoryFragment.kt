@@ -8,6 +8,10 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
+import kotlinx.coroutines.launch
 import nota.android.crash.xp.app.R
 import nota.android.crash.xp.app.common.ui.EmptyState
 import nota.android.crash.xp.app.common.ui.LoadingState
@@ -17,7 +21,7 @@ import nota.android.crash.xp.app.databinding.FragmentCrashHistoryBinding
 class CrashHistoryFragment : Fragment() {
 
     private var _binding: FragmentCrashHistoryBinding? = null
-    private val binding get() = _binding!!
+    private val binding get() = checkNotNull(_binding) { "Binding accessed after onDestroyView" }
 
     private val viewModel: CrashHistoryViewModel by viewModels {
         CrashHistoryViewModel.Factory(FileCrashLogRepository(requireContext()))
@@ -38,7 +42,11 @@ class CrashHistoryFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         setupList()
         EmptyState.bind(binding.emptyState.root, getString(R.string.crash_history_empty), R.drawable.ic_tab_observe)
-        viewModel.uiState.observe(viewLifecycleOwner, ::renderState)
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.uiState.collect { renderState(it) }
+            }
+        }
         viewModel.loadEvents(forceReload = savedInstanceState == null)
     }
 

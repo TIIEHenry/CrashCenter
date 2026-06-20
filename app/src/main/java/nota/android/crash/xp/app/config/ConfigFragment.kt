@@ -11,7 +11,9 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -32,7 +34,7 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 class ConfigFragment : Fragment() {
 
     private var _binding: FragmentConfigBinding? = null
-    private val binding get() = _binding!!
+    private val binding get() = checkNotNull(_binding) { "Binding accessed after onDestroyView" }
 
     private val viewModel: ConfigViewModel by viewModels {
         val context = requireContext()
@@ -75,7 +77,11 @@ class ConfigFragment : Fragment() {
         setupManagedFilterChips()
         setupLegacyFilterChips()
         setupPermissionBanner()
-        viewModel.uiState.observe(viewLifecycleOwner, ::renderState)
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.uiState.collect { renderState(it) }
+            }
+        }
         viewModel.loadApps(forceReload = savedInstanceState == null)
     }
 
@@ -86,7 +92,7 @@ class ConfigFragment : Fragment() {
             viewModel.loadApps(forceReload = true)
             return
         }
-        if (viewModel.uiState.value?.isLegacyMode == false) {
+        if (viewModel.uiState.value.isLegacyMode == false) {
             viewModel.loadApps(forceReload = true)
         }
     }
@@ -97,7 +103,7 @@ class ConfigFragment : Fragment() {
     }
 
     fun prepareOptionsMenu(menu: Menu) {
-        val legacy = viewModel.uiState.value?.isLegacyMode ?: true
+        val legacy = viewModel.uiState.value.isLegacyMode
         menu.findItem(R.id.item_select_all)?.isVisible = legacy
         menu.findItem(R.id.item_cancel_all)?.isVisible = legacy
         menu.findItem(R.id.item_add_managed_app)?.isVisible = !legacy
