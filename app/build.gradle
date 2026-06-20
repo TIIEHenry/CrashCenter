@@ -78,8 +78,8 @@ dependencies {
     implementation project(':CodeEditor')
     implementation project(':CodeEditorClient')
 
-    testImplementation 'junit:junit:4.13.2'
-    testImplementation 'org.json:json:20231013'
-    testImplementation 'org.robolectric:robolectric:4.14.1'
+    testImplementation libs.junit
+    testImplementation libs.json
+    testImplementation libs.robolectric
     testImplementation libs.kotlinx.coroutines.test
 }
