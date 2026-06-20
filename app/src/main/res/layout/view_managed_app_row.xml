@@ -45,7 +45,7 @@
         android:layout_marginStart="@dimen/spacing_md"
         android:paddingHorizontal="@dimen/badge_padding_horizontal"
         android:paddingVertical="@dimen/badge_padding_vertical"
-        android:textSize="10sp"
+        android:textSize="11sp"
         app:layout_constraintBottom_toBottomOf="@id/tvSubtitle"
         app:layout_constraintStart_toEndOf="@id/ivIcon"
         app:layout_constraintTop_toTopOf="@id/tvSubtitle"

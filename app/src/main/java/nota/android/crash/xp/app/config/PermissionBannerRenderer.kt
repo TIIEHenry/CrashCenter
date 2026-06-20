@@ -20,8 +20,9 @@ class PermissionBannerRenderer(
     fun render(status: PackageVisibilityHelper.Status) {
         val compact = !ModuleActivation.isModuleActive()
         val title = if (status.visiblePackageCount > 0) {
-            binding.root.context.getString(
-                if (compact) R.string.permission_list_partial_hint_compact else R.string.permission_list_partial_hint,
+            binding.root.context.resources.getQuantityString(
+                if (compact) R.plurals.permission_list_partial_compact else R.plurals.permission_list_partial,
+                status.visiblePackageCount,
                 status.visiblePackageCount,
             )
         } else {

@@ -69,7 +69,7 @@ class AppInterventionEditActivity : AppCompatActivity() {
     private fun renderProfile() {
         val enabledCount = profile.enabledRuleCount
         binding.tvStatusSummary.text = if (profile.hasEnabledRule) {
-            getString(R.string.intervention_status_enabled_format, enabledCount)
+            resources.getQuantityString(R.plurals.intervention_status_enabled, enabledCount, enabledCount)
         } else {
             getString(R.string.intervention_status_pending)
         }

@@ -16,7 +16,7 @@ class LegacyRenderer(
         val count = state.visibleApps.size
         FilterChipRow.setCountLabel(
             binding.hookFilterChipRow.root,
-            binding.root.context.getString(R.string.app_count_format, count),
+            binding.root.context.resources.getQuantityString(R.plurals.app_count, count, count),
         )
         return count
     }

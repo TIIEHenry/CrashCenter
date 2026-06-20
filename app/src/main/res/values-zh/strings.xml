@@ -51,7 +51,6 @@
 	<string name="xposed_status_title">模块状态</string>
 	<string name="xposed_active">模块已激活</string>
 	<string name="xposed_active_hint">Xposed 钩子已加载，可正常使用</string>
-	<string name="app_count_format">共 %1$d 个应用</string>
 	<string name="filter_empty">没有符合当前筛选条件的应用</string>
 	<string name="system_app_badge">系统</string>
 	<string name="crash_info_title">崩溃详情</string>
@@ -63,13 +62,10 @@
 	<string name="permission_rationale_message">崩溃中心需要读取设备上全部已安装应用，才能让您选择要拦截异常的目标。\n\nAndroid 11 及以上请在系统设置中开启「查询所有软件包」权限（若从未授予，可能需要重新安装）：\n\n1. 点击下方「打开设置」\n2. 进入「权限」\n3. 允许「查询所有软件包」\n4. 返回本应用，列表将自动刷新</string>
 	<string name="permission_open_settings">打开设置</string>
 	<string name="permission_settings_failed">无法打开应用设置</string>
-	<string name="permission_list_partial_hint">当前仅显示 %1$d 个可见应用，授权后可查看完整列表</string>
-	<string name="permission_list_partial_hint_compact">仅 %1$d 个可见 · 点击授权</string>
 	<string name="tab_config">配置</string>
 	<string name="tab_observe">观测</string>
 	<string name="crash_history_empty">暂无崩溃记录。启用崩溃日志后，被拦截的崩溃将显示在此处。</string>
 	<string name="crash_history_loading">正在加载崩溃历史…</string>
-	<string name="crash_history_count_format">共 %1$d 条崩溃记录</string>
 	<string name="crash_event_subtitle_format">%1$s · %2$s · %3$s</string>
 	<string name="crash_source_ueh">未捕获</string>
 	<string name="crash_source_looper">循环</string>
@@ -91,7 +87,6 @@
 	<string name="add_managed_app">添加应用</string>
 	<string name="add_managed_done">完成</string>
 	<string name="add_managed_picker_empty">没有可添加的已安装应用</string>
-	<string name="add_managed_success">已添加 %1$d 个应用</string>
 	<string name="switch_enable_intervention">启用崩溃拦截</string>
 	<string name="switch_disable_intervention">停用崩溃拦截</string>
 	<string name="intervention_rules_section">干预规则</string>
@@ -108,7 +103,33 @@
 	<string name="remove_managed_app_confirm_title">移除受管应用？</string>
 	<string name="remove_managed_app_confirm_message">将停止对该应用的崩溃拦截，已配置规则一并删除。</string>
 	<string name="remove_managed_app_success">已从受管列表移除</string>
-	<string name="intervention_status_enabled_format">已启用 %1$d 条规则</string>
 	<string name="intervention_status_pending">待配置</string>
 	<string name="rule_saved">规则已保存</string>
+
+	<!-- Plurals -->
+	<plurals name="app_count">
+		<item quantity="one">共 %1$d 个应用</item>
+		<item quantity="other">共 %1$d 个应用</item>
+	</plurals>
+	<plurals name="crash_history_count">
+		<item quantity="one">共 %1$d 条崩溃记录</item>
+		<item quantity="other">共 %1$d 条崩溃记录</item>
+	</plurals>
+	<plurals name="add_managed_success_count">
+		<item quantity="one">已添加 %1$d 个应用</item>
+		<item quantity="other">已添加 %1$d 个应用</item>
+	</plurals>
+	<plurals name="intervention_status_enabled">
+		<item quantity="one">已启用 %1$d 条规则</item>
+		<item quantity="other">已启用 %1$d 条规则</item>
+	</plurals>
+	<plurals name="permission_list_partial">
+		<item quantity="one">当前仅显示 %1$d 个可见应用，授权后可查看完整列表</item>
+		<item quantity="other">当前仅显示 %1$d 个可见应用，授权后可查看完整列表</item>
+	</plurals>
+	<plurals name="permission_list_partial_compact">
+		<item quantity="one">仅 %1$d 个可见 · 点击授权</item>
+		<item quantity="other">仅 %1$d 个可见 · 点击授权</item>
+	</plurals>
+
 </resources>

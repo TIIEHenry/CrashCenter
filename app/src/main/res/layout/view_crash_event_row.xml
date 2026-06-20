@@ -48,7 +48,7 @@
         android:paddingHorizontal="@dimen/badge_padding_horizontal"
         android:paddingVertical="@dimen/badge_padding_vertical"
         android:textColor="@color/systemAppBadge"
-        android:textSize="10sp"
+        android:textSize="11sp"
         android:visibility="gone"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"

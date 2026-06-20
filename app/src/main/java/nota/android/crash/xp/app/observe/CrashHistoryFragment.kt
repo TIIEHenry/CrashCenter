@@ -87,7 +87,7 @@ class CrashHistoryFragment : Fragment() {
         binding.eventCount.visibility = if (hasEvents) View.VISIBLE else View.GONE
 
         if (hasEvents) {
-            binding.eventCount.text = getString(R.string.crash_history_count_format, state.eventCount)
+            binding.eventCount.text = resources.getQuantityString(R.plurals.crash_history_count, state.eventCount, state.eventCount)
             adapter.setData(state.events)
         }
 

@@ -31,7 +31,7 @@ class PickableAppAdapter : ListAdapter<PickableApp, PickableAppAdapter.VH>(DiffC
 
     fun clearSelection() {
         selectedPackages.clear()
-        notifyDataSetChanged()
+        notifyItemRangeChanged(0, itemCount)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {

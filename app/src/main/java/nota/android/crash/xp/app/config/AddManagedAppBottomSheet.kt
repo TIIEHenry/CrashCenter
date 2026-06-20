@@ -138,7 +138,7 @@ class AddManagedAppBottomSheet : BottomSheetDialogFragment() {
         )
         Toast.makeText(
             requireContext(),
-            getString(R.string.add_managed_success, selected.size),
+            resources.getQuantityString(R.plurals.add_managed_success_count, selected.size, selected.size),
             Toast.LENGTH_SHORT,
         ).show()
         dismiss()
