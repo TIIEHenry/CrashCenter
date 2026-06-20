@@ -26,12 +26,10 @@
 
     <color name="background">@color/fluent_canvas</color>
     <color name="surface">@color/fluent_layer</color>
-    <color name="surfaceCard">@color/fluent_layer</color>
     <color name="surfaceVariant">@color/fluent_fill_subtle</color>
     <color name="textPrimary">@color/fluent_text_primary</color>
     <color name="textSecondary">@color/fluent_text_secondary</color>
     <color name="textTertiary">@color/fluent_text_tertiary</color>
-    <color name="divider">@color/fluent_stroke</color>
     <color name="outline">@color/fluent_stroke</color>
     <color name="outlineVariant">@color/fluent_stroke_subtle</color>
     <color name="toolbarDivider">@color/fluent_stroke</color>
@@ -48,8 +46,6 @@
     <color name="statusInactiveText">@color/status_warning</color>
 
     <!-- Legacy aliases kept for code references -->
-    <color name="chipSelectedBg">@color/fluent_accent_container</color>
-    <color name="chipSelectedStroke">@color/fluent_accent</color>
     <color name="systemAppBadge">@color/fluent_text_secondary</color>
     <color name="sheet_drag_handle">@color/fluent_text_secondary</color>
 

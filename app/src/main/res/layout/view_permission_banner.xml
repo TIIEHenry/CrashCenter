@@ -8,7 +8,6 @@
     android:background="@drawable/bg_status_permission"
     android:clickable="true"
     android:focusable="true"
-    android:foreground="?attr/selectableItemBackground"
     android:gravity="center_vertical"
     android:minHeight="@dimen/status_banner_height"
     android:orientation="horizontal"

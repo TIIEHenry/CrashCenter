@@ -6,11 +6,11 @@ plugins {
 android {
     namespace 'nota.android.crash.xp.app'
 
-    compileSdkVersion 36
+    compileSdkVersion 37
     defaultConfig {
         applicationId "nota.android.crash.xp.app"
         minSdk 21
-        targetSdk 36
+        targetSdk 37
         versionCode 1
         versionName "0.1.0"
     }

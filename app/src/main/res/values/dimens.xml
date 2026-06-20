@@ -16,10 +16,6 @@
     <!-- Fluent 2 corner radii -->
     <dimen name="fluent_corner_radius_control">4dp</dimen>
     <dimen name="radius_mobile_control">8dp</dimen>
-    <dimen name="fluent_corner_radius_overlay">8dp</dimen>
-
-    <dimen name="card_corner">@dimen/fluent_corner_radius_control</dimen>
-    <dimen name="card_elevation">0dp</dimen>
     <dimen name="toolbar_height">48dp</dimen>
     <dimen name="toolbar_elevation">0dp</dimen>
 

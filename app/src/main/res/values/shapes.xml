@@ -6,18 +6,4 @@
         <item name="cornerFamily">rounded</item>
         <item name="cornerSize">@dimen/fluent_corner_radius_control</item>
     </style>
-
-    <style name="ShapeAppearance.App.Corner.Overlay" parent="ShapeAppearance.MaterialComponents.MediumComponent">
-        <item name="cornerFamily">rounded</item>
-        <item name="cornerSize">@dimen/fluent_corner_radius_overlay</item>
-    </style>
-
-    <style name="ShapeAppearance.App.Corner.SheetTop" parent="">
-        <item name="cornerFamilyTopLeft">rounded</item>
-        <item name="cornerFamilyTopRight">rounded</item>
-        <item name="cornerSizeTopLeft">@dimen/radius_mobile_sheet</item>
-        <item name="cornerSizeTopRight">@dimen/radius_mobile_sheet</item>
-        <item name="cornerSizeBottomLeft">0dp</item>
-        <item name="cornerSizeBottomRight">0dp</item>
-    </style>
 </resources>
