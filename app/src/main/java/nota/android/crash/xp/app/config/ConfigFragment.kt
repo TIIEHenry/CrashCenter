@@ -24,10 +24,8 @@ import nota.android.crash.xp.app.ModuleActivation
 import nota.android.crash.xp.app.PackageVisibilityHelper
 import nota.android.crash.xp.app.R
 import nota.android.crash.xp.app.common.ui.DenseSearchField
-import nota.android.crash.xp.app.common.ui.EmptyState
 import nota.android.crash.xp.app.common.ui.FilterChipRow
 import nota.android.crash.xp.app.common.ui.LoadingState
-import nota.android.crash.xp.app.common.ui.PermissionBanner
 import nota.android.crash.xp.app.databinding.FragmentConfigBinding
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 
@@ -45,6 +43,10 @@ class ConfigFragment : Fragment() {
 
     private lateinit var legacyAdapter: AppToggleAdapter
     private lateinit var managedAdapter: ManagedAppAdapter
+    private lateinit var legacyRenderer: LegacyRenderer
+    private lateinit var managedRenderer: ManagedRenderer
+    private lateinit var permissionBannerRenderer: PermissionBannerRenderer
+    private lateinit var emptyStateRenderer: EmptyStateRenderer
     private var returningFromPermissionSettings = false
     private var suppressChipCallbacks = false
     private var xposedDialogShown = false
@@ -76,7 +78,10 @@ class ConfigFragment : Fragment() {
         setupSearch()
         setupManagedFilterChips()
         setupLegacyFilterChips()
-        setupPermissionBanner()
+        legacyRenderer = LegacyRenderer(binding, legacyAdapter)
+        managedRenderer = ManagedRenderer(binding, managedAdapter)
+        permissionBannerRenderer = PermissionBannerRenderer(binding, ::showPermissionRationaleDialog)
+        emptyStateRenderer = EmptyStateRenderer(binding, ::showAddManagedAppSheet)
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.uiState.collect { renderState(it) }
@@ -192,12 +197,6 @@ class ConfigFragment : Fragment() {
         }
     }
 
-    private fun setupPermissionBanner() {
-        PermissionBanner.setOnActionClickListener(binding.permissionBanner.root, View.OnClickListener {
-            showPermissionRationaleDialog()
-        })
-    }
-
     private fun setupSettingsChips() {
         val row = binding.settingChipRow.root
         FilterChipRow.chip(row, R.id.chipScopeMode)?.setOnLongClickListener {
@@ -252,30 +251,15 @@ class ConfigFragment : Fragment() {
         FilterChipRow.setChipChecked(settingsRow, R.id.chipShowSystem, state.showSystemUi)
         suppressChipCallbacks = false
 
-        state.packageVisibility?.let { updatePermissionBanner(it) }
+        state.packageVisibility?.let { permissionBannerRenderer.render(it) }
 
-        binding.managedFilterChipRow.root.visibility =
-            if (state.isLegacyMode) View.GONE else View.VISIBLE
-        binding.hookFilterChipRow.root.visibility =
-            if (state.isLegacyMode) View.VISIBLE else View.GONE
+        legacyRenderer.setVisibility(state.isLegacyMode)
+        managedRenderer.setVisibility(!state.isLegacyMode)
 
-        val listCount: Int
-        if (state.isLegacyMode) {
-            binding.recyclerv.adapter = legacyAdapter
-            legacyAdapter.setData(state.visibleApps)
-            listCount = state.visibleApps.size
-            FilterChipRow.setCountLabel(
-                binding.hookFilterChipRow.root,
-                getString(R.string.app_count_format, listCount),
-            )
+        val listCount = if (state.isLegacyMode) {
+            legacyRenderer.render(state)
         } else {
-            binding.recyclerv.adapter = managedAdapter
-            managedAdapter.setData(state.visibleManagedApps)
-            listCount = state.visibleManagedApps.size
-            FilterChipRow.setCountLabel(
-                binding.managedFilterChipRow.root,
-                getString(R.string.app_count_format, listCount),
-            )
+            managedRenderer.render(state)
         }
 
         binding.loadingPanel.root.visibility = if (state.isLoading) View.VISIBLE else View.GONE
@@ -283,32 +267,7 @@ class ConfigFragment : Fragment() {
             LoadingState.bind(binding.loadingPanel.root)
         }
 
-        val hasVisibleItems = !state.isLoading && listCount > 0
-        val empty = !state.isLoading && listCount == 0
-        binding.emptyState.root.visibility = if (empty) View.VISIBLE else View.GONE
-        binding.recyclerv.visibility = if (hasVisibleItems) View.VISIBLE else View.GONE
-
-        if (empty) {
-            val message = when (state.emptyMessage) {
-                ConfigViewModel.EMPTY_MANAGED_LIST -> getString(R.string.managed_empty_message)
-                else -> getString(
-                    if (state.isLegacyMode) {
-                        R.string.filter_empty
-                    } else {
-                        R.string.managed_filter_empty
-                    },
-                )
-            }
-            val showAddAction = !state.isLegacyMode &&
-                state.emptyMessage == ConfigViewModel.EMPTY_MANAGED_LIST
-            EmptyState.bind(
-                binding.emptyState.root,
-                message,
-                if (showAddAction) getString(R.string.add_managed_app) else null,
-                if (showAddAction) ({ showAddManagedAppSheet() }) else null,
-                if (showAddAction) R.drawable.ic_tab_config else null,
-            )
-        }
+        emptyStateRenderer.render(state, listCount)
 
         if (!state.isLoading && !xposedDialogShown) {
             xposedDialogShown = true
@@ -345,21 +304,6 @@ class ConfigFragment : Fragment() {
                 prefs.edit().putBoolean(PrefManager.PREF_XPOSED_DIALOG_DISMISSED, true).apply()
             }
             .show()
-    }
-
-    private fun updatePermissionBanner(status: PackageVisibilityHelper.Status) {
-        val compact = !ModuleActivation.isModuleActive()
-        val title = if (status.visiblePackageCount > 0) {
-            getString(
-                if (compact) R.string.permission_list_partial_hint_compact else R.string.permission_list_partial_hint,
-                status.visiblePackageCount,
-            )
-        } else {
-            getString(
-                if (compact) R.string.permission_banner_title_compact else R.string.permission_banner_title,
-            )
-        }
-        PermissionBanner.bind(binding.permissionBanner.root, status.needsUserAction, title, compact)
     }
 
     private fun showPermissionRationaleDialog() {
