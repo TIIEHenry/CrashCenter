@@ -119,13 +119,10 @@ class CrashLogCoordinatorTest {
     fun `logAsync does not throw on the caller thread`() {
         // logAsync launches a coroutine and returns immediately.
         // We verify the public API is callable without blocking/throwing.
-        val throwable = RuntimeException("test crash")
+        val event = CrashEvent(id = "test-async", packageName = "com.test")
         CrashLogCoordinator.logAsync(
             hookContext = context,
-            packageName = "com.test",
-            appLabel = "Test App",
-            throwable = throwable,
-            source = "test",
+            event = event,
         )
         // The internal coroutine may fail on XposedBridge in the background,
         // but the caller thread should not be affected.

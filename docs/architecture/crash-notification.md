@@ -51,7 +51,7 @@ sequenceDiagram
   User->>NM: 点击通知
     NM->>AMS: PendingIntent → ActivityCrashInfo
     AMS->>Module: 启动 nota.android.crash.ActivityCrashInfo
-    Module->>Module: 读取 Intent extra "Exception"
+    Module->>Module: 读取 Intent extra "crash_id" → CrashLogRepository 查详情
 ```
 
 ### 文字版数据流
@@ -74,8 +74,9 @@ sequenceDiagram
 用户点击通知
   PendingIntent → Component(模块包, ActivityCrashInfo)
     → 模块进程 ActivityCrashInfo.onCreate
-         → intent.getStringExtra("Exception")
-         → TextView 展示 stack trace
+         → intent.getStringExtra("crash_id")
+         → CrashDetailLoader.loadStackTraceById(repository, crashId)
+         → 若找到则展示完整 stack trace，若未找到则提示 "crash_detail_not_found"
 ```
 
 ---
@@ -132,7 +133,8 @@ getCrashTip(packageName) + appLabel + " " + throwable.getLocalizedMessage()
 | Action | `Intent.ACTION_VIEW` |
 | Component | `nota.android.crash.xp.app` / `nota.android.crash.ActivityCrashInfo` |
 | Flags | `FLAG_ACTIVITY_NEW_TASK \| FLAG_ACTIVITY_RESET_TASK_IF_NEEDED` |
-| Extra | `Exception` = `Log.getStackTraceString(throwable)`（完整 stack，供详情页） |
+| Extra | `crash_id` = 事件 UUID（由 `CrashEventBuilder` 生成） |
+| 详情页加载 | `ActivityCrashInfo` 通过 `CrashDetailLoader.loadStackTraceById` 从 `CrashLogRepository` 读取完整 stack trace |
 | PendingIntent | `getActivity(context, 0, intent, FLAG_CANCEL_CURRENT \| FLAG_IMMUTABLE*)` |
 
 \* API 31+（`Build.VERSION_CODES.S`）附加 `FLAG_IMMUTABLE`。
@@ -168,8 +170,8 @@ getCrashTip(packageName) + appLabel + " " + throwable.getLocalizedMessage()
 | 载体 | stack 内容 |
 |------|------------|
 | 通知 `BigTextStyle` | cause（若有）的 `StackTraceElement` 逐行拼接 |
-| Intent extra `Exception` | `Log.getStackTraceString(throwable)`（含完整链与嵌套 cause） |
-| `ActivityCrashInfo` | 直接显示 extra 全文 |
+| Intent extra `crash_id` | 事件 UUID（`CrashEvent.id`），详情页通过 `CrashDetailLoader` 从 repository 加载完整 stack |
+| `ActivityCrashInfo` | 通过 `crash_id` 查 `CrashLogRepository`；若找不到则回退到旧 `Exception` extra（兼容） |
 
 用户需**点击通知**才能看到 Intent 中的完整 stack；通知展开文本仅为摘要。
 
@@ -181,7 +183,9 @@ getCrashTip(packageName) + appLabel + " " + throwable.getLocalizedMessage()
 onCreate
   → ViewBinding 布局 activity_crashinfo
   → SystemBars 边距
-  → getIntent().getStringExtra("Exception") → TextView
+  → getIntent().getStringExtra("crash_id")
+  → CrashDetailLoader.loadStackTraceById(repository, crashId)
+  → 若找到则展示，若未找到则 fallback 到旧 "Exception" extra
 ```
 
 - 无持久化：关闭 Activity 后 stack 不保留（Phase 4 [crash-logging.md](crash-logging.md) + [code-editor-porting.md](code-editor-porting.md)）

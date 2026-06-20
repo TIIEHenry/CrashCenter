@@ -29,7 +29,7 @@ summary: "Phase 3/4 UI + 4B-α/4C-β as-built 文档同步；ADR-017 proposed；
 - **Phase 4C-α Shell**：`MainShellActivity` / `ConfigFragment` / Design System 组件类化；adb smoke PASS
 - **Phase 4C-β scaffolding**：`CrashHistoryFragment` + `FileCrashLogRepository` + `CrashEventRow`；Observe 空态
 - **Phase 4B 写入 scaffold**：`CrashLogCoordinator` + `DirectFsCrashLogWriter`；hook 异步 append `events.jsonl`；UUID + `source`；`crash_log_enabled` pref
-- **暗色 DayNight A–D**：`values-night/` + `ThemeColors` + Material 对话框；Meizu Phase D QA PASS
+- **ADR-013**：通知 Intent 从 `Exception` 字符串改为 `crash_id` UUID；`ActivityCrashInfo` 通过 `CrashDetailLoader` 从 `CrashLogRepository` 加载详情；旧 `Exception` extra 保留 fallback（2026-06-20）
 - **M2** permission banner compact；**M5** Add sheet 28dp 圆角 + DragHandle + peekHeight 50%
 - **Legacy backlog**：删 `activity_main`、OnBackPressed、sheet EmptyState、i18n/a11y/tint、ScopePolicy 澄清
 - **P0/P1 修复**：`ModuleActivation`、BNV StackOverflow、`PrefMigrator` fresh install、Observe 空态 copy、`ArrayUtil` 可见性

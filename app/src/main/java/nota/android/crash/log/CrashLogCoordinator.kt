@@ -38,22 +38,11 @@ object CrashLogCoordinator {
 
     fun logAsync(
         hookContext: Context,
-        packageName: String,
-        appLabel: String?,
-        throwable: Throwable,
-        source: String,
+        event: nota.android.crash.xp.app.data.CrashEvent,
     ) {
         coordinatorScope.launch {
             try {
                 if (!isLoggingEnabled()) return@launch
-                val processName = CrashEventBuilder.resolveProcessName(hookContext, packageName)
-                val event = CrashEventBuilder.build(
-                    packageName = packageName,
-                    appLabel = appLabel,
-                    processName = processName,
-                    throwable = throwable,
-                    source = source,
-                )
                 runPhase2Parallel(hookContext, event)
             } catch (t: Throwable) {
                 safeLog("CrashLogCoordinator failed: ${t.message}")

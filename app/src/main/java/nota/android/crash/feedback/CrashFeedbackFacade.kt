@@ -45,6 +45,7 @@ object CrashFeedbackFacade {
         packageName: String,
         appInfo: ApplicationInfo,
         throwable: Throwable,
+        crashId: String,
         showNotify: Boolean,
     ) {
         if (!showNotify) return
@@ -57,7 +58,7 @@ object CrashFeedbackFacade {
                     tip + label + " " + throwable.localizedMessage,
                     Toast.LENGTH_LONG,
                 ).show()
-                showNotification(packageName, application, appInfo, throwable)
+                showNotification(packageName, application, appInfo, throwable, crashId)
             } catch (t: Throwable) {
                 XposedBridge.log(t)
             }
@@ -69,6 +70,7 @@ object CrashFeedbackFacade {
         application: Application,
         appInfo: ApplicationInfo,
         throwable: Throwable,
+        crashId: String,
     ) {
         val notificationManager =
             application.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
@@ -84,7 +86,7 @@ object CrashFeedbackFacade {
         val intent = Intent(Intent.ACTION_VIEW).apply {
             component = ComponentName(PrefManager.PACKAGE_NAME, CRASH_INFO_CLASS)
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED
-            putExtra("Exception", Log.getStackTraceString(throwable))
+            putExtra("crash_id", crashId)
         }
 
         val appName = appInfo.loadLabel(application.packageManager).toString()

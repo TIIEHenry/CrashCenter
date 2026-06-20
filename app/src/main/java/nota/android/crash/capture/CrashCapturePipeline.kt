@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.pm.ApplicationInfo
 import de.robv.android.xposed.XposedBridge
 import nota.android.crash.feedback.CrashFeedbackFacade
+import nota.android.crash.log.CrashEventBuilder
 import nota.android.crash.log.CrashLogCoordinator
 import nota.android.crash.xp.ScopeDecision
 
@@ -29,19 +30,23 @@ object CrashCapturePipeline {
             } catch (_: Throwable) {
             }
 
-            CrashLogCoordinator.logAsync(
-                application,
-                packageName,
-                appLabel,
-                throwable,
-                source,
+            val processName = CrashEventBuilder.resolveProcessName(application, packageName)
+            val event = CrashEventBuilder.build(
+                packageName = packageName,
+                appLabel = appLabel,
+                processName = processName,
+                throwable = throwable,
+                source = source,
             )
+
+            CrashLogCoordinator.logAsync(application, event)
             XposedBridge.log(throwable)
             CrashFeedbackFacade.show(
                 application,
                 packageName,
                 appInfo,
                 throwable,
+                event.id,
                 decision.showNotify,
             )
         } catch (t: Throwable) {
