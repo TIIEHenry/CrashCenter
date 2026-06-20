@@ -1,5 +1,6 @@
 plugins {
     alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.serialization)
 }
 
 android {
@@ -64,6 +65,8 @@ dependencies {
     implementation libs.androidx.lifecycle.livedata.ktx
 
     compileOnly libs.xposed.api
+
+    implementation libs.serialization.json
 
     implementation project(':CodeEditor')
     implementation project(':CodeEditorClient')

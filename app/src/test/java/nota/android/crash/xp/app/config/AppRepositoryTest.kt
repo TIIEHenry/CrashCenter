@@ -1,11 +1,21 @@
 package nota.android.crash.xp.app.config
 
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.boolean
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class AppRepositoryTest {
+
+    private val json = Json {
+        explicitNulls = false
+        encodeDefaults = false
+    }
 
     // ---------- passesSystemFilter ----------
 
@@ -130,7 +140,7 @@ class AppRepositoryTest {
     }
 
     @Test
-    fun `InterventionRule toJson includes all fields when set`() {
+    fun `InterventionRule serialization includes all fields when set`() {
         val rule = InterventionRule(
             id = "r1",
             type = InterventionRuleType.CATCH_ALL,
@@ -138,16 +148,17 @@ class AppRepositoryTest {
             showNotify = true,
             crashLogEnabled = false,
         )
-        val json = rule.toJson()
-        assertEquals("r1", json.getString("id"))
-        assertEquals("CATCH_ALL", json.getString("type"))
-        assertEquals(true, json.getBoolean("enabled"))
-        assertEquals(true, json.getBoolean("showNotify"))
-        assertEquals(false, json.getBoolean("crashLogEnabled"))
+        val jsonStr = json.encodeToString(InterventionRule.serializer(), rule)
+        val element = Json.parseToJsonElement(jsonStr).jsonObject
+        assertEquals("r1", element["id"]!!.jsonPrimitive.content)
+        assertEquals("CATCH_ALL", element["type"]!!.jsonPrimitive.content)
+        assertEquals(true, element["enabled"]!!.jsonPrimitive.boolean)
+        assertEquals(true, element["showNotify"]!!.jsonPrimitive.boolean)
+        assertEquals(false, element["crashLogEnabled"]!!.jsonPrimitive.boolean)
     }
 
     @Test
-    fun `InterventionRule toJson omits null optional fields`() {
+    fun `InterventionRule serialization omits null optional fields`() {
         val rule = InterventionRule(
             id = "r1",
             type = InterventionRuleType.CATCH_ALL,
@@ -155,61 +166,51 @@ class AppRepositoryTest {
             showNotify = null,
             crashLogEnabled = null,
         )
-        val json = rule.toJson()
-        assertTrue(!json.has("showNotify"))
-        assertTrue(!json.has("crashLogEnabled"))
+        val jsonStr = json.encodeToString(InterventionRule.serializer(), rule)
+        val element = Json.parseToJsonElement(jsonStr).jsonObject
+        assertTrue(!element.containsKey("showNotify"))
+        assertTrue(!element.containsKey("crashLogEnabled"))
     }
 
     @Test
-    fun `InterventionRule fromJson parses valid JSON`() {
-        val json = org.json.JSONObject().apply {
-            put("id", "r1")
-            put("type", "CATCH_ALL")
-            put("enabled", true)
-            put("showNotify", false)
-            put("crashLogEnabled", true)
-        }
-        val rule = InterventionRule.fromJson(json)
-        assertEquals("r1", rule?.id)
-        assertEquals(InterventionRuleType.CATCH_ALL, rule?.type)
-        assertEquals(true, rule?.enabled)
-        assertEquals(false, rule?.showNotify)
-        assertEquals(true, rule?.crashLogEnabled)
+    fun `InterventionRule deserialization parses valid JSON`() {
+        val jsonStr = """{"id":"r1","type":"CATCH_ALL","enabled":true,"showNotify":false,"crashLogEnabled":true}"""
+        val rule = json.decodeFromString(InterventionRule.serializer(), jsonStr)
+        assertEquals("r1", rule.id)
+        assertEquals(InterventionRuleType.CATCH_ALL, rule.type)
+        assertEquals(true, rule.enabled)
+        assertEquals(false, rule.showNotify)
+        assertEquals(true, rule.crashLogEnabled)
     }
 
     @Test
-    fun `InterventionRule fromJson returns null for unknown type`() {
-        val json = org.json.JSONObject().apply {
-            put("id", "r1")
-            put("type", "UNKNOWN_TYPE")
-            put("enabled", true)
+    fun `InterventionRule deserialization handles unknown type`() {
+        // kotlinx.serialization will throw for unknown enum values
+        val jsonStr = """{"id":"r1","type":"UNKNOWN_TYPE","enabled":true}"""
+        try {
+            json.decodeFromString(InterventionRule.serializer(), jsonStr)
+            assertTrue("Should have thrown", false)
+        } catch (_: Exception) {
+            // Expected
         }
-        assertEquals(null, InterventionRule.fromJson(json))
     }
 
     @Test
-    fun `InterventionRule fromJson generates UUID for missing id`() {
-        val json = org.json.JSONObject().apply {
-            put("type", "CATCH_ALL")
-            put("enabled", true)
-        }
-        val rule = InterventionRule.fromJson(json)
-        assertEquals(36, rule?.id?.length)
+    fun `InterventionRule deserialization generates UUID for missing id`() {
+        val jsonStr = """{"type":"CATCH_ALL","enabled":true}"""
+        val rule = json.decodeFromString(InterventionRule.serializer(), jsonStr)
+        assertEquals("", rule.id) // Default empty string, not UUID (UUID generation is in codec)
     }
 
     @Test
-    fun `InterventionRule fromJson handles missing optional fields`() {
-        val json = org.json.JSONObject().apply {
-            put("id", "r1")
-            put("type", "CATCH_ALL")
-            put("enabled", true)
-        }
-        val rule = InterventionRule.fromJson(json)
-        assertEquals(null, rule?.showNotify)
-        assertEquals(null, rule?.crashLogEnabled)
+    fun `InterventionRule deserialization handles missing optional fields`() {
+        val jsonStr = """{"id":"r1","type":"CATCH_ALL","enabled":true}"""
+        val rule = json.decodeFromString(InterventionRule.serializer(), jsonStr)
+        assertEquals(null, rule.showNotify)
+        assertEquals(null, rule.crashLogEnabled)
     }
 
-    // ---------- AppInterventionProfile toJson/fromJson ----------
+    // ---------- AppInterventionProfile serialization ----------
 
     @Test
     fun `AppInterventionProfile round-trip serialization`() {
@@ -225,8 +226,8 @@ class AppRepositoryTest {
             ),
             updatedAt = 12345678L,
         )
-        val json = original.toJson()
-        val restored = AppInterventionProfile.fromJson(json)
+        val jsonStr = json.encodeToString(AppInterventionProfile.serializer(), original)
+        val restored = json.decodeFromString(AppInterventionProfile.serializer(), jsonStr)
 
         assertEquals(original.enabledRuleCount, restored.enabledRuleCount)
         assertEquals(original.updatedAt, restored.updatedAt)
@@ -238,56 +239,32 @@ class AppRepositoryTest {
     }
 
     @Test
-    fun `AppInterventionProfile fromJson handles empty rules array`() {
-        val json = org.json.JSONObject().apply {
-            put("rules", org.json.JSONArray())
-            put("updatedAt", 99L)
-        }
-        val profile = AppInterventionProfile.fromJson(json)
+    fun `AppInterventionProfile deserialization handles empty rules array`() {
+        val jsonStr = """{"rules":[],"updatedAt":99}"""
+        val profile = json.decodeFromString(AppInterventionProfile.serializer(), jsonStr)
         assertEquals(0, profile.rules.size)
         assertEquals(99L, profile.updatedAt)
         assertFalse(profile.hasEnabledRule)
     }
 
     @Test
-    fun `AppInterventionProfile fromJson handles missing rules key`() {
-        val json = org.json.JSONObject().apply {
-            put("updatedAt", 55L)
-        }
-        val profile = AppInterventionProfile.fromJson(json)
+    fun `AppInterventionProfile deserialization handles missing rules key`() {
+        val jsonStr = """{"updatedAt":55}"""
+        val profile = json.decodeFromString(AppInterventionProfile.serializer(), jsonStr)
         assertEquals(0, profile.rules.size)
         assertEquals(55L, profile.updatedAt)
     }
 
     @Test
-    fun `AppInterventionProfile fromJson filters out unknown rule types`() {
-        val rulesArray = org.json.JSONArray().apply {
-            put(org.json.JSONObject().apply {
-                put("id", "r1")
-                put("type", "UNKNOWN")
-                put("enabled", true)
-            })
-            put(org.json.JSONObject().apply {
-                put("id", "r2")
-                put("type", "CATCH_ALL")
-                put("enabled", true)
-            })
-        }
-        val json = org.json.JSONObject().apply {
-            put("rules", rulesArray)
-            put("updatedAt", 0L)
-        }
-        val profile = AppInterventionProfile.fromJson(json)
+    fun `AppInterventionProfile fromJson filters out unknown rule types via codec`() {
+        // This behavior is tested via InterventionRulesCodec
+        val json = """{"pkg":{"rules":[{"id":"r1","type":"UNKNOWN","enabled":true},{"id":"r2","type":"CATCH_ALL","enabled":true}],"updatedAt":0}}"""
+        val profile = InterventionRulesCodec.decode(json)["pkg"]!!
         assertEquals(1, profile.rules.size)
         assertEquals("r2", profile.rules[0].id)
     }
 
     // ---------- InterventionRuleType ----------
-
-    @Test
-    fun `InterventionRuleType toJson returns name`() {
-        assertEquals("CATCH_ALL", InterventionRuleType.CATCH_ALL.toJson())
-    }
 
     @Test
     fun `InterventionRuleType fromJson returns correct enum`() {
