@@ -3,24 +3,17 @@ package nota.android.crash.xp.app.config
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.withContext
-import kotlin.coroutines.CoroutineContext
 
 class ConfigViewModel(
     private val repository: AppRepositoryInterface,
-    private val ioDispatcher: CoroutineContext = Dispatchers.IO,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ConfigUiState())
     val uiState: StateFlow<ConfigUiState> = _uiState
-
-    private var appsLoadGeneration = 0
 
     init {
         val legacyMode = repository.isLegacyMode()
@@ -42,46 +35,37 @@ class ConfigViewModel(
             if (!current.isLegacyMode && current.managedApps.isNotEmpty()) return
         }
 
-        val loadGeneration = ++appsLoadGeneration
         emitState { copy(isLoading = true) }
 
         viewModelScope.launch {
             try {
                 if (current.isLegacyMode) {
-                    val (loadedApps, visibility) = withContext(ioDispatcher) {
-                        val appsDeferred = async { repository.loadInstalledApps() }
-                        val apps = appsDeferred.await()
-                        val visibilityDeferred = async { repository.detectPackageVisibilityAfterLoad(apps.size) }
-                        apps to visibilityDeferred.await()
+                    repository.loadInstalledApps().collect { loadedApps ->
+                        val visibility = repository.detectPackageVisibilityAfterLoad(loadedApps.size)
+                        emitState {
+                            copy(
+                                isLoading = false,
+                                allApps = loadedApps,
+                                packageVisibility = visibility,
+                            )
+                        }
+                        applyLegacyFiltersAndSort(preserveSort = false)
                     }
-                    if (loadGeneration != appsLoadGeneration) return@launch
-                    emitState {
-                        copy(
-                            isLoading = false,
-                            allApps = loadedApps,
-                            packageVisibility = visibility,
-                        )
-                    }
-                    applyLegacyFiltersAndSort(preserveSort = false)
                 } else {
-                    val (managedApps, visibility) = withContext(ioDispatcher) {
-                        repository.pruneUninstalled()
-                        val appsDeferred = async { repository.loadManagedApps() }
-                        val visibilityDeferred = async { repository.detectPackageVisibility() }
-                        appsDeferred.await() to visibilityDeferred.await()
+                    repository.pruneUninstalled()
+                    repository.loadManagedApps().collect { managedApps ->
+                        val visibility = repository.detectPackageVisibility()
+                        emitState {
+                            copy(
+                                isLoading = false,
+                                managedApps = managedApps,
+                                packageVisibility = visibility,
+                            )
+                        }
+                        applyManagedFiltersAndSort(preserveSort = false)
                     }
-                    if (loadGeneration != appsLoadGeneration) return@launch
-                    emitState {
-                        copy(
-                            isLoading = false,
-                            managedApps = managedApps,
-                            packageVisibility = visibility,
-                        )
-                    }
-                    applyManagedFiltersAndSort(preserveSort = false)
                 }
             } catch (_: Exception) {
-                if (loadGeneration != appsLoadGeneration) return@launch
                 emitState { copy(isLoading = false) }
             }
         }
@@ -139,23 +123,25 @@ class ConfigViewModel(
         if (current.isLegacyMode) return
 
         repository.setInterventionEnabled(packageName, enabled)
-        val updated = current.managedApps.map { app ->
-            if (app.packageName == packageName) {
-                reloadManagedApp(app.packageName) ?: app.copy(
-                    switchChecked = enabled,
-                    interventionStatus = if (enabled) {
-                        InterventionStatus.ENABLED
-                    } else {
-                        InterventionStatus.PENDING
-                    },
-                    enabledRuleCount = if (enabled) 1 else 0,
-                )
-            } else {
-                app
+        viewModelScope.launch {
+            val updated = current.managedApps.map { app ->
+                if (app.packageName == packageName) {
+                    reloadManagedApp(app.packageName) ?: app.copy(
+                        switchChecked = enabled,
+                        interventionStatus = if (enabled) {
+                            InterventionStatus.ENABLED
+                        } else {
+                            InterventionStatus.PENDING
+                        },
+                        enabledRuleCount = if (enabled) 1 else 0,
+                    )
+                } else {
+                    app
+                }
             }
+            emitState { copy(managedApps = updated) }
+            applyManagedFiltersAndSort(preserveSort = true)
         }
-        emitState { copy(managedApps = updated) }
-        applyManagedFiltersAndSort(preserveSort = true)
     }
 
     fun addManagedPackages(packages: Collection<String>) {
@@ -178,8 +164,8 @@ class ConfigViewModel(
         applyCurrentFilters(preserveSort = true)
     }
 
-    private fun reloadManagedApp(packageName: String): ManagedApp? =
-        repository.loadManagedApps().firstOrNull { it.packageName == packageName }
+    private suspend fun reloadManagedApp(packageName: String): ManagedApp? =
+        repository.loadManagedApps().first().firstOrNull { it.packageName == packageName }
 
     private fun applyCurrentFilters(preserveSort: Boolean) {
         val current = _uiState.value

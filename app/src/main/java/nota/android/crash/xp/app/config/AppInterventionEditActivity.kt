@@ -14,6 +14,8 @@ import kotlinx.coroutines.launch
 import nota.android.crash.xp.app.R
 import nota.android.crash.xp.app.SystemBars
 import nota.android.crash.xp.app.common.ui.ToolbarHeaderInsets
+import nota.android.crash.xp.app.di.ServiceLocator
+import nota.android.crash.xp.app.di.ViewModelFactory
 import nota.android.crash.xp.app.databinding.ActivityAppInterventionEditBinding
 
 class AppInterventionEditActivity : AppCompatActivity() {
@@ -23,7 +25,12 @@ class AppInterventionEditActivity : AppCompatActivity() {
     private var suppressNotifyCallbacks = false
 
     private val viewModel: AppInterventionEditViewModel by viewModels {
-        AppInterventionEditViewModelFactory(packageName, AppRepository(this))
+        ViewModelFactory {
+            AppInterventionEditViewModel(
+                packageName,
+                ServiceLocator.appRepository(this),
+            )
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -148,15 +155,5 @@ class AppInterventionEditActivity : AppCompatActivity() {
 
     companion object {
         const val EXTRA_PACKAGE_NAME = "packageName"
-    }
-}
-
-class AppInterventionEditViewModelFactory(
-    private val packageName: String,
-    private val repository: AppRepositoryInterface,
-) : androidx.lifecycle.ViewModelProvider.Factory {
-    @Suppress("UNCHECKED_CAST")
-    override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
-        return AppInterventionEditViewModel(packageName, repository) as T
     }
 }

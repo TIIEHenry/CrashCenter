@@ -30,13 +30,14 @@ class AddManagedAppViewModel(
 
     private fun loadPickableApps() {
         viewModelScope.launch {
-            val loaded = try {
-                repository.loadPickableApps()
+            try {
+                repository.loadPickableApps().collect { loaded ->
+                    allApps = loaded
+                    _uiState.value = AddManagedAppUiState.Success(apps = loaded)
+                }
             } catch (_: Exception) {
-                emptyList()
+                _uiState.value = AddManagedAppUiState.Success(apps = emptyList())
             }
-            allApps = loaded
-            _uiState.value = AddManagedAppUiState.Success(apps = loaded)
         }
     }
 

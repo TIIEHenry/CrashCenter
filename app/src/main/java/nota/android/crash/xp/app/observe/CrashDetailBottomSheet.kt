@@ -12,7 +12,8 @@ import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import kotlinx.coroutines.launch
 import nota.android.crash.xp.app.R
 import nota.android.crash.xp.app.common.ui.configureBottomSheetAppearance
-import nota.android.crash.xp.app.data.FileCrashLogRepository
+import nota.android.crash.xp.app.di.ServiceLocator
+import nota.android.crash.xp.app.di.ViewModelFactory
 import nota.android.crash.xp.app.databinding.BottomSheetCrashDetailBinding
 import nota.android.crash.xp.app.view.CrashLogViewerClient
 
@@ -25,11 +26,13 @@ class CrashDetailBottomSheet : BottomSheetDialogFragment() {
 
     private val viewModel: CrashDetailViewModel by viewModels {
         val crashId = arguments?.getString(ARG_CRASH_ID).orEmpty()
-        CrashDetailViewModel.Factory(
-            crashId = crashId,
-            repository = FileCrashLogRepository(requireContext()),
-            contextProvider = { requireContext() },
-        )
+        ViewModelFactory {
+            CrashDetailViewModel(
+                crashId = crashId,
+                repository = ServiceLocator.crashLogRepository(requireContext()),
+                contextProvider = { requireContext() },
+            )
+        }
     }
 
     override fun onCreateView(

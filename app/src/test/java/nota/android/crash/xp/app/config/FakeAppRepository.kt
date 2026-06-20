@@ -1,5 +1,7 @@
 package nota.android.crash.xp.app.config
 
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 import nota.android.crash.xp.app.PackageVisibilityHelper
 
 class FakeAppRepository : AppRepositoryInterface {
@@ -40,7 +42,7 @@ class FakeAppRepository : AppRepositoryInterface {
     override fun detectPackageVisibility(): PackageVisibilityHelper.Status = packageVisibilityStatus
     override fun detectPackageVisibilityAfterLoad(loadedCount: Int): PackageVisibilityHelper.Status = packageVisibilityStatus
 
-    override fun loadInstalledApps(): List<AppItem> = installedApps
+    override fun loadInstalledApps(): Flow<List<AppItem>> = flow { emit(installedApps) }
 
     override fun persistHookStates(apps: List<AppItem>) {
         _persistedHookStates = apps.toList()
@@ -48,9 +50,9 @@ class FakeAppRepository : AppRepositoryInterface {
 
     fun getPersistedHookStates(): List<AppItem>? = _persistedHookStates
 
-    override fun loadManagedApps(): List<ManagedApp> = managedAppsList
+    override fun loadManagedApps(): Flow<List<ManagedApp>> = flow { emit(managedAppsList) }
 
-    override fun loadPickableApps(): List<PickableApp> = pickableAppsList
+    override fun loadPickableApps(): Flow<List<PickableApp>> = flow { emit(pickableAppsList) }
 
     override fun readManagedPackageNames(): Set<String>? =
         if (legacyMode) null else _managedPackages.toSet()

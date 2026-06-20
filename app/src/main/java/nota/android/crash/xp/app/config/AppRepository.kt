@@ -1,6 +1,10 @@
 package nota.android.crash.xp.app.config
 
 import android.content.Context
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
 import nota.android.crash.xp.app.PackageVisibilityHelper
 
 interface AppRepositoryInterface {
@@ -13,10 +17,10 @@ interface AppRepositoryInterface {
     fun setShowSystemUi(enabled: Boolean)
     fun detectPackageVisibility(): PackageVisibilityHelper.Status
     fun detectPackageVisibilityAfterLoad(loadedCount: Int): PackageVisibilityHelper.Status
-    fun loadInstalledApps(): List<AppItem>
+    fun loadInstalledApps(): Flow<List<AppItem>>
     fun persistHookStates(apps: List<AppItem>)
-    fun loadManagedApps(): List<ManagedApp>
-    fun loadPickableApps(): List<PickableApp>
+    fun loadManagedApps(): Flow<List<ManagedApp>>
+    fun loadPickableApps(): Flow<List<PickableApp>>
     fun readManagedPackageNames(): Set<String>?
     fun addManagedPackages(packages: Collection<String>)
     fun removeManagedPackage(packageName: String)
@@ -52,10 +56,10 @@ class AppRepository(context: Context) : AppRepositoryInterface {
     override fun detectPackageVisibilityAfterLoad(loadedCount: Int): PackageVisibilityHelper.Status =
         visibilityRepo.detectPackageVisibilityAfterLoad(loadedCount)
 
-    override fun loadInstalledApps(): List<AppItem> {
+    override fun loadInstalledApps(): Flow<List<AppItem>> = flow {
         if (!isLegacyMode()) {
             pruneUninstalled()
-            return managedRepo.loadManagedApps().map { managed ->
+            emit(managedRepo.loadManagedApps().map { managed ->
                 AppItem(
                     name = managed.label,
                     appInfo = managed.appInfo,
@@ -65,10 +69,11 @@ class AppRepository(context: Context) : AppRepositoryInterface {
                     updateTime = managed.updateTime,
                     installTime = managed.installTime,
                 )
-            }
+            })
+        } else {
+            emit(legacyRepo.loadInstalledApps())
         }
-        return legacyRepo.loadInstalledApps()
-    }
+    }.flowOn(Dispatchers.IO)
 
     override fun persistHookStates(apps: List<AppItem>) {
         if (!isLegacyMode()) {
@@ -80,9 +85,13 @@ class AppRepository(context: Context) : AppRepositoryInterface {
         legacyRepo.persistHookStates(apps)
     }
 
-    override fun loadManagedApps(): List<ManagedApp> = managedRepo.loadManagedApps()
+    override fun loadManagedApps(): Flow<List<ManagedApp>> = flow {
+        emit(managedRepo.loadManagedApps())
+    }.flowOn(Dispatchers.IO)
 
-    override fun loadPickableApps(): List<PickableApp> = managedRepo.loadPickableApps()
+    override fun loadPickableApps(): Flow<List<PickableApp>> = flow {
+        emit(managedRepo.loadPickableApps())
+    }.flowOn(Dispatchers.IO)
 
     override fun readManagedPackageNames(): Set<String>? = managedRepo.readManagedPackageNames()
 

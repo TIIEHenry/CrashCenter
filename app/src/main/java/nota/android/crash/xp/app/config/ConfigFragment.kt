@@ -29,6 +29,7 @@ import nota.android.crash.xp.app.common.ui.LoadingState
 import nota.android.crash.xp.app.databinding.FragmentConfigBinding
 import androidx.core.content.edit
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import nota.android.crash.xp.app.di.ServiceLocator
 
 class ConfigFragment : Fragment() {
 
@@ -36,9 +37,8 @@ class ConfigFragment : Fragment() {
     private val binding get() = checkNotNull(_binding) { "Binding accessed after onDestroyView" }
 
     private val viewModel: ConfigViewModel by viewModels {
-        val context = requireContext()
         ConfigViewModel.Factory(
-            AppRepository(context),
+            ServiceLocator.appRepository(requireContext()),
         )
     }
 

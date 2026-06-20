@@ -3,6 +3,8 @@ package nota.android.crash.xp.app.config
 import android.content.pm.ApplicationInfo
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -48,7 +50,7 @@ class ConfigViewModelTest {
     }
 
     private fun createViewModel() {
-        viewModel = ConfigViewModel(repository, testDispatcher)
+        viewModel = ConfigViewModel(repository)
     }
 
     // ─── Initial State ───
@@ -254,12 +256,12 @@ class ConfigViewModelTest {
                 PackageVisibilityHelper.Status(true, true, false)
             override fun detectPackageVisibilityAfterLoad(loadedCount: Int): PackageVisibilityHelper.Status =
                 PackageVisibilityHelper.Status(true, true, false)
-            override fun loadInstalledApps(): List<AppItem> {
+            override fun loadInstalledApps(): Flow<List<AppItem>> = flow {
                 throw RuntimeException("Simulated error")
             }
             override fun persistHookStates(apps: List<AppItem>) {}
-            override fun loadManagedApps(): List<ManagedApp> = emptyList()
-            override fun loadPickableApps(): List<PickableApp> = emptyList()
+            override fun loadManagedApps(): Flow<List<ManagedApp>> = flow { emit(emptyList()) }
+            override fun loadPickableApps(): Flow<List<PickableApp>> = flow { emit(emptyList()) }
             override fun readManagedPackageNames(): Set<String>? = null
             override fun addManagedPackages(packages: Collection<String>) {}
             override fun removeManagedPackage(packageName: String) {}
@@ -268,7 +270,7 @@ class ConfigViewModelTest {
             override fun saveProfile(packageName: String, profile: AppInterventionProfile) {}
             override fun setInterventionEnabled(packageName: String, enabled: Boolean) {}
         }
-        viewModel = ConfigViewModel(throwingRepo, testDispatcher)
+        viewModel = ConfigViewModel(throwingRepo)
 
         viewModel.loadApps()
         advanceUntilIdle()

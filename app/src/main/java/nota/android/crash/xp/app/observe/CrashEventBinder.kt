@@ -1,20 +1,18 @@
-package nota.android.crash.xp.app.common.ui
+package nota.android.crash.xp.app.observe
 
 import android.content.Context
 import android.content.pm.PackageManager
 import android.text.format.DateUtils
 import android.view.View
-import android.widget.ImageView
-import android.widget.TextView
 import androidx.core.content.ContextCompat
 import nota.android.crash.xp.app.R
 import nota.android.crash.xp.app.data.CrashEvent
 import nota.android.crash.xp.app.databinding.ViewCrashEventRowBinding
 
-object CrashEventRow {
+object CrashEventBinder {
 
-    fun bind(root: View, event: CrashEvent, context: Context) {
-        val binding = ViewCrashEventRowBinding.bind(root)
+    fun bind(binding: ViewCrashEventRowBinding, event: CrashEvent) {
+        val context = binding.root.context
 
         val label = event.appLabel?.takeIf { it.isNotEmpty() } ?: event.packageName
         binding.tvAppName.text = label
@@ -32,7 +30,7 @@ object CrashEventRow {
             detail,
             relativeTime,
         )
-        root.contentDescription = context.getString(
+        binding.root.contentDescription = context.getString(
             R.string.legacy_app_row_a11y,
             label,
             subtitle,
@@ -52,8 +50,6 @@ object CrashEventRow {
         }
     }
 
-    private data class SourceLabel(val label: String, val contentDescription: String)
-
     private fun loadIcon(context: Context, packageName: String) = try {
         context.packageManager.getApplicationIcon(packageName)
     } catch (_: PackageManager.NameNotFoundException) {
@@ -72,4 +68,6 @@ object CrashEventRow {
         null, "" -> null
         else -> SourceLabel(source, source)
     }
+
+    private data class SourceLabel(val label: String, val contentDescription: String)
 }

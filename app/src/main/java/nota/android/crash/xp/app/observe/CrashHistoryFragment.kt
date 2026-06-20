@@ -17,7 +17,7 @@ import kotlinx.coroutines.launch
 import nota.android.crash.xp.app.R
 import nota.android.crash.xp.app.common.ui.EmptyState
 import nota.android.crash.xp.app.common.ui.LoadingState
-import nota.android.crash.xp.app.data.FileCrashLogRepository
+import nota.android.crash.xp.app.di.ServiceLocator
 import nota.android.crash.xp.app.databinding.FragmentCrashHistoryBinding
 
 class CrashHistoryFragment : Fragment() {
@@ -26,7 +26,9 @@ class CrashHistoryFragment : Fragment() {
     private val binding get() = checkNotNull(_binding) { "Binding accessed after onDestroyView" }
 
     private val viewModel: CrashHistoryViewModel by viewModels {
-        CrashHistoryViewModel.Factory(FileCrashLogRepository(requireContext()))
+        CrashHistoryViewModel.Factory(
+            ServiceLocator.crashLogRepository(requireContext()),
+        )
     }
 
     private lateinit var adapter: CrashHistoryPagingAdapter
