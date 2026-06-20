@@ -7,6 +7,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.withContext
 import java.util.Locale
 
@@ -48,11 +50,11 @@ class ConfigViewModel(
         viewModelScope.launch {
             try {
                 if (current.isLegacyMode) {
-                    val loadedApps = withContext(ioDispatcher) {
-                        repository.loadInstalledApps()
-                    }
-                    val visibility = withContext(ioDispatcher) {
-                        repository.detectPackageVisibilityAfterLoad(loadedApps.size)
+                    val (loadedApps, visibility) = withContext(ioDispatcher) {
+                        val appsDeferred = async { repository.loadInstalledApps() }
+                        val apps = appsDeferred.await()
+                        val visibilityDeferred = async { repository.detectPackageVisibilityAfterLoad(apps.size) }
+                        apps to visibilityDeferred.await()
                     }
                     if (loadGeneration != appsLoadGeneration) return@launch
                     emitState {
@@ -64,14 +66,11 @@ class ConfigViewModel(
                     }
                     applyLegacyFiltersAndSort(preserveSort = false)
                 } else {
-                    withContext(ioDispatcher) {
+                    val (managedApps, visibility) = withContext(ioDispatcher) {
                         repository.pruneUninstalled()
-                    }
-                    val managedApps = withContext(ioDispatcher) {
-                        repository.loadManagedApps()
-                    }
-                    val visibility = withContext(ioDispatcher) {
-                        repository.detectPackageVisibility()
+                        val appsDeferred = async { repository.loadManagedApps() }
+                        val visibilityDeferred = async { repository.detectPackageVisibility() }
+                        appsDeferred.await() to visibilityDeferred.await()
                     }
                     if (loadGeneration != appsLoadGeneration) return@launch
                     emitState {

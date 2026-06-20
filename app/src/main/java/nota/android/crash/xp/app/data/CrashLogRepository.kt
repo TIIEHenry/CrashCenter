@@ -4,6 +4,11 @@ import android.content.Context
 import java.io.BufferedReader
 import java.io.File
 import java.io.FileReader
+import java.util.Collections
+import java.util.concurrent.atomic.AtomicLong
+import java.util.concurrent.locks.ReentrantReadWriteLock
+import kotlin.concurrent.read
+import kotlin.concurrent.write
 
 interface CrashLogRepository {
     fun getAll(filter: CrashFilter, limit: Int, offset: Int): List<CrashEvent>
@@ -14,29 +19,110 @@ interface CrashLogRepository {
 class FileCrashLogRepository(context: Context) : CrashLogRepository {
 
     private val eventsFile = File(context.applicationContext.filesDir, "$LOG_DIR/$EVENTS_FILE")
+    private val lock = ReentrantReadWriteLock()
+
+    // LRU cache: most recent events by insertion order (newest first after sort)
+    private val cache = Collections.synchronizedMap(
+        object : LinkedHashMap<String, CrashEvent>(CACHE_CAPACITY, 0.75f, true) {
+            override fun removeEldestEntry(eldest: Map.Entry<String, CrashEvent>?): Boolean {
+                return size > CACHE_CAPACITY
+            }
+        }
+    )
+
+    // Track file modification time to invalidate cache when file changes
+    private var lastFileModified: AtomicLong = AtomicLong(0L)
+    private var lastFileLength: AtomicLong = AtomicLong(0L)
 
     override fun getAll(filter: CrashFilter, limit: Int, offset: Int): List<CrashEvent> {
-        val filtered = readAllEvents().filter { matchesFilter(it, filter) }
-        return filtered.drop(offset).take(limit)
+        return lock.read {
+            val result = mutableListOf<CrashEvent>()
+            var skipped = 0
+            var taken = 0
+
+            streamEvents { event ->
+                if (!matchesFilter(event, filter)) return@streamEvents true // continue
+                if (skipped < offset) {
+                    skipped++
+                    return@streamEvents true // continue
+                }
+                if (taken < limit) {
+                    result.add(event)
+                    taken++
+                    return@streamEvents true // continue
+                }
+                false // stop - we've reached the limit
+            }
+            result
+        }
     }
 
-    override fun getById(id: String): CrashEvent? =
-        readAllEvents().firstOrNull { it.id == id }
+    override fun getById(id: String): CrashEvent? {
+        return lock.read {
+            // Check cache first
+            cache[id]?.let { return@read it }
 
-    override fun getCount(filter: CrashFilter): Int =
-        readAllEvents().count { matchesFilter(it, filter) }
+            var found: CrashEvent? = null
+            streamEvents { event ->
+                if (event.id == id) {
+                    found = event
+                    cache[event.id] = event
+                    false // stop reading
+                } else {
+                    true // continue
+                }
+            }
+            found
+        }
+    }
 
-    private fun readAllEvents(): List<CrashEvent> {
-        if (!eventsFile.isFile) return emptyList()
-        val events = mutableListOf<CrashEvent>()
+    override fun getCount(filter: CrashFilter): Int {
+        return lock.read {
+            var count = 0
+            streamEvents { event ->
+                if (matchesFilter(event, filter)) {
+                    count++
+                }
+                true // always continue for count (no early termination possible unless we had a max)
+            }
+            count
+        }
+    }
+
+    /**
+     * Streams events from newest to oldest (file is sorted descending by timestamp).
+     * The [action] returns true to continue, false to stop early.
+     * Also populates the LRU cache as events are read.
+     */
+    private inline fun streamEvents(action: (CrashEvent) -> Boolean) {
+        if (!eventsFile.isFile) return
+
+        // Check if file changed since last read
+        val currentModified = eventsFile.lastModified()
+        val currentLength = eventsFile.length()
+        if (currentModified != lastFileModified.get() || currentLength != lastFileLength.get()) {
+            cache.clear()
+            lastFileModified.set(currentModified)
+            lastFileLength.set(currentLength)
+        }
+
         BufferedReader(FileReader(eventsFile)).use { reader ->
             reader.lineSequence().forEach { line ->
                 val trimmed = line.trim()
                 if (trimmed.isEmpty()) return@forEach
-                CrashEvent.fromJson(trimmed)?.let(events::add)
+
+                val event = CrashEvent.fromJson(trimmed) ?: return@forEach
+
+                // Add to cache if not already present
+                if (!cache.containsKey(event.id)) {
+                    cache.put(event.id, event)
+                }
+
+                if (!action(event)) {
+                    return@use // early termination
+                }
             }
         }
-        return events.sortedByDescending { it.timestampMs }
     }
 
     private fun matchesFilter(event: CrashEvent, filter: CrashFilter): Boolean {
@@ -68,6 +154,7 @@ class FileCrashLogRepository(context: Context) : CrashLogRepository {
     companion object {
         const val LOG_DIR = "crash_logs"
         const val EVENTS_FILE = "events.jsonl"
+        const val CACHE_CAPACITY = 200
 
         fun eventsFile(context: Context): File =
             File(context.applicationContext.filesDir, "$LOG_DIR/$EVENTS_FILE")
