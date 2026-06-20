@@ -27,13 +27,11 @@
     <string name="xposed_hint">请到Xposed Installer激活本模块后重启手机</string>
     <string name="item_test">测试</string>
     <string name="test_hint">测试中</string>
-	<string name="item_scope_mode">作用域模式</string>
 	<string name="item_scope_mode_short">作用域</string>
 	<string name="item_handle_system_short">处理系统</string>
 	<string name="item_show_system_short">显示系统</string>
 	<string name="xposed_active_inline">已激活 · 钩子已加载</string>
 	<string name="xposed_inactive_inline">未激活 · 请在 Xposed 中启用并重启</string>
-	<string name="scope_mode_description">开启后仅对勾选的应用生效；关闭后默认拦截全部应用，可单独排除。</string>
 	<string name="search_hint">搜索应用名或包名</string>
 	<string name="xposed_status_title">模块状态</string>
 	<string name="filter_empty">没有符合当前筛选条件的应用</string>

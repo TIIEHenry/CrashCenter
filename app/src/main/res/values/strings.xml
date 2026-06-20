@@ -27,13 +27,11 @@
     <string name="xposed_hint">Please active this module in Xposed Installer app and then reboot you phone</string>
     <string name="item_test">test</string>
     <string name="test_hint">success if app is not crash</string>
-    <string name="item_scope_mode">Scope Mode</string>
     <string name="item_scope_mode_short">Scope</string>
     <string name="item_handle_system_short">Sys hook</string>
     <string name="item_show_system_short">Show sys</string>
     <string name="xposed_active_inline">Module active · Hook loaded</string>
     <string name="xposed_inactive_inline">Not active · Enable in Xposed &amp; reboot</string>
-    <string name="scope_mode_description">When enabled, only selected apps are hooked. When disabled, all apps are hooked except those you exclude.</string>
     <string name="search_hint">Search by name or package</string>
     <string name="xposed_status_title">Module status</string>
     <string name="filter_empty">No apps match the current filters</string>
