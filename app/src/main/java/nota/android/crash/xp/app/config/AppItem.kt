@@ -5,7 +5,7 @@ import android.graphics.drawable.Drawable
 data class AppItem(
     val name: String,
     val icon: Drawable,
-    var hookEnabled: Boolean,
+    val hookEnabled: Boolean,
     val packageName: String,
     val isSystemApp: Boolean,
     val updateTime: Long,

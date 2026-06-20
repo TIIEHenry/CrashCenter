@@ -36,15 +36,15 @@ object CrashHandler {
         exceptionHandler = handler
 
         val targetLooper = XposedHelpers.callStaticMethod(Looper::class.java, "getMainLooper") as Looper
-        Handler(targetLooper).post {
-            while (true) {
-                try {
-                    XposedHelpers.callStaticMethod(Looper::class.java, "loop")
-                } catch (e: Throwable) {
-                    exceptionHandler?.handleException(e, SOURCE_LOOPER)
-                }
+        fun loopOnce() {
+            try {
+                XposedHelpers.callStaticMethod(Looper::class.java, "loop")
+            } catch (e: Throwable) {
+                exceptionHandler?.handleException(e, SOURCE_LOOPER)
+                Handler(targetLooper).post(::loopOnce)
             }
         }
+        Handler(targetLooper).post(::loopOnce)
 
         uncaughtExceptionHandler = XposedHelpers.callStaticMethod(
             Thread::class.java,

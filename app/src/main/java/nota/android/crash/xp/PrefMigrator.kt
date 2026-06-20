@@ -106,7 +106,6 @@ object PrefMigrator {
                     PackageManager.PackageInfoFlags.of(0),
                 )
             } else {
-                @Suppress("DEPRECATION")
                 packageManager.getPackageInfo(context.packageName, 0)
             }
             packageInfo.lastUpdateTime - packageInfo.firstInstallTime > UPGRADE_TIME_GRACE_MS

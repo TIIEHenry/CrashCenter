@@ -19,6 +19,7 @@ import android.widget.Toast
 import de.robv.android.xposed.XposedBridge
 import nota.android.crash.xp.PrefManager
 import nota.android.crash.xp.app.R
+import androidx.core.app.NotificationCompat
 
 /**
  * Hook-side Toast + Notification feedback (ADR-011).
@@ -106,20 +107,16 @@ object CrashFeedbackFacade {
         val title = moduleContext.getString(R.string.crash_tip) + " - " + appName
         val bigText = (throwable.localizedMessage ?: "") + "\n-----\n" + stackTrace
 
-        val notification = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
-            appInfo.targetSdkVersion >= Build.VERSION_CODES.O
-        ) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             notificationManager.createNotificationChannel(
                 NotificationChannel(CHANNEL_ID, CHANNEL_NAME, NotificationManager.IMPORTANCE_LOW),
             )
-            Notification.Builder(application, CHANNEL_ID)
-        } else {
-            @Suppress("DEPRECATION")
-            Notification.Builder(application)
         }
+
+        val notification = NotificationCompat.Builder(application, CHANNEL_ID)
             .setContentTitle(title)
             .setContentText(throwable.localizedMessage)
-            .setStyle(Notification.BigTextStyle().bigText(bigText))
+            .setStyle(NotificationCompat.BigTextStyle().bigText(bigText))
             .setSmallIcon(appInfo.icon)
             .setContentIntent(contentIntent)
             .build()
