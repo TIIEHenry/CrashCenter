@@ -1,28 +1,20 @@
 package nota.android.crash.xp.app.config
 
-import android.view.View
-import androidx.recyclerview.widget.RecyclerView
 import nota.android.crash.xp.app.R
-import nota.android.crash.xp.app.common.ui.FilterChipRow
 import nota.android.crash.xp.app.databinding.FragmentConfigBinding
 
 class ManagedRenderer(
-    private val binding: FragmentConfigBinding,
-    private val managedAdapter: ManagedAppAdapter,
+    binding: FragmentConfigBinding,
+    managedAdapter: ManagedAppAdapter,
 ) {
-    fun render(state: ConfigUiState): Int {
-        binding.recyclerv.adapter = managedAdapter
-        managedAdapter.setData(state.visibleManagedApps)
-        val count = state.visibleManagedApps.size
-        FilterChipRow.setCountLabel(
-            binding.managedFilterChipRow.root,
-            R.id.managed_countLabel,
-            binding.root.context.resources.getQuantityString(R.plurals.app_count, count, count),
-        )
-        return count
-    }
+    private val renderer = AppListRenderer(
+        recyclerView = binding.recyclerv,
+        filterChipRowRoot = binding.managedFilterChipRow.root,
+        countLabelId = R.id.managed_countLabel,
+        adapter = managedAdapter,
+        dataSelector = { it.visibleManagedApps },
+    )
 
-    fun setVisibility(visible: Boolean) {
-        binding.managedFilterChipRow.root.visibility = if (visible) View.VISIBLE else View.GONE
-    }
+    fun render(state: ConfigUiState): Int = renderer.render(state)
+    fun setVisibility(visible: Boolean) = renderer.setVisibility(visible)
 }

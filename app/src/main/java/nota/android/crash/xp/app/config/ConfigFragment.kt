@@ -38,10 +38,8 @@ class ConfigFragment : Fragment() {
         }
     }
 
-    private lateinit var legacyAdapter: AppToggleAdapter
-    private lateinit var managedAdapter: ManagedAppAdapter
-    private lateinit var legacyRenderer: LegacyRenderer
-    private lateinit var managedRenderer: ManagedRenderer
+    private lateinit var legacyController: LegacyConfigController
+    private lateinit var managedController: ManagedConfigController
     private lateinit var permissionBannerRenderer: PermissionBannerRenderer
     private lateinit var emptyStateRenderer: EmptyStateRenderer
     private lateinit var optionsMenuHelper: ConfigOptionsMenuHelper
@@ -73,13 +71,10 @@ class ConfigFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         setupHelpers()
-        setupList()
+        setupControllers()
         setupSettingsChips()
         setupSearch()
-        setupManagedFilterChips()
-        setupLegacyFilterChips()
-        legacyRenderer = LegacyRenderer(binding, legacyAdapter)
-        managedRenderer = ManagedRenderer(binding, managedAdapter)
+        setupRecyclerView()
         permissionBannerRenderer = PermissionBannerRenderer(binding, ::openPermissionRationaleDialog)
         emptyStateRenderer = EmptyStateRenderer(binding, ::showAddManagedAppSheet)
         viewLifecycleOwner.lifecycleScope.launch {
@@ -129,20 +124,21 @@ class ConfigFragment : Fragment() {
         )
     }
 
-    private fun setupList() {
-        legacyAdapter = AppToggleAdapter()
-        legacyAdapter.onItemClick { _, data, _ ->
-            viewModel.toggleApp(data.packageName)
-        }
+    private fun setupControllers() {
+        legacyController = LegacyConfigController(
+            binding = binding,
+            onToggleApp = viewModel::toggleApp,
+            onHookFilterChanged = viewModel::setHookFilter,
+        )
+        managedController = ManagedConfigController(
+            binding = binding,
+            onSwitchChanged = { app, enabled -> viewModel.setManagedSwitch(app.packageName, enabled) },
+            onItemClick = { app -> openInterventionEdit(app.packageName) },
+            onManagedFilterChanged = viewModel::setManagedFilter,
+        )
+    }
 
-        managedAdapter = ManagedAppAdapter()
-        managedAdapter.onSwitchChanged = { app, enabled ->
-            viewModel.setManagedSwitch(app.packageName, enabled)
-        }
-        managedAdapter.onItemClick { _, data, _ ->
-            openInterventionEdit(data.packageName)
-        }
-
+    private fun setupRecyclerView() {
         binding.recyclerv.apply {
             itemAnimator = DefaultItemAnimator().apply { addDuration = 100 }
             layoutManager = LinearLayoutManager(requireContext(), RecyclerView.VERTICAL, false)
@@ -170,28 +166,6 @@ class ConfigFragment : Fragment() {
         DenseSearchField.setOnQueryChangeListener(binding.searchField.root, viewModel::setQuery)
     }
 
-    private fun setupManagedFilterChips() {
-        FilterChipRow.setOnSingleSelectionChangeListener(binding.managedFilterChipRow.root, R.id.managed_chipGroup) { _, checkedIds ->
-            val filter = when (checkedIds.firstOrNull()) {
-                R.id.managed_chipEnabled -> ManagedFilter.ENABLED
-                R.id.managed_chipPending -> ManagedFilter.PENDING
-                else -> ManagedFilter.ALL
-            }
-            viewModel.setManagedFilter(filter)
-        }
-    }
-
-    private fun setupLegacyFilterChips() {
-        FilterChipRow.setOnSingleSelectionChangeListener(binding.hookFilterChipRow.root, R.id.hook_chipGroup) { _, checkedIds ->
-            val filter = when (checkedIds.firstOrNull()) {
-                R.id.hook_chipOn -> HookFilter.ON
-                R.id.hook_chipOff -> HookFilter.OFF
-                else -> HookFilter.ALL
-            }
-            viewModel.setHookFilter(filter)
-        }
-    }
-
     private fun renderState(state: ConfigUiState) {
         suppressChipCallbacks = true
         val settingsRow = binding.settingChipRow.root
@@ -202,13 +176,13 @@ class ConfigFragment : Fragment() {
 
         state.packageVisibility?.let { permissionBannerRenderer.render(it) }
 
-        legacyRenderer.setVisibility(state.isLegacyMode)
-        managedRenderer.setVisibility(!state.isLegacyMode)
+        legacyController.setVisibility(state.isLegacyMode)
+        managedController.setVisibility(!state.isLegacyMode)
 
         val listCount = if (state.isLegacyMode) {
-            legacyRenderer.render(state)
+            legacyController.render(state)
         } else {
-            managedRenderer.render(state)
+            managedController.render(state)
         }
 
         binding.loadingPanel.root.visibility = if (state.isLoading) View.VISIBLE else View.GONE

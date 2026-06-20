@@ -4,7 +4,6 @@ import androidx.annotation.IdRes
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import androidx.lifecycle.Lifecycle
-import nota.android.crash.xp.app.R
 import nota.android.crash.xp.app.config.ConfigFragment
 import nota.android.crash.xp.app.observe.ObserveHostFragment
 
@@ -16,6 +15,7 @@ import nota.android.crash.xp.app.observe.ObserveHostFragment
 class ShellNavigator(
     private val fragmentManager: FragmentManager,
     @IdRes private val containerId: Int,
+    private val fragmentFactory: FragmentFactory = DefaultFragmentFactory(),
 ) {
 
     /** Switch to [tab], creating the fragment lazily if necessary. */
@@ -46,16 +46,11 @@ class ShellNavigator(
     private fun findOrCreate(tab: ShellTab): Fragment {
         val tag = tab.tag()
         return fragmentManager.findFragmentByTag(tag)
-            ?: createFragment(tab).also { fragment ->
+            ?: fragmentFactory.createFragment(tab).also { fragment ->
                 fragmentManager.beginTransaction()
                     .add(containerId, fragment, tag)
                     .commitNow()
             }
-    }
-
-    private fun createFragment(tab: ShellTab): Fragment = when (tab) {
-        ShellTab.CONFIG -> ConfigFragment.newInstance()
-        ShellTab.OBSERVE -> ObserveHostFragment.newInstance()
     }
 
     /** Retrieve the current visible fragment, if any. */
@@ -72,5 +67,18 @@ class ShellNavigator(
     private fun ShellTab.tag(): String = when (this) {
         ShellTab.CONFIG -> ConfigFragment.TAG
         ShellTab.OBSERVE -> ObserveHostFragment.TAG
+    }
+
+    /** Factory for creating fragments by tab. */
+    interface FragmentFactory {
+        fun createFragment(tab: ShellTab): Fragment
+    }
+
+    /** Default production factory. */
+    class DefaultFragmentFactory : FragmentFactory {
+        override fun createFragment(tab: ShellTab): Fragment = when (tab) {
+            ShellTab.CONFIG -> ConfigFragment.newInstance()
+            ShellTab.OBSERVE -> ObserveHostFragment.newInstance()
+        }
     }
 }

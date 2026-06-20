@@ -1,6 +1,5 @@
 package nota.android.crash.xp.app.shell
 
-import androidx.activity.OnBackPressedDispatcher
 import androidx.activity.addCallback
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.Lifecycle
@@ -10,13 +9,15 @@ import androidx.core.view.get
 import androidx.core.view.size
 import kotlinx.coroutines.launch
 import nota.android.crash.xp.app.R
-import nota.android.crash.xp.app.config.ConfigFragment
 import nota.android.crash.xp.app.databinding.ActivityMainShellBinding
 
 /**
  * Encapsulates bottom navigation setup, tab selection handling, and tab state persistence
  * for [MainShellActivity]. Delegates fragment transactions to [ShellNavigator] and state
  * to [ShellViewModel].
+ *
+ * The actual navigation decisions are forwarded to [ShellNavigationCoordinator] so that
+ * they can be unit-tested without an Activity.
  */
 class ShellTabController(
     private val activity: AppCompatActivity,
@@ -24,6 +25,30 @@ class ShellTabController(
     private val viewModel: ShellViewModel,
     private val navigator: ShellNavigator,
 ) {
+
+    private val coordinator: ShellNavigationCoordinator
+
+    init {
+        coordinator = ShellNavigationCoordinator(
+            viewModel = viewModel,
+            navigator = navigator,
+            delegate = object : ShellNavigationCoordinator.Delegate {
+                override fun syncBottomNav(tab: ShellTab) {
+                    val menuItemId = when (tab) {
+                        ShellTab.CONFIG -> R.id.nav_config
+                        ShellTab.OBSERVE -> R.id.nav_observe
+                    }
+                    if (binding.bottomNav.selectedItemId != menuItemId) {
+                        binding.bottomNav.selectedItemId = menuItemId
+                    }
+                }
+
+                override fun invalidateOptionsMenu() {
+                    activity.invalidateOptionsMenu()
+                }
+            },
+        )
+    }
 
     fun onCreate(initialTab: ShellTab) {
         setupBottomNav()
@@ -37,7 +62,7 @@ class ShellTabController(
             }
         }
 
-        selectTab(initialTab, fromUser = false)
+        coordinator.selectTab(initialTab, fromUser = false)
     }
 
     fun onResume() {
@@ -45,82 +70,39 @@ class ShellTabController(
     }
 
     fun onCreateOptionsMenu(menu: android.view.Menu): Boolean {
-        return when (viewModel.uiState.value.selectedTab) {
-            ShellTab.CONFIG -> {
-                activity.menuInflater.inflate(R.menu.menu_main, menu)
-                true
-            }
-            ShellTab.OBSERVE -> {
-                activity.menuInflater.inflate(R.menu.menu_observe_stub, menu)
-                true
-            }
-            else -> {
-                menu.clear()
-                true
-            }
+        val tab = coordinator.currentTab()
+        val menuRes = coordinator.optionsMenuResForTab(tab)
+        return if (menuRes != null) {
+            activity.menuInflater.inflate(menuRes, menu)
+            true
+        } else {
+            menu.clear()
+            true
         }
     }
 
     fun onPrepareOptionsMenu(menu: android.view.Menu): Boolean {
-        when (viewModel.uiState.value.selectedTab) {
-            ShellTab.CONFIG -> {
-                (navigator.findFragment(ShellTab.CONFIG) as? ConfigFragment)
-                    ?.prepareOptionsMenu(menu)
-            }
-            ShellTab.OBSERVE -> {
-                for (index in 0 until menu.size) {
-                    menu[index].isEnabled = false
-                }
-            }
-            else -> Unit
-        }
+        coordinator.prepareOptionsMenu(menu)
         return true
     }
 
     fun onOptionsItemSelected(item: android.view.MenuItem): Boolean {
-        val configFragment = navigator.findFragment(ShellTab.CONFIG) as? ConfigFragment
-        return configFragment?.handleOptionsItem(item) == true
+        return coordinator.onOptionsItemSelected(item)
     }
 
     private fun setupBottomNav() {
         binding.bottomNav.setOnItemSelectedListener { item ->
             when (item.itemId) {
                 R.id.nav_config -> {
-                    selectTab(ShellTab.CONFIG, fromUser = true)
+                    coordinator.selectTab(ShellTab.CONFIG, fromUser = true)
                     true
                 }
                 R.id.nav_observe -> {
-                    selectTab(ShellTab.OBSERVE, fromUser = true)
+                    coordinator.selectTab(ShellTab.OBSERVE, fromUser = true)
                     true
                 }
                 else -> false
             }
-        }
-    }
-
-    private fun selectTab(tab: ShellTab, fromUser: Boolean) {
-        val currentTab = viewModel.uiState.value.selectedTab
-        if (currentTab == tab && navigator.findFragment(tab) != null) {
-            syncBottomNav(tab)
-            return
-        }
-
-        if (fromUser) {
-            viewModel.setSelectedTab(tab)
-        }
-
-        navigator.select(tab)
-        syncBottomNav(tab)
-        activity.invalidateOptionsMenu()
-    }
-
-    private fun syncBottomNav(tab: ShellTab) {
-        val menuItemId = when (tab) {
-            ShellTab.CONFIG -> R.id.nav_config
-            ShellTab.OBSERVE -> R.id.nav_observe
-        }
-        if (binding.bottomNav.selectedItemId != menuItemId) {
-            binding.bottomNav.selectedItemId = menuItemId
         }
     }
 
@@ -129,12 +111,10 @@ class ShellTabController(
             activity,
             true,
         ) {
-            if (viewModel.uiState.value.selectedTab == ShellTab.OBSERVE) {
-                selectTab(ShellTab.CONFIG, fromUser = true)
-                return@addCallback
+            if (!coordinator.handleBackNavigation()) {
+                isEnabled = false
+                activity.onBackPressedDispatcher.onBackPressed()
             }
-            isEnabled = false
-            activity.onBackPressedDispatcher.onBackPressed()
         }
     }
 }

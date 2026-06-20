@@ -1,8 +1,6 @@
 package nota.android.crash.xp.app.data
 
 import android.content.Context
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.emptyFlow
 import nota.android.crash.log.CanonicalJsonlWriter
 import java.io.BufferedReader
 import java.io.File
@@ -20,7 +18,6 @@ interface CrashLogRepository {
     fun getCount(filter: CrashFilter): Int
     fun deleteById(id: String): Boolean
     fun clear()
-    fun observeChanges(): Flow<Unit>
     fun applyRetention()
 }
 
@@ -208,8 +205,6 @@ class FileCrashLogRepository(context: Context) : CrashLogRepository {
         }
         return true
     }
-
-    override fun observeChanges(): Flow<Unit> = emptyFlow()
 
     override fun applyRetention() {
         lock.write {
