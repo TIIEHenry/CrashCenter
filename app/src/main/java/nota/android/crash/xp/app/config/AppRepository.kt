@@ -3,6 +3,7 @@ package nota.android.crash.xp.app.config
 import android.content.Context
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
+import androidx.core.content.edit
 import nota.android.crash.xp.PrefManager.ITSELF
 import nota.android.crash.xp.PrefManager.PREF_HANDLE_SYSTEM
 import nota.android.crash.xp.PrefManager.PREF_INTERVENTION_RULES
@@ -11,49 +12,71 @@ import nota.android.crash.xp.PrefManager.PREF_NAME
 import nota.android.crash.xp.PrefManager.PREF_PACKAGE_LIST
 import nota.android.crash.xp.PrefManager.PREF_SCOPE_MODE
 import nota.android.crash.xp.PrefManager.PREF_SHOW_SYSTEM_UI
-import androidx.core.content.edit
 import nota.android.crash.xp.app.PackageVisibilityHelper
 
-class AppRepository(context: Context) {
+interface AppRepositoryInterface {
+    fun isLegacyMode(): Boolean
+    fun readScopeMode(): Boolean
+    fun readHandleSystem(): Boolean
+    fun readShowSystemUi(): Boolean
+    fun setScopeMode(enabled: Boolean)
+    fun setHandleSystem(enabled: Boolean)
+    fun setShowSystemUi(enabled: Boolean)
+    fun detectPackageVisibility(): PackageVisibilityHelper.Status
+    fun detectPackageVisibilityAfterLoad(loadedCount: Int): PackageVisibilityHelper.Status
+    fun loadInstalledApps(): List<AppItem>
+    fun persistHookStates(apps: List<AppItem>)
+    fun loadManagedApps(): List<ManagedApp>
+    fun loadPickableApps(): List<PickableApp>
+    fun readManagedPackageNames(): Set<String>?
+    fun addManagedPackages(packages: Collection<String>)
+    fun removeManagedPackage(packageName: String)
+    fun pruneUninstalled(): Int
+    fun getProfile(packageName: String): AppInterventionProfile
+    fun saveProfile(packageName: String, profile: AppInterventionProfile)
+    fun setInterventionEnabled(packageName: String, enabled: Boolean)
+}
+
+class AppRepository(context: Context) : AppRepositoryInterface {
 
     private val appContext = context.applicationContext
     private val prefs = appContext.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
 
     // ─── Mode detection ───
 
-    fun isLegacyMode(): Boolean = !prefs.contains(PREF_MANAGED_PACKAGES)
+    override fun isLegacyMode(): Boolean = !prefs.contains(PREF_MANAGED_PACKAGES)
 
     // ─── Shared preferences (scope / system UI) ───
 
-    fun readScopeMode(): Boolean = prefs.getBoolean(PREF_SCOPE_MODE, false)
+    override fun readScopeMode(): Boolean = prefs.getBoolean(PREF_SCOPE_MODE, false)
 
-    fun readHandleSystem(): Boolean = prefs.getBoolean(PREF_HANDLE_SYSTEM, false)
+    override fun readHandleSystem(): Boolean = prefs.getBoolean(PREF_HANDLE_SYSTEM, false)
 
-    fun readShowSystemUi(): Boolean = prefs.getBoolean(PREF_SHOW_SYSTEM_UI, false)
+    override fun readShowSystemUi(): Boolean = prefs.getBoolean(PREF_SHOW_SYSTEM_UI, false)
 
-    fun setScopeMode(enabled: Boolean) {
+    override fun setScopeMode(enabled: Boolean) {
         prefs.edit { putBoolean(PREF_SCOPE_MODE, enabled) }
     }
 
-    fun setHandleSystem(enabled: Boolean) {
+    override fun setHandleSystem(enabled: Boolean) {
         prefs.edit { putBoolean(PREF_HANDLE_SYSTEM, enabled) }
     }
 
-    fun setShowSystemUi(enabled: Boolean) {
+    override fun setShowSystemUi(enabled: Boolean) {
         prefs.edit { putBoolean(PREF_SHOW_SYSTEM_UI, enabled) }
     }
 
     // ─── Package visibility ───
 
-    fun detectPackageVisibility(): PackageVisibilityHelper.Status =
+    override fun detectPackageVisibility(): PackageVisibilityHelper.Status =
         PackageVisibilityHelper.check(appContext)
 
-    fun detectPackageVisibilityAfterLoad(loadedCount: Int): PackageVisibilityHelper.Status =
+    override fun detectPackageVisibilityAfterLoad(loadedCount: Int): PackageVisibilityHelper.Status =
         PackageVisibilityHelper.checkAfterLoad(appContext, loadedCount)
 
     // ─── Legacy: installed apps with hook states ───
 
-    fun loadInstalledApps(): List<AppItem> {
+    override fun loadInstalledApps(): List<AppItem> {
         if (!isLegacyMode()) {
             pruneUninstalled()
             return loadManagedApps().map { managed ->
@@ -86,7 +109,7 @@ class AppRepository(context: Context) {
         }.filterNotNull().filter { app -> app.packageName != ITSELF }
     }
 
-    fun persistHookStates(apps: List<AppItem>) {
+    override fun persistHookStates(apps: List<AppItem>) {
         if (!isLegacyMode()) {
             for (app in apps) {
                 setInterventionEnabled(app.packageName, app.hookEnabled)
@@ -105,12 +128,12 @@ class AppRepository(context: Context) {
 
     // ─── Managed mode: managed apps ───
 
-    fun readManagedPackageNames(): Set<String>? {
+    override fun readManagedPackageNames(): Set<String>? {
         if (isLegacyMode()) return null
         return HashSet(prefs.getStringSet(PREF_MANAGED_PACKAGES, emptySet()) ?: emptySet())
     }
 
-    fun loadManagedApps(): List<ManagedApp> {
+    override fun loadManagedApps(): List<ManagedApp> {
         val managedPackages = readManagedPackageNames() ?: return emptyList()
         if (managedPackages.isEmpty()) return emptyList()
 
@@ -151,7 +174,7 @@ class AppRepository(context: Context) {
         return apps
     }
 
-    fun loadPickableApps(): List<PickableApp> {
+    override fun loadPickableApps(): List<PickableApp> {
         val managedPackages = readManagedPackageNames() ?: emptySet()
         val showSystemUi = readShowSystemUi()
         val packageManager = appContext.packageManager
@@ -176,7 +199,7 @@ class AppRepository(context: Context) {
         return apps
     }
 
-    fun addManagedPackages(packages: Collection<String>) {
+    override fun addManagedPackages(packages: Collection<String>) {
         if (packages.isEmpty()) return
         val current = readManagedPackageNames()?.toMutableSet() ?: mutableSetOf()
         var changed = false
@@ -190,7 +213,7 @@ class AppRepository(context: Context) {
         ensureManagedModelActive(current)
     }
 
-    fun removeManagedPackage(packageName: String) {
+    override fun removeManagedPackage(packageName: String) {
         val current = readManagedPackageNames()?.toMutableSet() ?: return
         if (!current.remove(packageName)) return
         writeManagedPackages(current)
@@ -199,7 +222,7 @@ class AppRepository(context: Context) {
         writeProfiles(profiles)
     }
 
-    fun pruneUninstalled(): Int {
+    override fun pruneUninstalled(): Int {
         val managedPackages = readManagedPackageNames()?.toMutableSet() ?: return 0
         if (managedPackages.isEmpty()) return 0
 
@@ -228,10 +251,10 @@ class AppRepository(context: Context) {
 
     // ─── Intervention profiles / rules ───
 
-    fun getProfile(packageName: String): AppInterventionProfile =
+    override fun getProfile(packageName: String): AppInterventionProfile =
         readAllProfiles()[packageName] ?: AppInterventionProfile.EMPTY
 
-    fun saveProfile(packageName: String, profile: AppInterventionProfile) {
+    override fun saveProfile(packageName: String, profile: AppInterventionProfile) {
         val profiles = readAllProfiles().toMutableMap()
         if (profile.rules.isEmpty()) {
             profiles.remove(packageName)
@@ -241,7 +264,7 @@ class AppRepository(context: Context) {
         writeProfiles(profiles)
     }
 
-    fun setInterventionEnabled(packageName: String, enabled: Boolean) {
+    override fun setInterventionEnabled(packageName: String, enabled: Boolean) {
         val profile = getProfile(packageName)
         val updated = if (enabled) {
             enableIntervention(profile)

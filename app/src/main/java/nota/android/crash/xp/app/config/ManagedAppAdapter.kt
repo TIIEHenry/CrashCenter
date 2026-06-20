@@ -3,27 +3,18 @@ package nota.android.crash.xp.app.config
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.recyclerview.widget.DiffUtil
-import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import nota.android.crash.xp.app.R
+import nota.android.crash.xp.app.common.ui.adapter.BaseListAdapter
+import nota.android.crash.xp.app.common.ui.adapter.SimpleDiffCallback
 import nota.android.crash.xp.app.common.ui.themeColor
 import nota.android.crash.xp.app.databinding.ViewManagedAppRowBinding
 
-class ManagedAppAdapter : ListAdapter<ManagedApp, ManagedAppAdapter.VH>(DiffCallback()) {
+class ManagedAppAdapter : BaseListAdapter<ManagedApp, ManagedAppAdapter.VH>(
+    SimpleDiffCallback { it.packageName }
+) {
 
     var onSwitchChanged: ((ManagedApp, Boolean) -> Unit)? = null
-
-    private var onItemClickListener: ((View, ManagedApp, Int) -> Unit)? = null
-    private var onItemLongClickListener: ((View, ManagedApp, Int) -> Boolean)? = null
-
-    fun onItemClick(f: (rootView: View, data: ManagedApp, pos: Int) -> Unit) {
-        onItemClickListener = f
-    }
-
-    fun onItemLongClick(f: (rootView: View, data: ManagedApp, pos: Int) -> Boolean) {
-        onItemLongClickListener = f
-    }
 
     fun setData(list: List<ManagedApp>) {
         submitList(list)
@@ -41,26 +32,18 @@ class ManagedAppAdapter : ListAdapter<ManagedApp, ManagedAppAdapter.VH>(DiffCall
     }
 
     inner class VH(private val binding: ViewManagedAppRowBinding) :
-        RecyclerView.ViewHolder(binding.root) {
+        BaseViewHolder<ManagedApp>(binding.root) {
 
         init {
             binding.root.setOnClickListener {
-                val pos = bindingAdapterPosition
-                if (pos != RecyclerView.NO_POSITION) {
-                    onItemClickListener?.invoke(binding.root, getItem(pos), pos)
-                }
+                notifyItemClick(binding.root, bindingAdapterPosition)
             }
             binding.root.setOnLongClickListener {
-                val pos = bindingAdapterPosition
-                if (pos != RecyclerView.NO_POSITION) {
-                    onItemLongClickListener?.invoke(binding.root, getItem(pos), pos) ?: false
-                } else {
-                    false
-                }
+                notifyItemLongClick(binding.root, bindingAdapterPosition)
             }
         }
 
-        fun bind(app: ManagedApp) {
+        override fun bind(app: ManagedApp) {
             val context = binding.root.context
             binding.root.contentDescription = context.getString(
                 R.string.legacy_app_row_a11y,
@@ -74,13 +57,13 @@ class ManagedAppAdapter : ListAdapter<ManagedApp, ManagedAppAdapter.VH>(DiffCall
             when (app.interventionStatus) {
                 InterventionStatus.ENABLED -> {
                     binding.tvStatusBadge.visibility = View.VISIBLE
-                    binding.tvStatusBadge.setBackgroundResource(R.drawable.bg_status_enabled_badge)
+                    binding.tvStatusBadge.setBackgroundResource(R.drawable.bg_status_active)
                     binding.tvStatusBadge.setTextColor(context.themeColor(R.attr.statusBannerActiveTextColor))
                     binding.tvStatusBadge.text = context.getString(R.string.managed_status_enabled)
                 }
                 InterventionStatus.PENDING -> {
                     binding.tvStatusBadge.visibility = View.VISIBLE
-                    binding.tvStatusBadge.setBackgroundResource(R.drawable.bg_status_pending_badge)
+                    binding.tvStatusBadge.setBackgroundResource(R.drawable.bg_status_inactive)
                     binding.tvStatusBadge.setTextColor(context.themeColor(R.attr.statusBannerInactiveTextColor))
                     binding.tvStatusBadge.text = context.getString(R.string.managed_status_pending)
                 }
@@ -98,16 +81,6 @@ class ManagedAppAdapter : ListAdapter<ManagedApp, ManagedAppAdapter.VH>(DiffCall
             binding.sw.setOnCheckedChangeListener { _, isChecked ->
                 onSwitchChanged?.invoke(app, isChecked)
             }
-        }
-    }
-
-    class DiffCallback : DiffUtil.ItemCallback<ManagedApp>() {
-        override fun areItemsTheSame(oldItem: ManagedApp, newItem: ManagedApp): Boolean {
-            return oldItem.packageName == newItem.packageName
-        }
-
-        override fun areContentsTheSame(oldItem: ManagedApp, newItem: ManagedApp): Boolean {
-            return oldItem == newItem
         }
     }
 }

@@ -7,20 +7,15 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.content.ContextCompat
-import androidx.recyclerview.widget.DiffUtil
-import androidx.recyclerview.widget.ListAdapter
-import androidx.recyclerview.widget.RecyclerView
 import nota.android.crash.xp.app.R
+import nota.android.crash.xp.app.common.ui.adapter.BaseListAdapter
+import nota.android.crash.xp.app.common.ui.adapter.SimpleDiffCallback
 import nota.android.crash.xp.app.data.CrashEvent
 import nota.android.crash.xp.app.databinding.ViewCrashEventRowBinding
 
-class CrashHistoryAdapter : ListAdapter<CrashEvent, CrashHistoryAdapter.VH>(DiffCallback()) {
-
-    private var onItemClickListener: ((View, CrashEvent, Int) -> Unit)? = null
-
-    fun onItemClick(f: (rootView: View, data: CrashEvent, pos: Int) -> Unit) {
-        onItemClickListener = f
-    }
+class CrashHistoryAdapter : BaseListAdapter<CrashEvent, CrashHistoryAdapter.VH>(
+    SimpleDiffCallback { it.id }
+) {
 
     fun setData(list: List<CrashEvent>) {
         submitList(list)
@@ -38,18 +33,15 @@ class CrashHistoryAdapter : ListAdapter<CrashEvent, CrashHistoryAdapter.VH>(Diff
     }
 
     inner class VH(private val binding: ViewCrashEventRowBinding) :
-        RecyclerView.ViewHolder(binding.root) {
+        BaseViewHolder<CrashEvent>(binding.root) {
 
         init {
             binding.root.setOnClickListener {
-                val pos = bindingAdapterPosition
-                if (pos != RecyclerView.NO_POSITION) {
-                    onItemClickListener?.invoke(binding.root, getItem(pos), pos)
-                }
+                notifyItemClick(binding.root, bindingAdapterPosition)
             }
         }
 
-        fun bind(event: CrashEvent) {
+        override fun bind(event: CrashEvent) {
             val context = binding.root.context
 
             val label = event.appLabel?.takeIf { it.isNotEmpty() } ?: event.packageName
@@ -105,16 +97,6 @@ class CrashHistoryAdapter : ListAdapter<CrashEvent, CrashHistoryAdapter.VH>(Diff
             )
             null, "" -> null
             else -> SourceLabel(source, source)
-        }
-    }
-
-    class DiffCallback : DiffUtil.ItemCallback<CrashEvent>() {
-        override fun areItemsTheSame(oldItem: CrashEvent, newItem: CrashEvent): Boolean {
-            return oldItem.id == newItem.id
-        }
-
-        override fun areContentsTheSame(oldItem: CrashEvent, newItem: CrashEvent): Boolean {
-            return oldItem == newItem
         }
     }
 }

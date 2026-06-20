@@ -1,6 +1,6 @@
 package nota.android.crash.xp.app.shell
 
-import android.app.AlertDialog
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
@@ -142,7 +142,7 @@ class MainShellActivity : AppCompatActivity() {
     private fun setupStatusBanner() {
         StatusBanner.setOnClickListener(binding.statusBanner.root) {
             if (!XposedManagerLauncher.open(this)) {
-                AlertDialog.Builder(this)
+                MaterialAlertDialogBuilder(this)
                     .setTitle(R.string.xposed_not_active)
                     .setMessage(R.string.xposed_hint)
                     .show()

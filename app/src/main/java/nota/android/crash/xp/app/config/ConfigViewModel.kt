@@ -10,8 +10,11 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.Locale
 
+import kotlin.coroutines.CoroutineContext
+
 class ConfigViewModel(
-    private val repository: AppRepository,
+    private val repository: AppRepositoryInterface,
+    private val ioDispatcher: CoroutineContext = Dispatchers.IO,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ConfigUiState())
@@ -45,10 +48,10 @@ class ConfigViewModel(
         viewModelScope.launch {
             try {
                 if (current.isLegacyMode) {
-                    val loadedApps = withContext(Dispatchers.IO) {
+                    val loadedApps = withContext(ioDispatcher) {
                         repository.loadInstalledApps()
                     }
-                    val visibility = withContext(Dispatchers.IO) {
+                    val visibility = withContext(ioDispatcher) {
                         repository.detectPackageVisibilityAfterLoad(loadedApps.size)
                     }
                     if (loadGeneration != appsLoadGeneration) return@launch
@@ -61,13 +64,13 @@ class ConfigViewModel(
                     }
                     applyLegacyFiltersAndSort(preserveSort = false)
                 } else {
-                    withContext(Dispatchers.IO) {
+                    withContext(ioDispatcher) {
                         repository.pruneUninstalled()
                     }
-                    val managedApps = withContext(Dispatchers.IO) {
+                    val managedApps = withContext(ioDispatcher) {
                         repository.loadManagedApps()
                     }
-                    val visibility = withContext(Dispatchers.IO) {
+                    val visibility = withContext(ioDispatcher) {
                         repository.detectPackageVisibility()
                     }
                     if (loadGeneration != appsLoadGeneration) return@launch
@@ -274,7 +277,7 @@ class ConfigViewModel(
     }
 
     class Factory(
-        private val repository: AppRepository,
+        private val repository: AppRepositoryInterface,
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {

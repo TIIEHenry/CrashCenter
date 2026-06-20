@@ -1,6 +1,6 @@
 package nota.android.crash.xp.app.config
 
-import android.app.AlertDialog
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.view.View
@@ -129,7 +129,7 @@ class AppInterventionEditActivity : AppCompatActivity() {
 
     private fun setupActions() {
         binding.btnRemoveApp.setOnClickListener {
-            AlertDialog.Builder(this)
+            MaterialAlertDialogBuilder(this)
                 .setTitle(R.string.remove_managed_app_confirm_title)
                 .setMessage(R.string.remove_managed_app_confirm_message)
                 .setPositiveButton(R.string.remove_managed_app) { _, _ ->

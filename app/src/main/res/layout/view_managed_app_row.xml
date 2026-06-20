@@ -49,7 +49,7 @@
         app:layout_constraintBottom_toBottomOf="@id/tvSubtitle"
         app:layout_constraintStart_toEndOf="@id/ivIcon"
         app:layout_constraintTop_toTopOf="@id/tvSubtitle"
-        tools:background="@drawable/bg_status_enabled_badge"
+        tools:background="@drawable/bg_status_active"
         tools:text="Enabled"
         tools:textColor="@color/statusActiveText" />
 

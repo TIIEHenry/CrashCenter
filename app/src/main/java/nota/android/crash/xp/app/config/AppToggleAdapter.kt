@@ -3,18 +3,13 @@ package nota.android.crash.xp.app.config
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.recyclerview.widget.DiffUtil
-import androidx.recyclerview.widget.ListAdapter
-import androidx.recyclerview.widget.RecyclerView
+import nota.android.crash.xp.app.common.ui.adapter.BaseListAdapter
+import nota.android.crash.xp.app.common.ui.adapter.SimpleDiffCallback
 import nota.android.crash.xp.app.databinding.ActivityMainAppitemBinding
 
-class AppToggleAdapter : ListAdapter<AppItem, AppToggleAdapter.VH>(DiffCallback()) {
-
-    private var onItemClickListener: ((View, AppItem, Int) -> Unit)? = null
-
-    fun onItemClick(f: (rootView: View, data: AppItem, pos: Int) -> Unit) {
-        onItemClickListener = f
-    }
+class AppToggleAdapter : BaseListAdapter<AppItem, AppToggleAdapter.VH>(
+    SimpleDiffCallback { it.packageName }
+) {
 
     fun setData(list: List<AppItem>) {
         submitList(list)
@@ -32,18 +27,15 @@ class AppToggleAdapter : ListAdapter<AppItem, AppToggleAdapter.VH>(DiffCallback(
     }
 
     inner class VH(private val binding: ActivityMainAppitemBinding) :
-        RecyclerView.ViewHolder(binding.root) {
+        BaseViewHolder<AppItem>(binding.root) {
 
         init {
             binding.root.setOnClickListener {
-                val pos = bindingAdapterPosition
-                if (pos != RecyclerView.NO_POSITION) {
-                    onItemClickListener?.invoke(binding.root, getItem(pos), pos)
-                }
+                notifyItemClick(binding.root, bindingAdapterPosition)
             }
         }
 
-        fun bind(data: AppItem) {
+        override fun bind(data: AppItem) {
             val context = binding.root.context
             binding.root.contentDescription = context.getString(
                 nota.android.crash.xp.app.R.string.legacy_app_row_a11y,
@@ -63,16 +55,6 @@ class AppToggleAdapter : ListAdapter<AppItem, AppToggleAdapter.VH>(DiffCallback(
             binding.tvPackageName.text = data.packageName
             binding.tvSystemBadge.visibility =
                 if (data.isSystemApp) View.VISIBLE else View.GONE
-        }
-    }
-
-    class DiffCallback : DiffUtil.ItemCallback<AppItem>() {
-        override fun areItemsTheSame(oldItem: AppItem, newItem: AppItem): Boolean {
-            return oldItem.packageName == newItem.packageName
-        }
-
-        override fun areContentsTheSame(oldItem: AppItem, newItem: AppItem): Boolean {
-            return oldItem == newItem
         }
     }
 }

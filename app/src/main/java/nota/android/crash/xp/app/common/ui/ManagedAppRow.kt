@@ -30,13 +30,13 @@ object ManagedAppRow {
         when (app.interventionStatus) {
             InterventionStatus.ENABLED -> {
                 badge.visibility = View.VISIBLE
-                badge.setBackgroundResource(R.drawable.bg_status_enabled_badge)
+                badge.setBackgroundResource(R.drawable.bg_status_active)
                 badge.setTextColor(context.themeColor(R.attr.statusBannerActiveTextColor))
                 badge.text = context.getString(R.string.managed_status_enabled)
             }
             InterventionStatus.PENDING -> {
                 badge.visibility = View.VISIBLE
-                badge.setBackgroundResource(R.drawable.bg_status_pending_badge)
+                badge.setBackgroundResource(R.drawable.bg_status_inactive)
                 badge.setTextColor(context.themeColor(R.attr.statusBannerInactiveTextColor))
                 badge.text = context.getString(R.string.managed_status_pending)
             }

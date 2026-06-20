@@ -67,6 +67,7 @@ dependencies {
     compileOnly libs.xposed.api
 
     implementation libs.serialization.json
+    implementation libs.kotlinx.coroutines.core
 
     implementation project(':CodeEditor')
     implementation project(':CodeEditorClient')
@@ -74,4 +75,5 @@ dependencies {
     testImplementation 'junit:junit:4.13.2'
     testImplementation 'org.json:json:20231013'
     testImplementation 'org.robolectric:robolectric:4.14.1'
+    testImplementation libs.kotlinx.coroutines.test
 }

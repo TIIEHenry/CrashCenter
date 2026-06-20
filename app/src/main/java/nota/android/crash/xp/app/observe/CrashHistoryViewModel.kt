@@ -11,8 +11,11 @@ import kotlinx.coroutines.withContext
 import nota.android.crash.xp.app.data.CrashFilter
 import nota.android.crash.xp.app.data.CrashLogRepository
 
+import kotlin.coroutines.CoroutineContext
+
 class CrashHistoryViewModel(
     private val repository: CrashLogRepository,
+    private val ioDispatcher: CoroutineContext = Dispatchers.IO,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(CrashHistoryUiState())
@@ -30,7 +33,7 @@ class CrashHistoryViewModel(
         emitState { copy(isLoading = true) }
 
         viewModelScope.launch {
-            val events = withContext(Dispatchers.IO) {
+            val events = withContext(ioDispatcher) {
                 try {
                     repository.getAll(CrashFilter(), Int.MAX_VALUE, 0)
                 } catch (_: Exception) {
