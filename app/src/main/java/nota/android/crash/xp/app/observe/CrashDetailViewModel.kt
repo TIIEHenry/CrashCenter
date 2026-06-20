@@ -34,8 +34,11 @@ class CrashDetailViewModel(
     private fun loadCrashDetail() {
         viewModelScope.launch {
             val event = repository.getById(crashId)
-            val stackTrace = CrashDetailLoader.loadStackTraceById(contextProvider(), crashId)
-                ?: "Crash detail not found: $crashId"
+            val stackTrace = try {
+                CrashDetailLoader.loadStackTraceById(contextProvider(), crashId)
+            } catch (_: Exception) {
+                null
+            } ?: "Crash detail not found: $crashId"
             val title = event?.shortExceptionClass
                 ?: titleFromStackTrace(stackTrace)
                 ?: "Crash Info"

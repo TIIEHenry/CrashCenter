@@ -6,8 +6,12 @@ object CrashDetailLoader {
 
     fun loadStackTraceById(context: Context, crashId: String): String? {
         if (crashId.isBlank()) return null
-        val event = FileCrashLogRepository(context).getById(crashId) ?: return null
-        return event.stackTrace.ifBlank { formatFallback(event) }
+        return try {
+            val event = FileCrashLogRepository(context).getById(crashId) ?: return null
+            event.stackTrace.ifBlank { formatFallback(event) }
+        } catch (_: Exception) {
+            null
+        }
     }
 
     private fun formatFallback(event: CrashEvent): String {
