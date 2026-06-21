@@ -1,5 +1,6 @@
 package nota.android.crash.xp.app.config
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -38,6 +39,7 @@ class AddManagedAppViewModel(
                 allApps = loaded
                 _uiState.value = AddManagedAppUiState.Success(apps = loaded)
             } catch (e: Exception) {
+                try { Log.w("AddManagedAppViewModel", "loadPickableApps failed", e) } catch (_: Throwable) {}
                 _uiState.value = AddManagedAppUiState.Error(e.message ?: "Unknown error")
             }
         }

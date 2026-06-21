@@ -1,5 +1,6 @@
 package nota.android.crash.xp.app.config
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.CoroutineDispatcher
@@ -13,6 +14,7 @@ data class AppInterventionEditUiState(
     val profile: AppInterventionProfile = AppInterventionProfile.EMPTY,
     val catchAllRule: InterventionRule? = null,
     val saved: Boolean = false,
+    val errorMessage: String? = null,
 )
 
 class AppInterventionEditViewModel(
@@ -27,14 +29,19 @@ class AppInterventionEditViewModel(
 
     init {
         viewModelScope.launch {
-            val profile = withContext(ioDispatcher) {
-                repository.getProfile(packageName)
+            try {
+                val profile = withContext(ioDispatcher) {
+                    repository.getProfile(packageName)
+                }
+                val catchAll = profile.rules.firstOrNull { it.type == InterventionRuleType.CATCH_ALL }
+                _uiState.value = AppInterventionEditUiState(
+                    profile = profile,
+                    catchAllRule = catchAll,
+                )
+            } catch (e: Exception) {
+                try { Log.w("AppInterventionEditViewModel", "loadProfile failed", e) } catch (_: Throwable) {}
+                _uiState.value = _uiState.value.copy(errorMessage = e.message)
             }
-            val catchAll = profile.rules.firstOrNull { it.type == InterventionRuleType.CATCH_ALL }
-            _uiState.value = AppInterventionEditUiState(
-                profile = profile,
-                catchAllRule = catchAll,
-            )
         }
     }
 
