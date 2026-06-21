@@ -26,8 +26,6 @@ object CrashHandler {
     @Volatile
     private var exceptionHandler: ExceptionHandler? = null
 
-    private var uncaughtExceptionHandler: Thread.UncaughtExceptionHandler? = null
-
     @JvmStatic
     @Synchronized
     fun insert(handler: ExceptionHandler) {
@@ -45,11 +43,6 @@ object CrashHandler {
             }
         }
         Handler(targetLooper).post(::loopOnce)
-
-        uncaughtExceptionHandler = XposedHelpers.callStaticMethod(
-            Thread::class.java,
-            "getDefaultUncaughtExceptionHandler"
-        ) as Thread.UncaughtExceptionHandler?
 
         XposedHelpers.callStaticMethod(
             Thread::class.java,

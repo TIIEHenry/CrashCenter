@@ -97,6 +97,14 @@ class CrashLogProvider : ContentProvider() {
             rateCounts[callingUid] = newCount
             newCount
         }
+        // Evict expired windows to prevent unbounded map growth.
+        if (count == 1) {
+            val cutoff = now - 2 * RATE_WINDOW_MS
+            synchronized(rateLock) {
+                rateWindowStart.entries.removeIf { it.value < cutoff }
+                rateCounts.keys.removeAll { rateWindowStart[it] == null }
+            }
+        }
         return count <= MAX_INSERTS_PER_WINDOW
     }
 

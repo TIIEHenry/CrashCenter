@@ -6,6 +6,7 @@ import de.robv.android.xposed.XposedBridge
 import nota.android.crash.feedback.CrashFeedbackFacade
 import nota.android.crash.log.CrashEventBuilder
 import nota.android.crash.log.CrashLogCoordinator
+import androidx.annotation.VisibleForTesting
 import nota.android.crash.xp.ScopeDecision
 
 /**
@@ -16,11 +17,13 @@ object CrashCapturePipeline {
 
     /** Test-only: replace coordinator call; null uses real [CrashLogCoordinator]. */
     @JvmStatic
-    var testCoordinator: CrashLogCoordinator? = null
+    @VisibleForTesting
+    internal var testCoordinator: CrashLogCoordinator? = null
 
     /** Test-only: replace feedback call; null uses real [CrashFeedbackFacade]. */
     @JvmStatic
-    var testFeedback: CrashFeedbackFacade? = null
+    @VisibleForTesting
+    internal var testFeedback: CrashFeedbackFacade? = null
 
     @JvmStatic
     fun onException(
