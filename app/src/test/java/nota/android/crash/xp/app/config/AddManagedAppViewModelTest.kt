@@ -89,9 +89,9 @@ class AddManagedAppViewModelTest {
         advanceUntilIdle()
 
         val state = viewModel.uiState.value
-        assertTrue(state is AddManagedAppUiState.Success)
-        val success = state as AddManagedAppUiState.Success
-        assertTrue(success.apps.isEmpty())
+        assertTrue(state is AddManagedAppUiState.Error)
+        val error = state as AddManagedAppUiState.Error
+        assertEquals("Simulated error", error.message)
     }
 
     // ─── Query Filtering ───

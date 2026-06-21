@@ -282,6 +282,7 @@ class ConfigViewModelTest {
         advanceUntilIdle()
 
         assertFalse(viewModel.uiState.value.isLoading)
+        assertEquals("Simulated error", viewModel.uiState.value.errorMessage)
     }
 
     // ─── State Mutations ───

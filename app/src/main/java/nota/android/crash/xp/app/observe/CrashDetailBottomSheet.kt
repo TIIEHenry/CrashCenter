@@ -118,6 +118,11 @@ class CrashDetailBottomSheet : BottomSheetDialogFragment() {
                                     binding.tvTitle.text = state.title
                                     viewer?.showStackTrace(state.stackTrace)
                                 }
+                                is CrashDetailUiState.Error -> {
+                                    if (_binding == null) return@collect
+                                    binding.tvTitle.text = getString(R.string.crash_info_title)
+                                    viewer?.showStackTrace(state.message)
+                                }
                             }
                         }
                     }

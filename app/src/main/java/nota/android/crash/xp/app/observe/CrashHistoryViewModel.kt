@@ -49,8 +49,11 @@ class CrashHistoryViewModel(
                     isLoading = false,
                     eventCount = count,
                 )
-            } catch (_: Exception) {
-                _uiState.value = _uiState.value.copy(isLoading = false)
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    errorMessage = e.message,
+                )
             }
         }
     }

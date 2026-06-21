@@ -22,4 +22,5 @@ data class ConfigUiState(
     val showSystemUi: Boolean = false,
     val packageVisibility: PackageVisibilityHelper.Status? = null,
     val emptyMessage: String? = null,
+    val errorMessage: String? = null,
 )

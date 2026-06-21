@@ -12,6 +12,10 @@ sealed class AddManagedAppUiState {
         val apps: List<PickableApp>,
         val query: String = "",
     ) : AddManagedAppUiState()
+
+    data class Error(
+        val message: String,
+    ) : AddManagedAppUiState()
 }
 
 class AddManagedAppViewModel(
@@ -33,8 +37,8 @@ class AddManagedAppViewModel(
                 val loaded = repository.loadPickableApps()
                 allApps = loaded
                 _uiState.value = AddManagedAppUiState.Success(apps = loaded)
-            } catch (_: Exception) {
-                _uiState.value = AddManagedAppUiState.Success(apps = emptyList())
+            } catch (e: Exception) {
+                _uiState.value = AddManagedAppUiState.Error(e.message ?: "Unknown error")
             }
         }
     }

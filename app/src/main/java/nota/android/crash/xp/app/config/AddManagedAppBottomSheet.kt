@@ -106,6 +106,16 @@ class AddManagedAppBottomSheet : BottomSheetDialogFragment() {
                             binding.emptyState.root.visibility = if (empty) View.VISIBLE else View.GONE
                             binding.recyclerPickable.visibility = if (!empty) View.VISIBLE else View.GONE
                         }
+                        is AddManagedAppUiState.Error -> {
+                            binding.loadingPanel.root.visibility = View.GONE
+                            binding.recyclerPickable.visibility = View.GONE
+                            binding.emptyState.root.visibility = View.VISIBLE
+                            EmptyState.bind(
+                                binding.emptyState.root,
+                                state.message,
+                                R.drawable.ic_add,
+                            )
+                        }
                     }
                 }
             }

@@ -11,6 +11,7 @@ import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.longOrNull
+import android.util.Log
 import java.util.UUID
 
 enum class InterventionRuleType {
@@ -76,7 +77,8 @@ object InterventionRulesCodec {
                     put(packageName, profile)
                 }
             }
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            try { Log.w("InterventionRulesCodec", "decode failed", e) } catch (_: Throwable) {}
             emptyMap()
         }
     }
@@ -94,8 +96,8 @@ object InterventionRulesCodec {
                             rule
                         }
                         add(finalRule)
-                    } catch (_: Exception) {
-                        // Skip invalid rules (unknown type, etc.)
+                    } catch (e: Exception) {
+                        try { Log.w("InterventionRulesCodec", "Skipping invalid rule", e) } catch (_: Throwable) {}
                     }
                 }
             }

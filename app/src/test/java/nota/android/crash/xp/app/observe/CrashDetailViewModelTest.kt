@@ -265,7 +265,7 @@ class CrashDetailViewModelTest {
     // ─── Failure Scenarios ───
 
     @Test
-    fun `loadCrashDetail with repository exception falls back to not found`() = runTest(testDispatcher) {
+    fun `loadCrashDetail with repository exception emits Error state`() = runTest(testDispatcher) {
         repository.throwOnGetById = true
         repository.addEvent(
             CrashEvent(
@@ -281,10 +281,9 @@ class CrashDetailViewModelTest {
         advanceUntilIdle()
 
         val state = viewModel.uiState.value
-        assertTrue(state is CrashDetailUiState.Success)
-        val success = state as CrashDetailUiState.Success
-        assertEquals("Crash detail not found", success.title)
-        assertTrue(success.stackTrace.contains("crash-9"))
+        assertTrue(state is CrashDetailUiState.Error)
+        val error = state as CrashDetailUiState.Error
+        assertTrue(error.message.isNotEmpty())
     }
 
     @Test
