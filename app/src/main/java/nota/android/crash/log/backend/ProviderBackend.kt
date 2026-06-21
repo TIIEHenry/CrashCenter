@@ -2,13 +2,13 @@ package nota.android.crash.log.backend
 
 import android.content.ContentValues
 import android.content.Context
-import de.robv.android.xposed.XposedBridge
 import nota.android.crash.log.AppendResult
 import nota.android.crash.log.BackendAvailability
 import nota.android.crash.log.BackendId
 import nota.android.crash.log.CrashLogBackend
 import nota.android.crash.log.CrashLogContract
 import nota.android.crash.log.ProcessSlot
+import nota.android.crash.log.appendWithSafeWrite
 import nota.android.crash.common.data.CrashEvent
 
 object ProviderBackend : CrashLogBackend {
@@ -20,8 +20,7 @@ object ProviderBackend : CrashLogBackend {
     override fun probe(context: Context): BackendAvailability = BackendAvailability.READY
 
     override fun append(context: Context, event: CrashEvent, deadlineMs: Long): AppendResult {
-        return try {
-            val stamped = event.withBackendWritten(listOf(id.wireName))
+        return appendWithSafeWrite(event) { stamped ->
             val values = ContentValues().apply {
                 put(CrashLogContract.COLUMN_PAYLOAD, stamped.toJsonLine())
                 put(CrashLogContract.COLUMN_PACKAGE_NAME, event.packageName)
@@ -32,9 +31,6 @@ object ProviderBackend : CrashLogBackend {
             } else {
                 AppendResult.Failure("insert returned null")
             }
-        } catch (t: Throwable) {
-            XposedBridge.log("CrashLog provider_insert failed: ${t.message}")
-            AppendResult.Failure(t.message ?: t.javaClass.simpleName)
         }
     }
 }
