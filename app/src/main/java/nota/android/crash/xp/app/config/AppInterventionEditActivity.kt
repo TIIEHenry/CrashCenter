@@ -15,7 +15,7 @@ import nota.android.crash.xp.app.R
 import nota.android.crash.xp.app.SystemBars
 import nota.android.crash.xp.app.common.ui.ToolbarHeaderInsets
 import nota.android.crash.xp.app.di.ServiceLocator
-import nota.android.crash.xp.app.di.ViewModelFactory
+import nota.android.crash.xp.app.di.appInterventionEditViewModelFactory
 import nota.android.crash.xp.app.databinding.ActivityAppInterventionEditBinding
 
 class AppInterventionEditActivity : AppCompatActivity() {
@@ -25,12 +25,7 @@ class AppInterventionEditActivity : AppCompatActivity() {
     private var suppressNotifyCallbacks = false
 
     private val viewModel: AppInterventionEditViewModel by viewModels {
-        ViewModelFactory {
-            AppInterventionEditViewModel(
-                packageName,
-                ServiceLocator.managedAppRepository(this),
-            )
-        }
+        ServiceLocator.appInterventionEditViewModelFactory(this, packageName)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {

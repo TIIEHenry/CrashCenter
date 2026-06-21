@@ -1,5 +1,6 @@
 package nota.android.crash.xp.app.observe
 
+import androidx.lifecycle.SavedStateHandle
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -7,7 +8,7 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
-import nota.android.crash.xp.app.data.CrashEvent
+import nota.android.crash.common.data.CrashEvent
 import nota.android.crash.xp.app.data.FakeCrashLogRepository
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -38,9 +39,11 @@ class CrashDetailViewModelTest {
 
     private fun createViewModel(crashId: String): CrashDetailViewModel {
         return CrashDetailViewModel(
-            crashId = crashId,
             repository = repository,
             ioDispatcher = testDispatcher,
+            savedStateHandle = SavedStateHandle().apply {
+                set(CrashHistoryFragment.EXTRA_CRASH_ID, crashId)
+            },
         )
     }
 
@@ -231,5 +234,78 @@ class CrashDetailViewModelTest {
         assertTrue(state is CrashDetailUiState.Success)
         val success = state as CrashDetailUiState.Success
         assertEquals("", success.title)
+    }
+
+    // ─── Boundary Cases ───
+
+    @Test
+    fun `loadCrashDetail with empty crashId shows not found`() = runTest(testDispatcher) {
+        val viewModel = createViewModel("")
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertTrue(state is CrashDetailUiState.Success)
+        val success = state as CrashDetailUiState.Success
+        assertEquals("Crash detail not found", success.title)
+        assertEquals("Crash detail not found: ", success.stackTrace)
+    }
+
+    @Test
+    fun `loadCrashDetail with blank crashId shows not found`() = runTest(testDispatcher) {
+        val viewModel = createViewModel("   ")
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertTrue(state is CrashDetailUiState.Success)
+        val success = state as CrashDetailUiState.Success
+        assertEquals("Crash detail not found", success.title)
+        assertEquals("Crash detail not found:    ", success.stackTrace)
+    }
+
+    // ─── Failure Scenarios ───
+
+    @Test
+    fun `loadCrashDetail with repository exception falls back to not found`() = runTest(testDispatcher) {
+        repository.throwOnGetById = true
+        repository.addEvent(
+            CrashEvent(
+                id = "crash-9",
+                timestampMs = 9000L,
+                packageName = "com.example.app",
+                exceptionClass = "java.lang.RuntimeException",
+                stackTrace = "trace",
+            )
+        )
+
+        val viewModel = createViewModel("crash-9")
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertTrue(state is CrashDetailUiState.Success)
+        val success = state as CrashDetailUiState.Success
+        assertEquals("Crash detail not found", success.title)
+        assertTrue(success.stackTrace.contains("crash-9"))
+    }
+
+    @Test
+    fun `loadCrashDetail with blank stackTrace and blank exceptionClass uses fallback`() = runTest(testDispatcher) {
+        val event = CrashEvent(
+            id = "crash-10",
+            timestampMs = 10000L,
+            packageName = "com.example.app",
+            exceptionClass = "",
+            stackTrace = "",
+        )
+        repository.addEvent(event)
+
+        val viewModel = createViewModel("crash-10")
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertTrue(state is CrashDetailUiState.Success)
+        val success = state as CrashDetailUiState.Success
+        assertEquals("", success.title)
+        assertTrue(success.stackTrace.contains("package=com.example.app"))
+        assertTrue(success.stackTrace.contains("id=crash-10"))
     }
 }

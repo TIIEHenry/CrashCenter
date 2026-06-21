@@ -14,7 +14,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import nota.android.crash.xp.app.data.CrashFilter
-import nota.android.crash.xp.app.data.CrashEvent
+import nota.android.crash.common.data.CrashEvent
 import nota.android.crash.xp.app.data.CrashLogRepository
 
 class CrashHistoryViewModel(

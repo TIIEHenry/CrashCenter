@@ -3,7 +3,7 @@ package nota.android.crash.xp.app.observe
 import androidx.paging.PagingSource
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
-import nota.android.crash.xp.app.data.CrashEvent
+import nota.android.crash.common.data.CrashEvent
 import nota.android.crash.xp.app.data.CrashFilter
 import nota.android.crash.xp.app.data.FakeCrashLogRepository
 import org.junit.Assert.assertEquals

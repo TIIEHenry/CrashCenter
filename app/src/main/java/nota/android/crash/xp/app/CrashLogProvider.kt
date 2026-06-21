@@ -9,7 +9,7 @@ import android.os.Binder
 import nota.android.crash.log.BackendId
 import nota.android.crash.log.CanonicalJsonlWriter
 import nota.android.crash.log.CrashLogContract
-import nota.android.crash.xp.app.data.CrashEvent
+import nota.android.crash.common.data.CrashEvent
 import nota.android.crash.xp.app.data.FileCrashLogRepository
 import java.util.concurrent.ConcurrentHashMap
 

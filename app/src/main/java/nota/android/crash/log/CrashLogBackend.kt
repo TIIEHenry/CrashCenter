@@ -1,7 +1,7 @@
 package nota.android.crash.log
 
 import android.content.Context
-import nota.android.crash.xp.app.data.CrashEvent
+import nota.android.crash.common.data.CrashEvent
 
 enum class BackendId(val wireName: String) {
     ROOT_SU("root_su"),

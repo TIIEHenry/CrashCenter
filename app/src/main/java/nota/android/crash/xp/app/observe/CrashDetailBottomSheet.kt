@@ -14,7 +14,7 @@ import nota.android.crash.xp.app.R
 import nota.android.crash.xp.app.common.ui.configureBottomSheetAppearance
 import nota.android.crash.xp.app.data.CrashDetailLoader
 import nota.android.crash.xp.app.di.ServiceLocator
-import nota.android.crash.xp.app.di.ViewModelFactory
+import nota.android.crash.xp.app.di.crashDetailViewModelFactory
 import nota.android.crash.xp.app.databinding.BottomSheetCrashDetailBinding
 import nota.android.crash.xp.app.view.CrashLogViewerClient
 
@@ -55,21 +55,12 @@ class CrashDetailBottomSheet : BottomSheetDialogFragment() {
 
     private var viewer: CrashLogViewerClient? = null
 
-    private lateinit var args: CrashDetailArgs
-
     private val viewModel: CrashDetailViewModel by viewModels {
-        val crashId = (args as? CrashDetailArgs.FromId)?.crashId.orEmpty()
-        ViewModelFactory {
-            CrashDetailViewModel(
-                crashId = crashId,
-                repository = ServiceLocator.crashLogRepository(requireContext()),
-            )
-        }
+        ServiceLocator.crashDetailViewModelFactory(this, requireContext())
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        args = CrashDetailArgs.fromBundle(requireArguments())
     }
 
     override fun onCreateView(
@@ -100,6 +91,7 @@ class CrashDetailBottomSheet : BottomSheetDialogFragment() {
     }
 
     private fun observeViewModel() {
+        val args = CrashDetailArgs.fromBundle(requireArguments())
         when (val a = args) {
             is CrashDetailArgs.FromStackTrace -> {
                 binding.tvTitle.text = a.title

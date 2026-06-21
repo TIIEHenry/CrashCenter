@@ -25,7 +25,7 @@ import nota.android.crash.xp.app.common.ui.FilterChipRow
 import nota.android.crash.xp.app.common.ui.LoadingState
 import nota.android.crash.xp.app.databinding.FragmentConfigBinding
 import nota.android.crash.xp.app.di.ServiceLocator
-import nota.android.crash.xp.app.di.ViewModelFactory
+import nota.android.crash.xp.app.di.configViewModelFactory
 
 class ConfigFragment : Fragment() {
 
@@ -33,13 +33,7 @@ class ConfigFragment : Fragment() {
     private val binding get() = checkNotNull(_binding) { "Binding accessed after onDestroyView" }
 
     private val viewModel: ConfigViewModel by viewModels {
-        ViewModelFactory {
-            ConfigViewModel(
-                ServiceLocator.legacyAppRepository(requireContext()),
-                ServiceLocator.managedAppRepository(requireContext()),
-                ServiceLocator.packageVisibilityRepository(requireContext()),
-            )
-        }
+        ServiceLocator.configViewModelFactory(requireContext())
     }
 
     private lateinit var legacyController: LegacyConfigController

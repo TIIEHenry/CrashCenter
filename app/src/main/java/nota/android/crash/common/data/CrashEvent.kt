@@ -1,4 +1,4 @@
-package nota.android.crash.xp.app.data
+package nota.android.crash.common.data
 
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json

@@ -1,6 +1,6 @@
 package nota.android.crash.log
 
-import nota.android.crash.xp.app.data.CrashEvent
+import nota.android.crash.common.data.CrashEvent
 import java.io.BufferedReader
 import java.io.File
 import java.io.FileReader

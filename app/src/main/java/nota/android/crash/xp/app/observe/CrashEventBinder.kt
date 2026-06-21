@@ -6,7 +6,7 @@ import android.text.format.DateUtils
 import android.view.View
 import androidx.core.content.ContextCompat
 import nota.android.crash.xp.app.R
-import nota.android.crash.xp.app.data.CrashEvent
+import nota.android.crash.common.data.CrashEvent
 import nota.android.crash.xp.app.databinding.ViewCrashEventRowBinding
 
 object CrashEventBinder {

@@ -1,5 +1,6 @@
 package nota.android.crash.xp.app.observe
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.CoroutineDispatcher
@@ -20,10 +21,12 @@ sealed class CrashDetailUiState {
 }
 
 class CrashDetailViewModel(
-    private val crashId: String,
     private val repository: CrashLogRepository,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
+    savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
+
+    private val crashId: String = savedStateHandle.get<String>(ARG_CRASH_ID).orEmpty()
 
     private val _uiState = MutableStateFlow<CrashDetailUiState>(CrashDetailUiState.Loading)
     val uiState: StateFlow<CrashDetailUiState> = _uiState
@@ -34,15 +37,26 @@ class CrashDetailViewModel(
 
     private fun loadCrashDetail() {
         viewModelScope.launch {
-            val event = withContext(ioDispatcher) {
-                repository.getById(crashId)
+            try {
+                val event = withContext(ioDispatcher) {
+                    repository.getById(crashId)
+                }
+                val stackTrace = event?.let { CrashDetailLoader.stackTraceFrom(it) }
+                    ?: "Crash detail not found: $crashId"
+                val title = event?.shortExceptionClass
+                    ?: CrashDetailLoader.titleFromStackTrace(stackTrace)
+                    ?: "Crash Info"
+                _uiState.value = CrashDetailUiState.Success(title, stackTrace)
+            } catch (_: Exception) {
+                _uiState.value = CrashDetailUiState.Success(
+                    title = "Crash detail not found",
+                    stackTrace = "Crash detail not found: $crashId",
+                )
             }
-            val stackTrace = event?.let { CrashDetailLoader.stackTraceFrom(it) }
-                ?: "Crash detail not found: $crashId"
-            val title = event?.shortExceptionClass
-                ?: CrashDetailLoader.titleFromStackTrace(stackTrace)
-                ?: "Crash Info"
-            _uiState.value = CrashDetailUiState.Success(title, stackTrace)
         }
+    }
+
+    companion object {
+        private const val ARG_CRASH_ID = CrashHistoryFragment.EXTRA_CRASH_ID
     }
 }

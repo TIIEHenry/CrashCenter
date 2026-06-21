@@ -5,7 +5,7 @@ import android.net.Uri
 import android.os.Binder
 import android.os.Process
 import nota.android.crash.log.CrashLogContract
-import nota.android.crash.xp.app.data.CrashEvent
+import nota.android.crash.common.data.CrashEvent
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse

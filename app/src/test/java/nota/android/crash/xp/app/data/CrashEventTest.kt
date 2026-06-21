@@ -1,5 +1,6 @@
 package nota.android.crash.xp.app.data
 
+import nota.android.crash.common.data.CrashEvent
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull

@@ -9,7 +9,7 @@ import nota.android.crash.log.BackendId
 import nota.android.crash.log.CrashLogBackend
 import nota.android.crash.log.CrashLogContract
 import nota.android.crash.log.ProcessSlot
-import nota.android.crash.xp.app.data.CrashEvent
+import nota.android.crash.common.data.CrashEvent
 
 object ProviderBackend : CrashLogBackend {
 

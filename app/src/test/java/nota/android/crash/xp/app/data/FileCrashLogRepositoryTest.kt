@@ -1,6 +1,7 @@
 package nota.android.crash.xp.app.data
 
 import android.content.Context
+import nota.android.crash.common.data.CrashEvent
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Rule

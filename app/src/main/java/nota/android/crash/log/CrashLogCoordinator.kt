@@ -38,7 +38,7 @@ object CrashLogCoordinator {
 
     fun logAsync(
         hookContext: Context,
-        event: nota.android.crash.xp.app.data.CrashEvent,
+        event: nota.android.crash.common.data.CrashEvent,
     ) {
         coordinatorScope.launch {
             try {
@@ -52,7 +52,7 @@ object CrashLogCoordinator {
 
     private suspend fun runPhase2Parallel(
         hookContext: Context,
-        event: nota.android.crash.xp.app.data.CrashEvent,
+        event: nota.android.crash.common.data.CrashEvent,
     ) {
         val backends = CrashLogBackendRegistry.enabledHookPhase2Backends(hookContext)
         if (backends.isEmpty()) return

@@ -1,14 +1,17 @@
 package nota.android.crash.xp.app.observe
 
+import androidx.paging.PagingData
+import androidx.paging.testing.asSnapshot
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
-import nota.android.crash.xp.app.data.CrashEvent
+import nota.android.crash.common.data.CrashEvent
 import nota.android.crash.xp.app.data.FakeCrashLogRepository
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -105,5 +108,94 @@ class CrashHistoryViewModelTest {
         val state = viewModel.uiState.value
         assertFalse(state.isLoading)
         assertEquals(0, state.eventCount)
+    }
+
+    // ─── PagingData Flow ───
+
+    @Test
+    fun `pagingData emits expected events`() = testScope.runTest {
+        val events = listOf(
+            CrashEvent(id = "e1", timestampMs = 1000L, packageName = "com.example.a", exceptionClass = "NullPointerException"),
+            CrashEvent(id = "e2", timestampMs = 2000L, packageName = "com.example.b", exceptionClass = "IllegalStateException"),
+        )
+        repository.events = events
+        createViewModel()
+
+        val snapshot: List<CrashEvent> = viewModel.pagingData.asSnapshot()
+        assertEquals(2, snapshot.size)
+        assertEquals("e1", snapshot[0].id)
+        assertEquals("e2", snapshot[1].id)
+    }
+
+    @Test
+    fun `pagingData emits empty list when repository has no events`() = testScope.runTest {
+        createViewModel()
+
+        val snapshot: List<CrashEvent> = viewModel.pagingData.asSnapshot()
+        assertTrue(snapshot.isEmpty())
+    }
+
+    // ─── Recovery After Exception ───
+
+    @Test
+    fun `loadEvents recovers after exception`() = testScope.runTest {
+        repository.throwOnGetCount = true
+        createViewModel()
+
+        viewModel.loadEvents()
+        advanceUntilIdle()
+        assertFalse(viewModel.uiState.value.isLoading)
+        assertEquals(0, viewModel.uiState.value.eventCount)
+
+        repository.throwOnGetCount = false
+        repository.events = listOf(
+            CrashEvent(id = "e1", timestampMs = 1000L, packageName = "com.example.a", exceptionClass = "NullPointerException"),
+        )
+
+        viewModel.loadEvents()
+        advanceUntilIdle()
+        assertEquals(1, viewModel.uiState.value.eventCount)
+    }
+
+    // ─── Re-entrancy / Deduplication ───
+
+    @Test
+    fun `consecutive loadEvents without completion cancels previous job`() = testScope.runTest {
+        repository.events = listOf(
+            CrashEvent(id = "e1", timestampMs = 1000L, packageName = "com.example.a", exceptionClass = "NullPointerException"),
+        )
+        createViewModel()
+
+        // First call
+        viewModel.loadEvents()
+        // Second call before first completes
+        viewModel.loadEvents()
+
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertFalse(state.isLoading)
+        assertEquals(1, state.eventCount)
+    }
+
+    @Test
+    fun `multiple loadEvents calls do not accumulate duplicate counts`() = testScope.runTest {
+        repository.events = listOf(
+            CrashEvent(id = "e1", timestampMs = 1000L, packageName = "com.example.a", exceptionClass = "NullPointerException"),
+            CrashEvent(id = "e2", timestampMs = 2000L, packageName = "com.example.b", exceptionClass = "IllegalStateException"),
+        )
+        createViewModel()
+
+        viewModel.loadEvents()
+        advanceUntilIdle()
+        assertEquals(2, viewModel.uiState.value.eventCount)
+
+        viewModel.loadEvents()
+        advanceUntilIdle()
+        assertEquals(2, viewModel.uiState.value.eventCount)
+
+        viewModel.loadEvents()
+        advanceUntilIdle()
+        assertEquals(2, viewModel.uiState.value.eventCount)
     }
 }

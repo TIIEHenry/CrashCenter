@@ -2,7 +2,7 @@ package nota.android.crash.log
 
 import android.content.Context
 import android.util.Log
-import nota.android.crash.xp.app.data.CrashEvent
+import nota.android.crash.common.data.CrashEvent
 import java.util.UUID
 
 object CrashEventBuilder {

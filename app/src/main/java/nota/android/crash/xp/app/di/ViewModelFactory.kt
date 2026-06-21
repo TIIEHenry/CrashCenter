@@ -1,7 +1,17 @@
 package nota.android.crash.xp.app.di
 
+import android.content.Context
+import android.os.Bundle
+import androidx.lifecycle.AbstractSavedStateViewModelFactory
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import androidx.savedstate.SavedStateRegistryOwner
+import nota.android.crash.xp.app.config.AddManagedAppViewModel
+import nota.android.crash.xp.app.config.AppInterventionEditViewModel
+import nota.android.crash.xp.app.config.ConfigViewModel
+import nota.android.crash.xp.app.observe.CrashDetailViewModel
+import nota.android.crash.xp.app.observe.CrashHistoryViewModel
 
 /**
  * Generic ViewModel factory that delegates creation to a lambda.
@@ -15,3 +25,59 @@ class ViewModelFactory<VM : ViewModel>(
         return creator() as T
     }
 }
+
+/**
+ * Pre-configured ViewModel factories exposed from ServiceLocator.
+ * Eliminates duplicated lambda boilerplate in Fragments/Activities.
+ */
+fun ServiceLocator.configViewModelFactory(context: Context): ViewModelProvider.Factory =
+    ViewModelFactory {
+        ConfigViewModel(
+            legacyAppRepository(context),
+            managedAppRepository(context),
+            packageVisibilityRepository(context),
+        )
+    }
+
+fun ServiceLocator.crashHistoryViewModelFactory(context: Context): ViewModelProvider.Factory =
+    ViewModelFactory {
+        CrashHistoryViewModel(crashLogRepository(context))
+    }
+
+fun ServiceLocator.addManagedAppViewModelFactory(context: Context): ViewModelProvider.Factory =
+    ViewModelFactory {
+        AddManagedAppViewModel(managedAppRepository(context))
+    }
+
+fun ServiceLocator.appInterventionEditViewModelFactory(
+    context: Context,
+    packageName: String,
+): ViewModelProvider.Factory =
+    ViewModelFactory {
+        AppInterventionEditViewModel(
+            packageName,
+            managedAppRepository(context),
+        )
+    }
+
+/**
+ * CrashDetailViewModel factory that uses SavedStateHandle to read crashId.
+ * The fragment passes crashId via arguments; the ViewModel reads it from SavedStateHandle.
+ */
+fun ServiceLocator.crashDetailViewModelFactory(
+    owner: SavedStateRegistryOwner,
+    context: Context,
+): ViewModelProvider.Factory =
+    object : AbstractSavedStateViewModelFactory(owner, null) {
+        @Suppress("UNCHECKED_CAST")
+        override fun <T : ViewModel> create(
+            key: String,
+            modelClass: Class<T>,
+            handle: SavedStateHandle,
+        ): T {
+            return CrashDetailViewModel(
+                crashLogRepository(context),
+                savedStateHandle = handle,
+            ) as T
+        }
+    }

@@ -1,6 +1,7 @@
 package nota.android.crash.xp.app.data
 
 import android.content.Context
+import nota.android.crash.common.data.CrashEvent
 import nota.android.crash.log.CanonicalJsonlWriter
 import java.io.BufferedReader
 import java.io.File

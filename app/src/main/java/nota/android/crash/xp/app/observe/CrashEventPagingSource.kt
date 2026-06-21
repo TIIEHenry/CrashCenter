@@ -2,7 +2,7 @@ package nota.android.crash.xp.app.observe
 
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
-import nota.android.crash.xp.app.data.CrashEvent
+import nota.android.crash.common.data.CrashEvent
 import nota.android.crash.xp.app.data.CrashFilter
 import nota.android.crash.xp.app.data.CrashLogRepository
 

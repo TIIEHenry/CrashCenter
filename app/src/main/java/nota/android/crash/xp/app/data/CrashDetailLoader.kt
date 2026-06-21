@@ -1,5 +1,7 @@
 package nota.android.crash.xp.app.data
 
+import nota.android.crash.common.data.CrashEvent
+
 object CrashDetailLoader {
 
     fun loadStackTraceById(repository: CrashLogRepository, crashId: String): String? {

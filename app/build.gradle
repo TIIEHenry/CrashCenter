@@ -87,5 +87,6 @@ dependencies {
     testImplementation libs.mockito.core
     testImplementation libs.mockito.kotlin
     testImplementation libs.kotlinx.coroutines.test
+    testImplementation libs.androidx.paging.testing
     testImplementation libs.xposed.api
 }

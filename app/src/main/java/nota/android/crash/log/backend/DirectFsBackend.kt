@@ -9,7 +9,7 @@ import nota.android.crash.log.CanonicalJsonlWriter
 import nota.android.crash.log.CrashLogBackend
 import nota.android.crash.log.ProcessSlot
 import nota.android.crash.xp.PrefManager
-import nota.android.crash.xp.app.data.CrashEvent
+import nota.android.crash.common.data.CrashEvent
 import nota.android.crash.xp.app.data.FileCrashLogRepository
 import java.io.File
 
