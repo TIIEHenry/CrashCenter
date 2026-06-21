@@ -8,7 +8,7 @@ import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Toast
+
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
@@ -21,6 +21,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import nota.android.crash.xp.app.R
 import nota.android.crash.xp.app.common.ui.CallbackSuppressor
+import nota.android.crash.xp.app.common.ui.showErrorToast
 import nota.android.crash.xp.app.common.ui.DenseSearchField
 import nota.android.crash.xp.app.common.ui.FilterChipRow
 import nota.android.crash.xp.app.common.ui.LoadingState
@@ -220,9 +221,7 @@ class ConfigFragment : Fragment() {
 
         emptyStateRenderer.render(state, listCount)
 
-        state.errorMessage?.let { message ->
-            Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
-        }
+        requireContext().showErrorToast(state.errorMessage)
 
         if (!state.isLoading && !xposedDialogShown) {
             xposedDialogShown = dialogHelper.showXposedInactiveDialogIfNeeded(xposedDialogShown)

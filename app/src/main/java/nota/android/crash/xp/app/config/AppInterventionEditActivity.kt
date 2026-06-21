@@ -3,6 +3,7 @@ package nota.android.crash.xp.app.config
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.view.View
+
 import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
@@ -14,6 +15,7 @@ import kotlinx.coroutines.launch
 import nota.android.crash.xp.app.R
 import nota.android.crash.xp.app.SystemBars
 import nota.android.crash.xp.app.common.ui.CallbackSuppressor
+import nota.android.crash.xp.app.common.ui.showErrorToast
 import nota.android.crash.xp.app.common.ui.ToolbarHeaderInsets
 import nota.android.crash.xp.app.di.ServiceLocator
 import nota.android.crash.xp.app.di.appInterventionEditViewModelFactory
@@ -58,10 +60,7 @@ class AppInterventionEditActivity : AppCompatActivity() {
                     if (state.saved) {
                         Toast.makeText(this@AppInterventionEditActivity, R.string.rule_saved, Toast.LENGTH_SHORT).show()
                     }
-                    state.errorMessage?.let { message ->
-                        Toast.makeText(this@AppInterventionEditActivity, message, Toast.LENGTH_SHORT).show()
-                        viewModel.clearError()
-                    }
+                    showErrorToast(state.errorMessage) { viewModel.clearError() }
                 }
             }
         }
