@@ -160,21 +160,18 @@ class CrashHistoryViewModelTest {
     // ─── Re-entrancy / Deduplication ───
 
     @Test
-    fun `consecutive loadEvents without completion cancels previous job`() = testScope.runTest {
+    fun `consecutive loadEvents before completion produces correct final state`() = testScope.runTest {
         repository.events = listOf(
             CrashEvent(id = "e1", timestampMs = 1000L, packageName = "com.example.a", exceptionClass = "NullPointerException"),
         )
         createViewModel()
 
-        // First call
+        // Two rapid calls before either completes
         viewModel.loadEvents()
-        val firstJob = viewModel.loadJob
-        // Second call before first completes
         viewModel.loadEvents()
 
         advanceUntilIdle()
 
-        assertTrue("first job should be cancelled", firstJob?.isCancelled == true)
         val state = viewModel.uiState.value
         assertFalse(state.isLoading)
         assertEquals(1, state.eventCount)

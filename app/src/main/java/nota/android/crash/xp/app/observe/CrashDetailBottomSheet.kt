@@ -33,7 +33,7 @@ sealed class CrashDetailArgs {
     }
 
     companion object {
-        private const val ARG_CRASH_ID = CrashHistoryFragment.EXTRA_CRASH_ID
+        private const val ARG_CRASH_ID = CrashDetailBottomSheet.EXTRA_CRASH_ID
         private const val ARG_STACK_TRACE = "stack_trace"
         private const val ARG_TITLE = "title"
 
@@ -129,6 +129,7 @@ class CrashDetailBottomSheet : BottomSheetDialogFragment() {
 
     companion object {
         const val TAG = "crash_detail_sheet"
+        const val EXTRA_CRASH_ID = "crash_id"
 
         fun newInstance(args: CrashDetailArgs): CrashDetailBottomSheet =
             CrashDetailBottomSheet().apply { arguments = args.toBundle() }

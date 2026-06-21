@@ -7,7 +7,7 @@ import nota.android.crash.xp.app.SystemBars
 import nota.android.crash.xp.app.common.ui.ToolbarHeaderInsets
 import nota.android.crash.xp.app.di.ServiceLocator
 import nota.android.crash.xp.app.databinding.ActivityCrashinfoBinding
-import nota.android.crash.xp.app.observe.CrashHistoryFragment
+import nota.android.crash.xp.app.observe.CrashDetailBottomSheet
 import nota.android.crash.xp.app.view.CrashLogViewerClient
 
 class ActivityCrashInfo : AppCompatActivity() {
@@ -33,7 +33,7 @@ class ActivityCrashInfo : AppCompatActivity() {
     }
 
     private fun resolveStackTrace(intent: Intent): String? {
-        val crashId = intent.getStringExtra(CrashHistoryFragment.EXTRA_CRASH_ID)
+        val crashId = intent.getStringExtra(CrashDetailBottomSheet.EXTRA_CRASH_ID)
         if (crashId != null && crashId.isNotEmpty()) {
             val repo = ServiceLocator.crashLogRepository(this)
             val event = repo.getById(crashId)

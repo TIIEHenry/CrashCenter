@@ -122,7 +122,6 @@ class CrashHistoryFragment : Fragment() {
 
     companion object {
         const val TAG = "crash_history"
-        const val EXTRA_CRASH_ID = "crash_id"
 
         fun newInstance(): CrashHistoryFragment = CrashHistoryFragment()
     }

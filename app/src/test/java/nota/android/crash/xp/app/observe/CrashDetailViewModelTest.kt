@@ -42,7 +42,7 @@ class CrashDetailViewModelTest {
             repository = repository,
             ioDispatcher = testDispatcher,
             savedStateHandle = SavedStateHandle().apply {
-                set(CrashHistoryFragment.EXTRA_CRASH_ID, crashId)
+                set(CrashDetailBottomSheet.EXTRA_CRASH_ID, crashId)
             },
         )
     }

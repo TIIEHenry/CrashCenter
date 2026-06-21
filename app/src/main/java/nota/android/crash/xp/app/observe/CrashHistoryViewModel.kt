@@ -27,7 +27,7 @@ class CrashHistoryViewModel(
     private val _uiState = MutableStateFlow(CrashHistoryUiState())
     val uiState: StateFlow<CrashHistoryUiState> = _uiState
 
-    internal var loadJob: Job? = null
+    private var loadJob: Job? = null
 
     val pagingData: Flow<PagingData<CrashEvent>> = Pager(
         config = PagingConfig(

@@ -62,6 +62,6 @@ class CrashDetailViewModel(
     }
 
     companion object {
-        private const val ARG_CRASH_ID = CrashHistoryFragment.EXTRA_CRASH_ID
+        private const val ARG_CRASH_ID = CrashDetailBottomSheet.EXTRA_CRASH_ID
     }
 }
