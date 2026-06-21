@@ -13,6 +13,7 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.launch
 import nota.android.crash.xp.app.R
 import nota.android.crash.xp.app.SystemBars
+import nota.android.crash.xp.app.common.ui.CallbackSuppressor
 import nota.android.crash.xp.app.common.ui.ToolbarHeaderInsets
 import nota.android.crash.xp.app.di.ServiceLocator
 import nota.android.crash.xp.app.di.appInterventionEditViewModelFactory
@@ -22,7 +23,7 @@ class AppInterventionEditActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityAppInterventionEditBinding
     private lateinit var packageName: String
-    private var suppressNotifyCallbacks = false
+    private val suppressNotifyCallbacks = CallbackSuppressor()
 
     private val viewModel: AppInterventionEditViewModel by viewModels {
         ServiceLocator.appInterventionEditViewModelFactory(this, packageName)
@@ -106,19 +107,19 @@ class AppInterventionEditActivity : AppCompatActivity() {
     }
 
     private fun bindNotifyTriState(showNotify: Boolean?) {
-        suppressNotifyCallbacks = true
         val chipId = when (showNotify) {
             true -> R.id.chipNotifyOn
             false -> R.id.chipNotifyOff
             null -> R.id.chipNotifyInherit
         }
-        binding.notifyChipGroup.check(chipId)
-        suppressNotifyCallbacks = false
+        suppressNotifyCallbacks.run {
+            binding.notifyChipGroup.check(chipId)
+        }
     }
 
     private fun setupRuleControls() {
         binding.notifyChipGroup.setOnCheckedStateChangeListener { _, checkedIds ->
-            if (suppressNotifyCallbacks) return@setOnCheckedStateChangeListener
+            if (suppressNotifyCallbacks.suppressed) return@setOnCheckedStateChangeListener
             val notifyValue = when (checkedIds.firstOrNull()) {
                 R.id.chipNotifyOn -> true
                 R.id.chipNotifyOff -> false

@@ -20,6 +20,7 @@ import androidx.recyclerview.widget.RecyclerView
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import nota.android.crash.xp.app.R
+import nota.android.crash.xp.app.common.ui.CallbackSuppressor
 import nota.android.crash.xp.app.common.ui.DenseSearchField
 import nota.android.crash.xp.app.common.ui.FilterChipRow
 import nota.android.crash.xp.app.common.ui.LoadingState
@@ -43,7 +44,7 @@ class ConfigFragment : Fragment() {
     private lateinit var optionsMenuHelper: ConfigOptionsMenuHelper
     private lateinit var dialogHelper: ConfigDialogHelper
     private var returningFromPermissionSettings = false
-    private var suppressChipCallbacks = false
+    private val suppressChipCallbacks = CallbackSuppressor()
     private var xposedDialogShown = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -179,13 +180,13 @@ class ConfigFragment : Fragment() {
             true
         }
         FilterChipRow.chip(row, R.id.setting_chipGroup, R.id.chipScopeMode)?.setOnCheckedChangeListener { _, isChecked ->
-            if (!suppressChipCallbacks) viewModel.setScopeMode(isChecked)
+            if (!suppressChipCallbacks.suppressed) viewModel.setScopeMode(isChecked)
         }
         FilterChipRow.chip(row, R.id.setting_chipGroup, R.id.chipHandleSystem)?.setOnCheckedChangeListener { _, isChecked ->
-            if (!suppressChipCallbacks) viewModel.setHandleSystem(isChecked)
+            if (!suppressChipCallbacks.suppressed) viewModel.setHandleSystem(isChecked)
         }
         FilterChipRow.chip(row, R.id.setting_chipGroup, R.id.chipShowSystem)?.setOnCheckedChangeListener { _, isChecked ->
-            if (!suppressChipCallbacks) viewModel.setShowSystemUi(isChecked)
+            if (!suppressChipCallbacks.suppressed) viewModel.setShowSystemUi(isChecked)
         }
     }
 
@@ -194,12 +195,12 @@ class ConfigFragment : Fragment() {
     }
 
     private fun renderState(state: ConfigUiState) {
-        suppressChipCallbacks = true
         val settingsRow = binding.settingChipRow.root
-        FilterChipRow.setChipChecked(settingsRow, R.id.setting_chipGroup, R.id.chipScopeMode, state.scopeMode)
-        FilterChipRow.setChipChecked(settingsRow, R.id.setting_chipGroup, R.id.chipHandleSystem, state.handleSystem)
-        FilterChipRow.setChipChecked(settingsRow, R.id.setting_chipGroup, R.id.chipShowSystem, state.showSystemUi)
-        suppressChipCallbacks = false
+        suppressChipCallbacks.run {
+            FilterChipRow.setChipChecked(settingsRow, R.id.setting_chipGroup, R.id.chipScopeMode, state.scopeMode)
+            FilterChipRow.setChipChecked(settingsRow, R.id.setting_chipGroup, R.id.chipHandleSystem, state.handleSystem)
+            FilterChipRow.setChipChecked(settingsRow, R.id.setting_chipGroup, R.id.chipShowSystem, state.showSystemUi)
+        }
 
         state.packageVisibility?.let { permissionBannerRenderer.render(it) }
 
