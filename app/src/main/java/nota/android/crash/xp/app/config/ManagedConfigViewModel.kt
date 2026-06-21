@@ -2,7 +2,6 @@ package nota.android.crash.xp.app.config
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import nota.android.crash.xp.app.PackageVisibilityHelper
 
 internal class ManagedConfigViewModel(
     private val repository: ManagedAppRepository,

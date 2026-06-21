@@ -7,7 +7,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import nota.android.crash.xp.app.common.BaseFlowViewModel
-import nota.android.crash.xp.app.common.safeLog
 import nota.android.crash.xp.app.data.CrashDetailLoader
 import nota.android.crash.xp.app.data.CrashLogRepository
 

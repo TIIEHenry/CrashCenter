@@ -10,7 +10,6 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ApplicationInfo
-import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
@@ -112,13 +111,9 @@ object CrashFeedbackFacade {
         }
         val contentIntent = PendingIntent.getActivity(application, 0, intent, pendingFlags)
 
-        val title = try {
-            moduleContext.getString(
-                moduleContext.resources.getIdentifier("crash_tip", "string", PrefManager.PACKAGE_NAME)
-            ) + " - " + appName
-        } catch (_: Throwable) {
-            appName
-        }
+        val title = resolveCrashTip(moduleContext, pkgName)
+            ?.let { "$it - $appName" }
+            ?: appName
         val bigText = (throwable.localizedMessage ?: "") + "\n-----\n" + stackTrace
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -141,12 +136,20 @@ object CrashFeedbackFacade {
     private fun crashTipPrefix(packageName: String): String {
         return try {
             val currentApp = AndroidAppHelper.currentApplication() ?: return ""
-            val context = currentApp.createPackageContext(packageName, Context.CONTEXT_IGNORE_SECURITY)
-            context.getString(
-                context.resources.getIdentifier("crash_tip", "string", PrefManager.PACKAGE_NAME)
-            ) + ": "
+            val tip = resolveCrashTip(currentApp, packageName) ?: return ""
+            "$tip: "
         } catch (_: Throwable) {
             ""
+        }
+    }
+
+    private fun resolveCrashTip(baseContext: Context, packageName: String): String? {
+        return try {
+            val context = baseContext.createPackageContext(packageName, Context.CONTEXT_IGNORE_SECURITY)
+            val resId = context.resources.getIdentifier("crash_tip", "string", PrefManager.PACKAGE_NAME)
+            if (resId != 0) context.getString(resId) else null
+        } catch (_: Throwable) {
+            null
         }
     }
 }

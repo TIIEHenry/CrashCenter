@@ -3,7 +3,6 @@ package nota.android.crash.xp.app.config
 import android.content.Context
 import android.content.SharedPreferences
 import androidx.core.content.edit
-import nota.android.crash.xp.PrefManager.ITSELF
 import nota.android.crash.xp.PrefManager.PREF_HANDLE_SYSTEM
 import nota.android.crash.xp.PrefManager.PREF_PACKAGE_LIST
 import nota.android.crash.xp.PrefManager.PREF_SCOPE_MODE

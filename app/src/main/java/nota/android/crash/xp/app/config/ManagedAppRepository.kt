@@ -2,7 +2,6 @@ package nota.android.crash.xp.app.config
 
 import android.content.Context
 import android.content.SharedPreferences
-import android.content.pm.PackageManager
 import androidx.core.content.edit
 import nota.android.crash.xp.PrefManager.PREF_INTERVENTION_RULES
 import nota.android.crash.xp.PrefManager.PREF_MANAGED_PACKAGES

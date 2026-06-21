@@ -1,8 +1,6 @@
 package nota.android.crash.xp.app.common.ui
 
 import android.view.View
-import android.widget.ImageView
-import android.widget.TextView
 import nota.android.crash.xp.app.R
 import nota.android.crash.xp.app.databinding.ViewStatusBannerBinding
 

@@ -3,7 +3,6 @@ package nota.android.crash.xp.app.config
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.recyclerview.widget.RecyclerView
 import nota.android.crash.xp.app.R
 import nota.android.crash.xp.app.common.ui.adapter.BaseListAdapter
 import nota.android.crash.xp.app.common.ui.adapter.SimpleDiffCallback

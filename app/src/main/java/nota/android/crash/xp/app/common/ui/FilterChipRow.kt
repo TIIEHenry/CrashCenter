@@ -4,9 +4,6 @@ import android.view.View
 import android.widget.TextView
 import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
-import nota.android.crash.xp.app.databinding.ViewHookFilterChipRowBinding
-import nota.android.crash.xp.app.databinding.ViewManagedFilterChipRowBinding
-import nota.android.crash.xp.app.databinding.ViewSettingChipRowBinding
 
 object FilterChipRow {
 

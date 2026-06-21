@@ -7,7 +7,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import nota.android.crash.xp.app.common.BaseFlowViewModel
 import nota.android.crash.xp.app.common.HasErrorMessage
-import nota.android.crash.xp.app.common.safeLog
 
 data class AppInterventionEditUiState(
     val profile: AppInterventionProfile = AppInterventionProfile.EMPTY,

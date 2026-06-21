@@ -34,37 +34,23 @@ internal class ConfigOptionsMenuHelper(
                 showHelpDialog()
                 true
             }
-            R.id.item_sort_by_name -> {
+            else -> {
+                val sortMode = SORT_MODE_MAP[item.itemId] ?: return false
                 item.isChecked = true
-                viewModel.setSortMode(SortMode.NAME_ASC)
+                viewModel.setSortMode(sortMode)
                 true
             }
-            R.id.item_sort_by_name_reverse -> {
-                item.isChecked = true
-                viewModel.setSortMode(SortMode.NAME_DESC)
-                true
-            }
-            R.id.item_sort_by_install_time -> {
-                item.isChecked = true
-                viewModel.setSortMode(SortMode.INSTALL_TIME_ASC)
-                true
-            }
-            R.id.item_sort_by_install_time_reverse -> {
-                item.isChecked = true
-                viewModel.setSortMode(SortMode.INSTALL_TIME_DESC)
-                true
-            }
-            R.id.item_sort_by_update_time -> {
-                item.isChecked = true
-                viewModel.setSortMode(SortMode.UPDATE_TIME_ASC)
-                true
-            }
-            R.id.item_sort_by_update_time_reverse -> {
-                item.isChecked = true
-                viewModel.setSortMode(SortMode.UPDATE_TIME_DESC)
-                true
-            }
-            else -> false
         }
+    }
+
+    companion object {
+        private val SORT_MODE_MAP = mapOf(
+            R.id.item_sort_by_name to SortMode.NAME_ASC,
+            R.id.item_sort_by_name_reverse to SortMode.NAME_DESC,
+            R.id.item_sort_by_install_time to SortMode.INSTALL_TIME_ASC,
+            R.id.item_sort_by_install_time_reverse to SortMode.INSTALL_TIME_DESC,
+            R.id.item_sort_by_update_time to SortMode.UPDATE_TIME_ASC,
+            R.id.item_sort_by_update_time_reverse to SortMode.UPDATE_TIME_DESC,
+        )
     }
 }

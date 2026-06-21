@@ -3,7 +3,6 @@ package nota.android.crash.xp.app.config
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
 import nota.android.crash.xp.app.common.BaseFlowViewModel
-import nota.android.crash.xp.app.common.safeLog
 
 sealed class AddManagedAppUiState {
     data object Loading : AddManagedAppUiState()

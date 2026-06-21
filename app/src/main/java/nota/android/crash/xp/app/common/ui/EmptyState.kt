@@ -7,7 +7,6 @@ import androidx.annotation.DrawableRes
 import com.google.android.material.button.MaterialButton
 import nota.android.crash.xp.app.R
 import nota.android.crash.xp.app.databinding.ViewEmptyStateActionBinding
-import nota.android.crash.xp.app.databinding.ViewEmptyStateBinding
 
 object EmptyState {
 

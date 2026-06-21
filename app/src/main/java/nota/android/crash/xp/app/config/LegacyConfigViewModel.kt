@@ -1,7 +1,6 @@
 package nota.android.crash.xp.app.config
 
 import kotlinx.coroutines.CoroutineScope
-import nota.android.crash.xp.app.PackageVisibilityHelper
 
 internal class LegacyConfigViewModel(
     private val repository: LegacyAppRepository,
