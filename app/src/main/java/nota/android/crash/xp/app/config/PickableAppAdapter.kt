@@ -52,9 +52,7 @@ class PickableAppAdapter : BaseListAdapter<PickableApp, PickableAppAdapter.VH>(
         }
 
         override fun bind(data: PickableApp) {
-            binding.ivIcon.setImageDrawable(data.appInfo.loadIcon(binding.root.context.packageManager))
-            binding.tvName.text = data.label
-            binding.tvPackageName.text = data.packageName
+            data.bindAppInfo(binding.root, binding.ivIcon, binding.tvName, binding.tvPackageName)
             binding.checkbox.isChecked = selectedPackages.contains(data.packageName)
         }
     }

@@ -40,15 +40,8 @@ class ManagedAppAdapter : BaseListAdapter<ManagedApp, ManagedAppAdapter.VH>(
         }
 
         override fun bind(app: ManagedApp) {
+            app.bindAppInfo(binding.root, binding.ivIcon, binding.tvName, binding.tvSubtitle)
             val context = binding.root.context
-            binding.root.contentDescription = context.getString(
-                R.string.legacy_app_row_a11y,
-                app.label,
-                app.packageName,
-            )
-            binding.ivIcon.setImageDrawable(app.appInfo.loadIcon(context.packageManager))
-            binding.tvName.text = app.label
-            binding.tvSubtitle.text = app.packageName
 
             when (app.interventionStatus) {
                 InterventionStatus.ENABLED -> {

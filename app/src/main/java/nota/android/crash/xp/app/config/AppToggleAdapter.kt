@@ -32,14 +32,8 @@ class AppToggleAdapter : BaseListAdapter<AppItem, AppToggleAdapter.VH>(
         }
 
         override fun bind(data: AppItem) {
+            data.bindAppInfo(binding.root, binding.ivIcon, binding.tvName, binding.tvPackageName)
             val context = binding.root.context
-            binding.root.contentDescription = context.getString(
-                nota.android.crash.xp.app.R.string.legacy_app_row_a11y,
-                data.label,
-                data.packageName,
-            )
-            binding.ivIcon.setImageDrawable(data.appInfo.loadIcon(context.packageManager))
-            binding.tvName.text = data.label
             binding.sw.contentDescription = context.getString(
                 if (data.hookEnabled) {
                     nota.android.crash.xp.app.R.string.switch_disable_intervention
@@ -48,7 +42,6 @@ class AppToggleAdapter : BaseListAdapter<AppItem, AppToggleAdapter.VH>(
                 },
             )
             binding.sw.isChecked = data.hookEnabled
-            binding.tvPackageName.text = data.packageName
             binding.tvSystemBadge.visibility =
                 if (data.isSystem) View.VISIBLE else View.GONE
         }
