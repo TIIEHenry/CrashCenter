@@ -205,14 +205,14 @@ class BaseConfigViewModelTest {
         }
 
         override fun loadApps(forceReload: Boolean) {
-            loadWithState {
+            loadWithState(scope) {
                 emitState { copy(isLoading = false, allApps = testItems) }
                 applyFilters(preserveSort = false)
             }
         }
 
         fun triggerFailingLoad() {
-            loadWithState { throw RuntimeException("Test failure") }
+            loadWithState(scope) { throw RuntimeException("Test failure") }
         }
 
         override fun applyFilters(preserveSort: Boolean) = applyFilters(

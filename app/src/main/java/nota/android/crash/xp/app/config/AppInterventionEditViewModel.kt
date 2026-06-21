@@ -6,14 +6,17 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import nota.android.crash.xp.app.common.BaseFlowViewModel
+import nota.android.crash.xp.app.common.HasErrorMessage
 import nota.android.crash.xp.app.common.safeLog
 
 data class AppInterventionEditUiState(
     val profile: AppInterventionProfile = AppInterventionProfile.EMPTY,
     val catchAllRule: InterventionRule? = null,
     val saved: Boolean = false,
-    val errorMessage: String? = null,
-)
+    override val errorMessage: String? = null,
+) : HasErrorMessage {
+    override fun withNoErrorMessage(): AppInterventionEditUiState = copy(errorMessage = null)
+}
 
 class AppInterventionEditViewModel(
     private val packageName: String,
@@ -71,10 +74,6 @@ class AppInterventionEditViewModel(
             )
         }
         saveProfile()
-    }
-
-    fun clearError() {
-        emitState { copy(errorMessage = null) }
     }
 
     fun removeManagedApp() {

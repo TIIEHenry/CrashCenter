@@ -20,7 +20,7 @@ internal class LegacyConfigViewModel(
         val current = _uiState.value
         if (!forceReload && current.allApps.isNotEmpty()) return
 
-        loadWithState {
+        loadWithState(scope) {
             val loadedApps = repository.loadInstalledApps()
             val visibility = visibilityRepository.detectPackageVisibilityAfterLoad(loadedApps.size)
             emitState { copy(isLoading = false, allApps = loadedApps, packageVisibility = visibility) }

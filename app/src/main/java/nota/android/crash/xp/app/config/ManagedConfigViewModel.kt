@@ -21,7 +21,7 @@ internal class ManagedConfigViewModel(
         val current = _uiState.value
         if (!forceReload && current.managedApps.isNotEmpty()) return
 
-        loadWithState {
+        loadWithState(scope) {
             repository.pruneUninstalled()
             val managedApps = repository.loadManagedApps()
             val visibility = visibilityRepository.detectPackageVisibility()

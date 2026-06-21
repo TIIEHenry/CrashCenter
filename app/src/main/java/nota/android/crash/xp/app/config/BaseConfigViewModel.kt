@@ -1,10 +1,8 @@
 package nota.android.crash.xp.app.config
 
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
 import nota.android.crash.xp.app.PackageVisibilityHelper
 import nota.android.crash.xp.app.common.BaseFlowViewModel
-import nota.android.crash.xp.app.common.safeLog
 
 internal abstract class BaseConfigViewModel(
     protected val scope: CoroutineScope,
@@ -70,10 +68,6 @@ internal abstract class BaseConfigViewModel(
         // No-op by default; override in legacy
     }
 
-    override fun clearError() {
-        emitState { copy(errorMessage = null) }
-    }
-
     protected fun <T : AppListItem> applyFilters(
         preserveSort: Boolean,
         filter: (ConfigUiState) -> List<T>,
@@ -87,18 +81,6 @@ internal abstract class BaseConfigViewModel(
         AppFilterEngine.sort(filtered, current.sortMode)
         emitState { setState(filtered) }
         emitState { copy(emptyMessage = emptyMessage(filtered, source)) }
-    }
-
-    protected fun loadWithState(block: suspend () -> Unit) {
-        emitState { copy(isLoading = true) }
-        scope.launch {
-            try {
-                block()
-            } catch (e: Exception) {
-                safeLog("BaseConfigViewModel", "load failed", e)
-                emitState { copy(isLoading = false, errorMessage = e.message) }
-            }
-        }
     }
 
     abstract fun applyFilters(preserveSort: Boolean)

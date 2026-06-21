@@ -7,13 +7,10 @@ import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import nota.android.crash.common.data.CrashEvent
 import nota.android.crash.xp.app.common.BaseFlowViewModel
-import nota.android.crash.xp.app.common.safeLog
 import nota.android.crash.xp.app.data.CrashFilter
 import nota.android.crash.xp.app.data.CrashLogRepository
 
@@ -21,8 +18,6 @@ class CrashHistoryViewModel(
     private val repository: CrashLogRepository,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) : BaseFlowViewModel<CrashHistoryUiState>(CrashHistoryUiState()) {
-
-    private var loadJob: Job? = null
 
     val pagingData: Flow<PagingData<CrashEvent>> = Pager(
         config = PagingConfig(
@@ -34,27 +29,10 @@ class CrashHistoryViewModel(
     ).flow.cachedIn(viewModelScope)
 
     fun loadEvents() {
-        loadJob?.cancel()
-        loadJob = viewModelScope.launch {
-            emitState { copy(isLoading = true) }
-            try {
-                val count = withContext(ioDispatcher) {
-                    repository.getCount(CrashFilter())
-                }
-                emitState {
-                    copy(isLoading = false, eventCount = count)
-                }
-            } catch (e: Exception) {
-                safeLog("CrashHistoryViewModel", "loadEvents failed", e)
-                emitState {
-                    copy(isLoading = false, errorMessage = e.message)
-                }
-            }
+        loadWithState(viewModelScope) {
+            val count = withContext(ioDispatcher) { repository.getCount(CrashFilter()) }
+            emitState { copy(isLoading = false, eventCount = count) }
         }
-    }
-
-    fun clearError() {
-        emitState { copy(errorMessage = null) }
     }
 
     companion object {
