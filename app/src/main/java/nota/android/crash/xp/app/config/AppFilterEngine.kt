@@ -48,13 +48,13 @@ object AppFilterEngine {
         filter.sinceMs?.let { if (event.timestampMs < it) return false }
         filter.untilMs?.let { if (event.timestampMs > it) return false }
         filter.query?.trim()?.takeIf { it.isNotEmpty() }?.let { query ->
-            val q = query.lowercase(Locale.getDefault())
+            val q = query.lowercase(Locale.ROOT)
             val haystack = listOfNotNull(
                 event.appLabel,
                 event.packageName,
                 event.exceptionClass,
                 event.message,
-            ).joinToString(" ").lowercase(Locale.getDefault())
+            ).joinToString(" ").lowercase(Locale.ROOT)
             if (!haystack.contains(q)) return false
         }
         return true
@@ -66,11 +66,11 @@ object AppFilterEngine {
         labelExtractor: (T) -> String,
         packageNameExtractor: (T) -> String,
     ): List<T> {
-        val queryLower = query.lowercase(Locale.getDefault())
+        val queryLower = query.lowercase(Locale.ROOT)
         if (queryLower.isEmpty()) return items
         return items.filter { item ->
-            labelExtractor(item).lowercase(Locale.getDefault()).contains(queryLower) ||
-                packageNameExtractor(item).lowercase(Locale.getDefault()).contains(queryLower)
+            labelExtractor(item).lowercase(Locale.ROOT).contains(queryLower) ||
+                packageNameExtractor(item).lowercase(Locale.ROOT).contains(queryLower)
         }
     }
 

@@ -7,6 +7,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.util.Locale
 
 class AppFilterEngineTest {
 
@@ -322,6 +323,44 @@ class AppFilterEngineTest {
             packageNameExtractor = { it },
         )
         assertTrue(result.isEmpty())
+    }
+
+    @Test
+    fun `filterByQuery I lowercased correctly under Turkish locale`() {
+        val saved = Locale.getDefault()
+        try {
+            Locale.setDefault(Locale("tr", "TR"))
+            val items = listOf("INSTALL")
+            val result = AppFilterEngine.filterByQuery(
+                items = items,
+                query = "install",
+                labelExtractor = { it },
+                packageNameExtractor = { it },
+            )
+            assertEquals(1, result.size)
+        } finally {
+            Locale.setDefault(saved)
+        }
+    }
+
+    @Test
+    fun `matchesCrashEvent I lowercased correctly under Turkish locale`() {
+        val saved = Locale.getDefault()
+        try {
+            Locale.setDefault(Locale("tr", "TR"))
+            val event = CrashEvent(
+                id = "evt-tr",
+                timestampMs = 1000L,
+                packageName = "com.example.app",
+                appLabel = "Example App",
+                exceptionClass = "java.lang.IllegalStateException",
+                message = "Illegal state reached",
+            )
+            val filter = CrashFilter(query = "illegal")
+            assertTrue(AppFilterEngine.matchesCrashEvent(event, filter))
+        } finally {
+            Locale.setDefault(saved)
+        }
     }
 
     // ─── sort ───
