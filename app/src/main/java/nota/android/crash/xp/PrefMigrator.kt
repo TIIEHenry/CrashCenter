@@ -24,17 +24,16 @@ object PrefMigrator {
      * @return whether [KEY_MIGRATED] was already set before this call (prior app session),
      *         and whether legacy grapcrash prefs supplied data on this call.
      */
-    fun migrateIfNeeded(context: Context): LegacyPrefState {
-        val dest = context.getSharedPreferences(PrefManager.PREF_NAME, Context.MODE_PRIVATE)
-        val hadPriorSession = dest.getBoolean(KEY_MIGRATED, false)
+    fun migrateIfNeeded(context: Context, prefs: SharedPreferences): LegacyPrefState {
+        val hadPriorSession = prefs.getBoolean(KEY_MIGRATED, false)
         if (hadPriorSession) {
             return LegacyPrefState(hadPriorSession = true, importHadData = false)
         }
 
         val snapshot = LegacyPrefSnapshotReader.read(context)
-        val importHadData = snapshot != null && LegacyPrefImporter.import(context, snapshot)
+        val importHadData = snapshot != null && LegacyPrefImporter.import(prefs, snapshot)
 
-        dest.edit { putBoolean(KEY_MIGRATED, true) }
+        prefs.edit { putBoolean(KEY_MIGRATED, true) }
         return LegacyPrefState(hadPriorSession = false, importHadData = importHadData)
     }
 
@@ -42,8 +41,8 @@ object PrefMigrator {
      * One-shot migration from ADR-002 `package_list` to ADR-015 managed model.
      * Runs once per install after [migrateIfNeeded]; leaves `package_list` read-only.
      */
-    fun migrateManagedModelIfNeeded(context: Context, legacyPrefState: LegacyPrefState) {
-        ManagedModelMigrator.migrateIfNeeded(context, legacyPrefState)
+    fun migrateManagedModelIfNeeded(context: Context, prefs: SharedPreferences, legacyPrefState: LegacyPrefState) {
+        ManagedModelMigrator.migrateIfNeeded(context, prefs, legacyPrefState)
     }
 
     data class LegacyPrefState(

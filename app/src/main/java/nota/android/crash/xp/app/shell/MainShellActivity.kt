@@ -14,6 +14,7 @@ import kotlinx.coroutines.launch
 import nota.android.crash.xp.PrefMigrator
 import nota.android.crash.xp.XposedManagerLauncher
 import nota.android.crash.xp.app.ModuleActivation
+import nota.android.crash.xp.app.di.ServiceLocator
 import nota.android.crash.xp.app.R
 import nota.android.crash.xp.app.SystemBars
 import nota.android.crash.xp.app.common.ui.StatusBanner
@@ -28,8 +29,9 @@ class MainShellActivity : AppCompatActivity() {
     private lateinit var tabController: ShellTabController
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        val legacyPrefState = PrefMigrator.migrateIfNeeded(applicationContext)
-        PrefMigrator.migrateManagedModelIfNeeded(applicationContext, legacyPrefState)
+        val prefs = ServiceLocator.prefs(applicationContext)
+        val legacyPrefState = PrefMigrator.migrateIfNeeded(applicationContext, prefs)
+        PrefMigrator.migrateManagedModelIfNeeded(applicationContext, prefs, legacyPrefState)
         super.onCreate(savedInstanceState)
         binding = ActivityMainShellBinding.inflate(layoutInflater)
         setContentView(binding.root)

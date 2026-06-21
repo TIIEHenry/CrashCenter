@@ -1,6 +1,7 @@
 package nota.android.crash.xp.migration
 
 import android.content.Context
+import android.content.SharedPreferences
 import nota.android.crash.xp.PrefManager
 import nota.android.crash.xp.PrefMigrator
 import nota.android.crash.xp.app.config.InterventionRulesCodec
@@ -17,13 +18,14 @@ import org.robolectric.RuntimeEnvironment
 class ManagedModelMigratorTest {
 
     private lateinit var context: Context
+    private lateinit var prefs: SharedPreferences
 
     @Before
     fun setUp() {
         context = RuntimeEnvironment.getApplication()
+        prefs = context.getSharedPreferences(PrefManager.PREF_NAME, Context.MODE_PRIVATE)
         // Clear all prefs before each test
-        context.getSharedPreferences(PrefManager.PREF_NAME, Context.MODE_PRIVATE)
-            .edit().clear().commit()
+        prefs.edit().clear().commit()
     }
 
     // ---------- Already migrated flag set ----------
@@ -37,7 +39,7 @@ class ManagedModelMigratorTest {
             }
 
         val legacyState = PrefMigrator.LegacyPrefState(hadPriorSession = false, importHadData = false)
-        ManagedModelMigrator.migrateIfNeeded(context, legacyState)
+        ManagedModelMigrator.migrateIfNeeded(context, prefs, legacyState)
 
         val prefs = context.getSharedPreferences(PrefManager.PREF_NAME, Context.MODE_PRIVATE)
         assertTrue(prefs.getBoolean(PrefManager.PREF_MANAGED_MODEL_MIGRATED, false))
@@ -55,7 +57,7 @@ class ManagedModelMigratorTest {
             }
 
         val legacyState = PrefMigrator.LegacyPrefState(hadPriorSession = false, importHadData = false)
-        ManagedModelMigrator.migrateIfNeeded(context, legacyState)
+        ManagedModelMigrator.migrateIfNeeded(context, prefs, legacyState)
 
         val prefs = context.getSharedPreferences(PrefManager.PREF_NAME, Context.MODE_PRIVATE)
         assertTrue(prefs.getBoolean(PrefManager.PREF_MANAGED_MODEL_MIGRATED, false))
@@ -67,7 +69,7 @@ class ManagedModelMigratorTest {
     @Test
     fun `migrateIfNeeded activates empty state when no legacy data exists`() {
         val legacyState = PrefMigrator.LegacyPrefState(hadPriorSession = false, importHadData = false)
-        ManagedModelMigrator.migrateIfNeeded(context, legacyState)
+        ManagedModelMigrator.migrateIfNeeded(context, prefs, legacyState)
 
         val prefs = context.getSharedPreferences(PrefManager.PREF_NAME, Context.MODE_PRIVATE)
         assertTrue(prefs.getBoolean(PrefManager.PREF_MANAGED_MODEL_MIGRATED, false))
@@ -91,7 +93,7 @@ class ManagedModelMigratorTest {
             }
 
         val legacyState = PrefMigrator.LegacyPrefState(hadPriorSession = false, importHadData = true)
-        ManagedModelMigrator.migrateIfNeeded(context, legacyState)
+        ManagedModelMigrator.migrateIfNeeded(context, prefs, legacyState)
 
         val prefs = context.getSharedPreferences(PrefManager.PREF_NAME, Context.MODE_PRIVATE)
         assertTrue(prefs.getBoolean(PrefManager.PREF_MANAGED_MODEL_MIGRATED, false))
@@ -108,7 +110,7 @@ class ManagedModelMigratorTest {
             }
 
         val legacyState = PrefMigrator.LegacyPrefState(hadPriorSession = false, importHadData = false)
-        ManagedModelMigrator.migrateIfNeeded(context, legacyState)
+        ManagedModelMigrator.migrateIfNeeded(context, prefs, legacyState)
 
         val prefs = context.getSharedPreferences(PrefManager.PREF_NAME, Context.MODE_PRIVATE)
         assertTrue(prefs.getBoolean(PrefManager.PREF_MANAGED_MODEL_MIGRATED, false))
@@ -123,7 +125,7 @@ class ManagedModelMigratorTest {
             }
 
         val legacyState = PrefMigrator.LegacyPrefState(hadPriorSession = false, importHadData = false)
-        ManagedModelMigrator.migrateIfNeeded(context, legacyState)
+        ManagedModelMigrator.migrateIfNeeded(context, prefs, legacyState)
 
         val prefs = context.getSharedPreferences(PrefManager.PREF_NAME, Context.MODE_PRIVATE)
         assertTrue(prefs.getBoolean(PrefManager.PREF_MANAGED_MODEL_MIGRATED, false))
@@ -138,7 +140,7 @@ class ManagedModelMigratorTest {
             }
 
         val legacyState = PrefMigrator.LegacyPrefState(hadPriorSession = false, importHadData = false)
-        ManagedModelMigrator.migrateIfNeeded(context, legacyState)
+        ManagedModelMigrator.migrateIfNeeded(context, prefs, legacyState)
 
         val prefs = context.getSharedPreferences(PrefManager.PREF_NAME, Context.MODE_PRIVATE)
         assertTrue(prefs.getBoolean(PrefManager.PREF_MANAGED_MODEL_MIGRATED, false))
@@ -153,7 +155,7 @@ class ManagedModelMigratorTest {
             }
 
         val legacyState = PrefMigrator.LegacyPrefState(hadPriorSession = false, importHadData = false)
-        ManagedModelMigrator.migrateIfNeeded(context, legacyState)
+        ManagedModelMigrator.migrateIfNeeded(context, prefs, legacyState)
 
         val prefs = context.getSharedPreferences(PrefManager.PREF_NAME, Context.MODE_PRIVATE)
         assertTrue(prefs.getBoolean(PrefManager.PREF_MANAGED_MODEL_MIGRATED, false))
@@ -170,7 +172,7 @@ class ManagedModelMigratorTest {
             }
 
         val legacyState = PrefMigrator.LegacyPrefState(hadPriorSession = false, importHadData = false)
-        ManagedModelMigrator.migrateIfNeeded(context, legacyState)
+        ManagedModelMigrator.migrateIfNeeded(context, prefs, legacyState)
 
         val prefs = context.getSharedPreferences(PrefManager.PREF_NAME, Context.MODE_PRIVATE)
         assertTrue(prefs.getBoolean(PrefManager.PREF_MANAGED_MODEL_MIGRATED, false))
@@ -186,7 +188,7 @@ class ManagedModelMigratorTest {
             }
 
         val legacyState = PrefMigrator.LegacyPrefState(hadPriorSession = false, importHadData = true)
-        ManagedModelMigrator.migrateIfNeeded(context, legacyState)
+        ManagedModelMigrator.migrateIfNeeded(context, prefs, legacyState)
 
         val prefs = context.getSharedPreferences(PrefManager.PREF_NAME, Context.MODE_PRIVATE)
         val rulesJson = prefs.getString(PrefManager.PREF_INTERVENTION_RULES, null)
@@ -210,7 +212,7 @@ class ManagedModelMigratorTest {
             }
 
         val legacyState = PrefMigrator.LegacyPrefState(hadPriorSession = false, importHadData = true)
-        ManagedModelMigrator.migrateIfNeeded(context, legacyState)
+        ManagedModelMigrator.migrateIfNeeded(context, prefs, legacyState)
 
         val prefs = context.getSharedPreferences(PrefManager.PREF_NAME, Context.MODE_PRIVATE)
         // package_list should still exist (read-only, not deleted)
@@ -227,14 +229,14 @@ class ManagedModelMigratorTest {
             }
 
         val legacyState = PrefMigrator.LegacyPrefState(hadPriorSession = false, importHadData = true)
-        ManagedModelMigrator.migrateIfNeeded(context, legacyState)
+        ManagedModelMigrator.migrateIfNeeded(context, prefs, legacyState)
 
         val prefs = context.getSharedPreferences(PrefManager.PREF_NAME, Context.MODE_PRIVATE)
         val firstManaged = prefs.getStringSet(PrefManager.PREF_MANAGED_PACKAGES, null)
         val firstRules = prefs.getString(PrefManager.PREF_INTERVENTION_RULES, null)
 
         // Second call should be no-op due to flag
-        ManagedModelMigrator.migrateIfNeeded(context, legacyState)
+        ManagedModelMigrator.migrateIfNeeded(context, prefs, legacyState)
 
         assertEquals(firstManaged, prefs.getStringSet(PrefManager.PREF_MANAGED_PACKAGES, null))
         assertEquals(firstRules, prefs.getString(PrefManager.PREF_INTERVENTION_RULES, null))
@@ -244,7 +246,7 @@ class ManagedModelMigratorTest {
     fun `migrateIfNeeded with all false booleans and no package_list activates empty`() {
         // No legacy indicators at all
         val legacyState = PrefMigrator.LegacyPrefState(hadPriorSession = false, importHadData = false)
-        ManagedModelMigrator.migrateIfNeeded(context, legacyState)
+        ManagedModelMigrator.migrateIfNeeded(context, prefs, legacyState)
 
         val prefs = context.getSharedPreferences(PrefManager.PREF_NAME, Context.MODE_PRIVATE)
         assertTrue(prefs.getBoolean(PrefManager.PREF_MANAGED_MODEL_MIGRATED, false))

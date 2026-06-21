@@ -19,8 +19,7 @@ object ManagedModelMigrator {
 
     private const val UPGRADE_TIME_GRACE_MS = 60_000L
 
-    fun migrateIfNeeded(context: Context, legacyPrefState: PrefMigrator.LegacyPrefState) {
-        val prefs = context.getSharedPreferences(PrefManager.PREF_NAME, Context.MODE_PRIVATE)
+    fun migrateIfNeeded(context: Context, prefs: SharedPreferences, legacyPrefState: PrefMigrator.LegacyPrefState) {
         if (prefs.getBoolean(PrefManager.PREF_MANAGED_MODEL_MIGRATED, false)) {
             return
         }

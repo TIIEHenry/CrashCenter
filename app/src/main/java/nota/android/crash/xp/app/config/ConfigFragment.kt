@@ -118,6 +118,7 @@ class ConfigFragment : Fragment() {
         )
         dialogHelper = ConfigDialogHelper(
             context = requireContext(),
+            prefs = ServiceLocator.prefs(requireContext()),
             onPermissionSettingsOpened = {
                 returningFromPermissionSettings = true
             },

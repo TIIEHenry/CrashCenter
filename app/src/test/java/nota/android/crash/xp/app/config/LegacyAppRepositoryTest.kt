@@ -29,7 +29,7 @@ class LegacyAppRepositoryTest {
         context = RuntimeEnvironment.getApplication()
         prefs = context.getSharedPreferences(PrefManager.PREF_NAME, Context.MODE_PRIVATE)
         prefs.edit().clear().commit()
-        repository = LegacyAppRepository(context)
+        repository = LegacyAppRepository(context, prefs)
     }
 
     // ─── Shared preferences reading/writing ───

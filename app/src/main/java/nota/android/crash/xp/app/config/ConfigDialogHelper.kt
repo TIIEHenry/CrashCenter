@@ -1,6 +1,7 @@
 package nota.android.crash.xp.app.config
 
 import android.content.Context
+import android.content.SharedPreferences
 import android.widget.Toast
 import androidx.core.content.edit
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -11,6 +12,7 @@ import nota.android.crash.xp.app.R
 
 internal class ConfigDialogHelper(
     private val context: Context,
+    private val prefs: SharedPreferences,
     private val onPermissionSettingsOpened: () -> Unit,
 ) {
 
@@ -23,7 +25,6 @@ internal class ConfigDialogHelper(
 
     fun showXposedInactiveDialogIfNeeded(xposedDialogShown: Boolean): Boolean {
         if (xposedDialogShown) return false
-        val prefs = context.getSharedPreferences(PrefManager.PREF_NAME, Context.MODE_PRIVATE)
         if (prefs.getBoolean(PrefManager.PREF_XPOSED_DIALOG_DISMISSED, false)) return false
         if (ModuleActivation.isModuleActive()) return false
 

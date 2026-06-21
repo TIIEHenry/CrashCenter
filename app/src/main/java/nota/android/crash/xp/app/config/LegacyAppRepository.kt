@@ -1,10 +1,10 @@
 package nota.android.crash.xp.app.config
 
 import android.content.Context
+import android.content.SharedPreferences
 import androidx.core.content.edit
 import nota.android.crash.xp.PrefManager.ITSELF
 import nota.android.crash.xp.PrefManager.PREF_HANDLE_SYSTEM
-import nota.android.crash.xp.PrefManager.PREF_NAME
 import nota.android.crash.xp.PrefManager.PREF_PACKAGE_LIST
 import nota.android.crash.xp.PrefManager.PREF_SCOPE_MODE
 import nota.android.crash.xp.PrefManager.PREF_SHOW_SYSTEM_UI
@@ -13,10 +13,12 @@ import nota.android.crash.xp.app.PackageVisibilityHelper
 /**
  * Handles legacy app list loading and hook states persistence.
  */
-class LegacyAppRepository(context: Context) {
+class LegacyAppRepository(
+    context: Context,
+    private val prefs: SharedPreferences,
+) {
 
     private val appContext = context.applicationContext
-    private val prefs = appContext.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
     private val packageManager = appContext.packageManager
 
     // ─── Shared preferences (scope / system UI) ───

@@ -1,6 +1,7 @@
 package nota.android.crash.xp.migration
 
 import android.content.Context
+import android.content.SharedPreferences
 import nota.android.crash.xp.PrefManager
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -15,13 +16,14 @@ import org.robolectric.RuntimeEnvironment
 class LegacyPrefImporterTest {
 
     private lateinit var context: Context
+    private lateinit var prefs: SharedPreferences
 
     @Before
     fun setUp() {
         context = RuntimeEnvironment.getApplication()
+        prefs = context.getSharedPreferences(PrefManager.PREF_NAME, Context.MODE_PRIVATE)
         // Clear prefs before each test
-        context.getSharedPreferences(PrefManager.PREF_NAME, Context.MODE_PRIVATE)
-            .edit().clear().commit()
+        prefs.edit().clear().commit()
     }
 
     @Test
@@ -35,10 +37,9 @@ class LegacyPrefImporterTest {
             stringSets = emptyMap(),
         )
 
-        val result = LegacyPrefImporter.import(context, snapshot)
+        val result = LegacyPrefImporter.import(prefs, snapshot)
         assertTrue(result)
 
-        val prefs = context.getSharedPreferences(PrefManager.PREF_NAME, Context.MODE_PRIVATE)
         assertTrue(prefs.getBoolean(PrefManager.PREF_SCOPE_MODE, false))
         assertFalse(prefs.getBoolean(PrefManager.PREF_HANDLE_SYSTEM, true))
         assertTrue(prefs.getBoolean(PrefManager.PREF_SHOW_SYSTEM_UI, false))
@@ -53,10 +54,9 @@ class LegacyPrefImporterTest {
             ),
         )
 
-        val result = LegacyPrefImporter.import(context, snapshot)
+        val result = LegacyPrefImporter.import(prefs, snapshot)
         assertTrue(result)
 
-        val prefs = context.getSharedPreferences(PrefManager.PREF_NAME, Context.MODE_PRIVATE)
         val set = prefs.getStringSet(PrefManager.PREF_PACKAGE_LIST, null)
         assertEquals(setOf("com.a", "com.b", "com.c"), set)
     }
@@ -68,10 +68,9 @@ class LegacyPrefImporterTest {
             stringSets = mapOf(PrefManager.PREF_PACKAGE_LIST to setOf("pkg1")),
         )
 
-        val result = LegacyPrefImporter.import(context, snapshot)
+        val result = LegacyPrefImporter.import(prefs, snapshot)
         assertTrue(result)
 
-        val prefs = context.getSharedPreferences(PrefManager.PREF_NAME, Context.MODE_PRIVATE)
         assertTrue(prefs.getBoolean(PrefManager.PREF_SCOPE_MODE, false))
         assertEquals(setOf("pkg1"), prefs.getStringSet(PrefManager.PREF_PACKAGE_LIST, null))
     }
@@ -79,7 +78,7 @@ class LegacyPrefImporterTest {
     @Test
     fun `import returns false when snapshot has no data`() {
         val snapshot = LegacyPrefSnapshotReader.Snapshot()
-        val result = LegacyPrefImporter.import(context, snapshot)
+        val result = LegacyPrefImporter.import(prefs, snapshot)
         assertFalse(result)
     }
 
@@ -89,49 +88,45 @@ class LegacyPrefImporterTest {
             booleans = emptyMap(),
             stringSets = emptyMap(),
         )
-        val result = LegacyPrefImporter.import(context, snapshot)
+        val result = LegacyPrefImporter.import(prefs, snapshot)
         assertFalse(result)
     }
 
     @Test
     fun `import overwrites existing values`() {
         // Pre-populate with different values
-        context.getSharedPreferences(PrefManager.PREF_NAME, Context.MODE_PRIVATE)
-            .edit().apply {
-                putBoolean(PrefManager.PREF_SCOPE_MODE, false)
-                putStringSet(PrefManager.PREF_PACKAGE_LIST, setOf("old"))
-                apply()
-            }
+        prefs.edit().apply {
+            putBoolean(PrefManager.PREF_SCOPE_MODE, false)
+            putStringSet(PrefManager.PREF_PACKAGE_LIST, setOf("old"))
+            apply()
+        }
 
         val snapshot = LegacyPrefSnapshotReader.Snapshot(
             booleans = mapOf(PrefManager.PREF_SCOPE_MODE to true),
             stringSets = mapOf(PrefManager.PREF_PACKAGE_LIST to setOf("new")),
         )
 
-        LegacyPrefImporter.import(context, snapshot)
+        LegacyPrefImporter.import(prefs, snapshot)
 
-        val prefs = context.getSharedPreferences(PrefManager.PREF_NAME, Context.MODE_PRIVATE)
         assertTrue(prefs.getBoolean(PrefManager.PREF_SCOPE_MODE, false))
         assertEquals(setOf("new"), prefs.getStringSet(PrefManager.PREF_PACKAGE_LIST, null))
     }
 
     @Test
     fun `import does not affect other existing keys`() {
-        context.getSharedPreferences(PrefManager.PREF_NAME, Context.MODE_PRIVATE)
-            .edit().apply {
-                putBoolean("other_key", true)
-                putString("other_string", "value")
-                apply()
-            }
+        prefs.edit().apply {
+            putBoolean("other_key", true)
+            putString("other_string", "value")
+            apply()
+        }
 
         val snapshot = LegacyPrefSnapshotReader.Snapshot(
             booleans = mapOf(PrefManager.PREF_SCOPE_MODE to true),
             stringSets = emptyMap(),
         )
 
-        LegacyPrefImporter.import(context, snapshot)
+        LegacyPrefImporter.import(prefs, snapshot)
 
-        val prefs = context.getSharedPreferences(PrefManager.PREF_NAME, Context.MODE_PRIVATE)
         assertTrue(prefs.getBoolean("other_key", false))
         assertEquals("value", prefs.getString("other_string", null))
     }
@@ -143,10 +138,9 @@ class LegacyPrefImporterTest {
             stringSets = mapOf(PrefManager.PREF_PACKAGE_LIST to emptySet()),
         )
 
-        val result = LegacyPrefImporter.import(context, snapshot)
+        val result = LegacyPrefImporter.import(prefs, snapshot)
         assertTrue(result)
 
-        val prefs = context.getSharedPreferences(PrefManager.PREF_NAME, Context.MODE_PRIVATE)
         val set = prefs.getStringSet(PrefManager.PREF_PACKAGE_LIST, null)
         assertTrue(set?.isEmpty() ?: false)
     }
@@ -158,10 +152,9 @@ class LegacyPrefImporterTest {
             stringSets = emptyMap(),
         )
 
-        val result = LegacyPrefImporter.import(context, snapshot)
+        val result = LegacyPrefImporter.import(prefs, snapshot)
         assertTrue(result)
 
-        val prefs = context.getSharedPreferences(PrefManager.PREF_NAME, Context.MODE_PRIVATE)
         assertTrue(prefs.getBoolean(PrefManager.PREF_HANDLE_SYSTEM, false))
         assertFalse(prefs.contains(PrefManager.PREF_PACKAGE_LIST))
     }
@@ -173,10 +166,9 @@ class LegacyPrefImporterTest {
             stringSets = mapOf(PrefManager.PREF_PACKAGE_LIST to setOf("x")),
         )
 
-        val result = LegacyPrefImporter.import(context, snapshot)
+        val result = LegacyPrefImporter.import(prefs, snapshot)
         assertTrue(result)
 
-        val prefs = context.getSharedPreferences(PrefManager.PREF_NAME, Context.MODE_PRIVATE)
         assertEquals(setOf("x"), prefs.getStringSet(PrefManager.PREF_PACKAGE_LIST, null))
         assertFalse(prefs.contains(PrefManager.PREF_SCOPE_MODE))
     }
