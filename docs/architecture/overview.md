@@ -3,7 +3,7 @@ title: "CrashCenter 系统总览"
 type: architecture
 status: accepted
 phase: N/A
-updated: 2026-06-20
+updated: 2026-06-21
 summary: "Xposed 异常拦截模块的整体架构与数据流；4B-α 观测 + 4C-α UI Shell as-built；演进见 architecture-optimization.md"
 ---
 
@@ -102,7 +102,7 @@ hook 侧观测层 MVP 与模块 UI Shell 已落地：
 | 偏好迁移 | `PrefMigrator.kt` | 一次性从 legacy `tiiehenry.xp.grapcrash` 导入配置 |
 | 包可见性 | `PackageVisibilityHelper.kt` | Android 11+ `QUERY_ALL_PACKAGES` 检测与手动授权引导 |
 | Xposed 管理器跳转 | `XposedManagerLauncher.kt` | 状态条点击 → 多框架回退打开 LSPosed / EdXposed |
-| RecyclerView 辅助 | `recyclerhelper/` | 通用 Adapter / ViewHolder |
+| 通用列表 | `common/ui/adapter/BaseListAdapter.kt` | 通用 Adapter / ViewHolder |
 
 ## 跨进程配置同步
 

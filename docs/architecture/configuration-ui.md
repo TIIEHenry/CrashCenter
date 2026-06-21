@@ -3,14 +3,14 @@ title: "配置域 UI 架构"
 type: architecture
 status: accepted
 phase: N/A
-updated: 2026-06-19
+updated: 2026-06-21
 summary: "配置域从 ActivityMain 单体演进为 MainShellActivity + ConfigFragment + ConfigUiState；复用 Fluent Design System 与 Phase 3 单屏 IA"
 ---
 
 # 配置域 UI 架构
 
 > 适用模块：`:app`
-> 当前源码：`ActivityMain.kt`、`ActivityCrashInfo.java`、`recyclerhelper/`
+> 当前源码：`MainShellActivity.kt`、`ConfigFragment.kt`、`ActivityCrashInfo.kt`、`common/ui/adapter/`
 > 目标源码：`MainShellActivity`、`ConfigFragment`、`ConfigViewModel`、`AppListRepository`
 
 ## 概述

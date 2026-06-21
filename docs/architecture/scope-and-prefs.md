@@ -3,14 +3,14 @@ title: "作用域与偏好模型"
 type: architecture
 status: accepted
 phase: N/A
-updated: 2026-06-19
+updated: 2026-06-21
 summary: "SharedPreferences 键、scope 模式与跨进程同步；legacy tiiehenry.xp.grapcrash 迁移"
 ---
 
 # 作用域与偏好模型
 
 > 适用模块：`:app`
-> 源码：`PrefManager.java`、`ActivityMain.kt`、`XposedEntry.java`
+> 源码：`PrefManager.kt`、`ConfigFragment.kt`、`XposedEntry.kt`
 > 相关 ADR：[ADR-002](../decisions/002-inverted-package-toggle.md)、[ADR-003](../decisions/003-xsharedpreferences-cross-process.md)
 
 ## 概述
@@ -41,7 +41,7 @@ CrashCenter 通过 SharedPreferences 在 UI 进程写入配置，Xposed hook 侧
 | `true` | `true` | 全部 app | scope=true 时 hook 系统 app |
 | `true` | `false` | 全部 app | scope=true 时不 hook 系统 app（可见但不 hook） |
 
-源码：`PrefManager.PREF_SHOW_SYSTEM_UI`；UI 读取位于 `ActivityMain.kt` FilterChip（"显示系统应用"）。
+源码：`PrefManager.PREF_SHOW_SYSTEM_UI`；UI 读取位于 `ConfigFragment.kt` / `BaseConfigViewModel.kt` FilterChip（"显示系统应用"）。
 
 ### Phase 4 计划键（崩溃观测，待实现）
 
@@ -69,7 +69,7 @@ CrashCenter 通过 SharedPreferences 在 UI 进程写入配置，Xposed hook 侧
 
 ### Legacy（`managed_packages == null`）
 
-ActivityMain 中 Switch **开启**（checked）表示 app **被 hook**：
+`LegacyConfigViewModel.toggleApp()` + `LegacyAppRepository.persistHookStates()` 中 Switch **开启**（checked）表示 app **被 hook**：
 
 ```
 Switch ON  → 包名 NOT IN package_list

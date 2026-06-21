@@ -3,7 +3,7 @@ title: "导航与信息架构"
 type: architecture
 status: accepted
 phase: 4
-updated: 2026-06-20
+updated: 2026-06-21
 summary: "分阶段导航：Phase 3/4B 无 tab；Phase 4C+ 双底栏（配置 | 观测），观测内 TabLayout（历史 | 统计）；路由表见 ui-routing.md"
 ---
 
@@ -32,14 +32,14 @@ UI 架构按四层组织：
 
 | 阶段 | 顶级 tab 数 | 形态 |
 |------|-------------|------|
-| Phase 3 / 4B | **0** | 单 `ActivityMain`，全部配置同屏 |
+| Phase 3 / 4B | **0** | 单 `ActivityMain`（已迁移至 4C `MainShellActivity`），全部配置同屏 |
 | Phase 4C+ | **2** | 底栏：**配置** \| **观测** |
 
 ---
 
 ## Phase 3 / 4B：0 tab（当前）
 
-- **载体**：单一 `ActivityMain`（见 [configuration-ui.md](configuration-ui.md)）
+- **载体**：单一 `ActivityMain`（已迁移至 4C `MainShellActivity`；见 [configuration-ui.md](configuration-ui.md)）
 - **内容**：Xposed 状态条、包可见性 banner、全局 FilterChip、搜索与过滤、per-app 列表、Toolbar 排序/批量/About/Test
 - **4B**：`CrashLogger` MVP 仅后台写 JSONL，**无 UI**，导航不变
 - **迁移约束**：Phase 3/4B 不提前引入空 bottom nav；可在代码内部预拆 `ConfigFragment` / state，但用户可见 IA 仍为 0 tab
@@ -177,7 +177,7 @@ Design System 来自 Phase 3 已落地的 Fluent/AppSnapShotor token，但应从
 
 | 阶段 | Tab 数 | 导航形态 | 备注 |
 |------|--------|----------|------|
-| **Phase 3**（当前） | 0 | 单 `ActivityMain` | ADR-005 单屏配置 |
+| **Phase 3**（当前） | 0 | 单 `ActivityMain`（已迁移至 4C `MainShellActivity`） | ADR-005 单屏配置 |
 | **Phase 4B** | 0 | 无 UI 变更 | `CrashLogger` 后台写盘 |
 | **Phase 4C-α** | 0 → **2** | 引入 Shell + Design System + `ConfigFragment` | 不交付统计；观测可先空态 |
 | **Phase 4C-β** | 2 | 观测 tab 接入 **历史** | 历史列表 → `CrashDetailBottomSheet`；通知仍走 Activity |
