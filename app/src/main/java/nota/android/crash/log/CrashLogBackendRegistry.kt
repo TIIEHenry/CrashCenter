@@ -1,6 +1,7 @@
 package nota.android.crash.log
 
 import android.content.Context
+import android.content.SharedPreferences
 import de.robv.android.xposed.XSharedPreferences
 import nota.android.crash.log.backend.DirectFsBackend
 import nota.android.crash.log.backend.ProviderBackend
@@ -19,9 +20,7 @@ object CrashLogBackendRegistry {
         TargetRelayBackend,
     )
 
-    fun enabledHookPhase2Backends(context: Context): List<CrashLogBackend> {
-        val prefs = XSharedPreferences(PrefManager.PACKAGE_NAME, PrefManager.PREF_NAME)
-        prefs.reload()
+    fun enabledHookPhase2Backends(prefs: SharedPreferences): List<CrashLogBackend> {
         return hookPhase2Backends.filter { backend ->
             when (backend.id) {
                 BackendId.PROVIDER_INSERT ->
@@ -33,5 +32,11 @@ object CrashLogBackendRegistry {
                 else -> false
             }
         }
+    }
+
+    fun enabledHookPhase2Backends(context: Context): List<CrashLogBackend> {
+        val prefs = XSharedPreferences(PrefManager.PACKAGE_NAME, PrefManager.PREF_NAME)
+        prefs.reload()
+        return enabledHookPhase2Backends(prefs as SharedPreferences)
     }
 }

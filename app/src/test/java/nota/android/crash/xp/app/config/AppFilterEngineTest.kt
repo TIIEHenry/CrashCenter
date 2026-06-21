@@ -290,6 +290,33 @@ class AppFilterEngineTest {
     }
 
     @Test
+    fun `filterByQuery with blank query does not match items without spaces`() {
+        // filterByQuery does NOT trim the query (unlike matchesCrashEvent).
+        // A whitespace-only query is used literally to match against label/packageName.
+        val items = listOf("Alpha", "Beta")
+        val result = AppFilterEngine.filterByQuery(
+            items = items,
+            query = "   ",
+            labelExtractor = { it },
+            packageNameExtractor = { it },
+        )
+        assertTrue(result.isEmpty())
+    }
+
+    @Test
+    fun `filterByQuery with whitespace-only query matches items containing spaces`() {
+        val items = listOf("Alpha Beta", "Gamma")
+        val result = AppFilterEngine.filterByQuery(
+            items = items,
+            query = " ",
+            labelExtractor = { it },
+            packageNameExtractor = { "unused" },
+        )
+        assertEquals(1, result.size)
+        assertEquals("Alpha Beta", result[0])
+    }
+
+    @Test
     fun `filterByQuery matches label case insensitive`() {
         val items = listOf("Alpha", "Beta", "Gamma")
         val result = AppFilterEngine.filterByQuery(
@@ -316,6 +343,70 @@ class AppFilterEngineTest {
     @Test
     fun `filterByQuery no match returns empty`() {
         val items = listOf("Alpha", "Beta")
+        val result = AppFilterEngine.filterByQuery(
+            items = items,
+            query = "zzz",
+            labelExtractor = { it },
+            packageNameExtractor = { it },
+        )
+        assertTrue(result.isEmpty())
+    }
+
+    @Test
+    fun `filterByQuery with special characters in query matches literally`() {
+        val items = listOf("com.example.app (v2)", "com.other")
+        val result = AppFilterEngine.filterByQuery(
+            items = items,
+            query = "(v2)",
+            labelExtractor = { it },
+            packageNameExtractor = { "unused" },
+        )
+        assertEquals(1, result.size)
+        assertEquals("com.example.app (v2)", result[0])
+    }
+
+    @Test
+    fun `filterByQuery with dot in query matches literally`() {
+        val items = listOf("com.example.app", "com-example")
+        val result = AppFilterEngine.filterByQuery(
+            items = items,
+            query = "com.example",
+            labelExtractor = { it },
+            packageNameExtractor = { "unused" },
+        )
+        assertEquals(1, result.size)
+        assertEquals("com.example.app", result[0])
+    }
+
+    @Test
+    fun `filterByQuery partial substring match`() {
+        val items = listOf("Alpha Browser", "BetaMailer", "Gamma Editor")
+        val result = AppFilterEngine.filterByQuery(
+            items = items,
+            query = "edit",
+            labelExtractor = { it },
+            packageNameExtractor = { "unused" },
+        )
+        assertEquals(1, result.size)
+        assertEquals("Gamma Editor", result[0])
+    }
+
+    @Test
+    fun `filterByQuery on single element list matches`() {
+        val items = listOf("OnlyApp")
+        val result = AppFilterEngine.filterByQuery(
+            items = items,
+            query = "only",
+            labelExtractor = { it },
+            packageNameExtractor = { "unused" },
+        )
+        assertEquals(1, result.size)
+        assertEquals("OnlyApp", result[0])
+    }
+
+    @Test
+    fun `filterByQuery on single element list no match`() {
+        val items = listOf("OnlyApp")
         val result = AppFilterEngine.filterByQuery(
             items = items,
             query = "zzz",
@@ -443,6 +534,48 @@ class AppFilterEngineTest {
         val list = mutableListOf(fakeAppItem("com.a", "Only"))
         AppFilterEngine.sort(list = list, mode = SortMode.NAME_DESC)
         assertEquals("Only", list[0].label)
+    }
+
+    @Test
+    fun `sort NAME_ASC preserves insertion order for equal labels`() {
+        val list = mutableListOf(
+            fakeAppItem("com.first", "Same"),
+            fakeAppItem("com.second", "Same"),
+            fakeAppItem("com.third", "Same"),
+        )
+        AppFilterEngine.sort(list = list, mode = SortMode.NAME_ASC)
+        assertEquals(
+            listOf("com.first", "com.second", "com.third"),
+            list.map { it.packageName },
+        )
+    }
+
+    @Test
+    fun `sort INSTALL_TIME_ASC preserves insertion order for equal install times`() {
+        val list = mutableListOf(
+            fakeAppItem("com.a", "A", installTime = 5),
+            fakeAppItem("com.b", "B", installTime = 5),
+            fakeAppItem("com.c", "C", installTime = 5),
+        )
+        AppFilterEngine.sort(list = list, mode = SortMode.INSTALL_TIME_ASC)
+        assertEquals(
+            listOf("com.a", "com.b", "com.c"),
+            list.map { it.packageName },
+        )
+    }
+
+    @Test
+    fun `sort UPDATE_TIME_DESC preserves insertion order for equal update times`() {
+        val list = mutableListOf(
+            fakeAppItem("com.a", "A", updateTime = 10),
+            fakeAppItem("com.b", "B", updateTime = 10),
+            fakeAppItem("com.c", "C", updateTime = 10),
+        )
+        AppFilterEngine.sort(list = list, mode = SortMode.UPDATE_TIME_DESC)
+        assertEquals(
+            listOf("com.a", "com.b", "com.c"),
+            list.map { it.packageName },
+        )
     }
 
     @Test
