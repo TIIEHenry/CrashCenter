@@ -15,7 +15,7 @@ sealed class AddManagedAppUiState {
 }
 
 class AddManagedAppViewModel(
-    private val repository: AppRepositoryInterface,
+    private val repository: ManagedAppRepository,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<AddManagedAppUiState>(AddManagedAppUiState.Loading)
@@ -30,10 +30,9 @@ class AddManagedAppViewModel(
     private fun loadPickableApps() {
         viewModelScope.launch {
             try {
-                repository.loadPickableApps().collect { loaded ->
-                    allApps = loaded
-                    _uiState.value = AddManagedAppUiState.Success(apps = loaded)
-                }
+                val loaded = repository.loadPickableApps()
+                allApps = loaded
+                _uiState.value = AddManagedAppUiState.Success(apps = loaded)
             } catch (_: Exception) {
                 _uiState.value = AddManagedAppUiState.Success(apps = emptyList())
             }

@@ -28,7 +28,7 @@ class AppInterventionEditActivity : AppCompatActivity() {
         ViewModelFactory {
             AppInterventionEditViewModel(
                 packageName,
-                ServiceLocator.appRepository(this),
+                ServiceLocator.managedAppRepository(this),
             )
         }
     }

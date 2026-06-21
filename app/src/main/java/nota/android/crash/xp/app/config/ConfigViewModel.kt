@@ -5,10 +5,16 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.StateFlow
 
 class ConfigViewModel(
-    repository: AppRepositoryInterface,
+    legacyRepository: LegacyAppRepository,
+    managedRepository: ManagedAppRepository,
+    visibilityRepository: PackageVisibilityRepository,
 ) : ViewModel() {
 
-    private val delegate: ConfigViewModelDelegate = createDelegate(repository)
+    private val delegate: ConfigViewModelDelegate = createDelegate(
+        legacyRepository,
+        managedRepository,
+        visibilityRepository,
+    )
 
     val uiState: StateFlow<ConfigUiState> = delegate.uiState
 
@@ -25,11 +31,15 @@ class ConfigViewModel(
     fun selectAll(enabled: Boolean) = delegate.selectAll(enabled)
     fun setSortMode(mode: SortMode) = delegate.setSortMode(mode)
 
-    private fun createDelegate(repository: AppRepositoryInterface): ConfigViewModelDelegate {
-        return if (repository.isLegacyMode()) {
-            LegacyConfigViewModel(repository, viewModelScope)
+    private fun createDelegate(
+        legacyRepository: LegacyAppRepository,
+        managedRepository: ManagedAppRepository,
+        visibilityRepository: PackageVisibilityRepository,
+    ): ConfigViewModelDelegate {
+        return if (managedRepository.isLegacyMode()) {
+            LegacyConfigViewModel(legacyRepository, visibilityRepository, viewModelScope)
         } else {
-            ManagedConfigViewModel(repository, viewModelScope)
+            ManagedConfigViewModel(managedRepository, visibilityRepository, viewModelScope)
         }
     }
 

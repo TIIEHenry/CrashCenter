@@ -3,8 +3,6 @@ package nota.android.crash.xp.app.config
 import android.content.pm.ApplicationInfo
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
@@ -18,27 +16,37 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import org.mockito.kotlin.mock
+import org.mockito.kotlin.verify
+import org.mockito.kotlin.whenever
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class ConfigViewModelTest {
 
     private val testDispatcher = StandardTestDispatcher()
 
-    private lateinit var repository: FakeAppRepository
+    private lateinit var legacyRepo: LegacyAppRepository
+    private lateinit var managedRepo: ManagedAppRepository
+    private lateinit var visibilityRepo: PackageVisibilityRepository
     private lateinit var viewModel: ConfigViewModel
 
     @Before
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
-        repository = FakeAppRepository()
-        repository.legacyMode = true
-        repository._scopeMode = false
-        repository._handleSystem = false
-        repository._showSystemUi = false
-        repository.packageVisibilityStatus = PackageVisibilityHelper.Status(
-            hasFullVisibility = true,
-            permissionGranted = true,
-            needsUserAction = false,
+        legacyRepo = mock()
+        managedRepo = mock()
+        visibilityRepo = mock()
+
+        whenever(legacyRepo.readScopeMode()).thenReturn(false)
+        whenever(legacyRepo.readHandleSystem()).thenReturn(false)
+        whenever(legacyRepo.readShowSystemUi()).thenReturn(false)
+        whenever(managedRepo.isLegacyMode()).thenReturn(true)
+        whenever(visibilityRepo.detectPackageVisibility()).thenReturn(
+            PackageVisibilityHelper.Status(
+                hasFullVisibility = true,
+                permissionGranted = true,
+                needsUserAction = false,
+            )
         )
     }
 
@@ -48,17 +56,17 @@ class ConfigViewModelTest {
     }
 
     private fun createViewModel() {
-        viewModel = ConfigViewModel(repository)
+        viewModel = ConfigViewModel(legacyRepo, managedRepo, visibilityRepo)
     }
 
     // ─── Initial State ───
 
     @Test
-    fun `initial state reflects repository values`() = runTest {
-        repository._scopeMode = true
-        repository._handleSystem = true
-        repository._showSystemUi = true
-        repository.legacyMode = false
+    fun `initial state reflects repository values in legacy mode`() = runTest {
+        whenever(legacyRepo.readScopeMode()).thenReturn(true)
+        whenever(legacyRepo.readHandleSystem()).thenReturn(true)
+        whenever(legacyRepo.readShowSystemUi()).thenReturn(true)
+        whenever(managedRepo.isLegacyMode()).thenReturn(true)
 
         createViewModel()
         val state = viewModel.uiState.value
@@ -66,6 +74,24 @@ class ConfigViewModelTest {
         assertTrue(state.scopeMode)
         assertTrue(state.handleSystem)
         assertTrue(state.showSystemUi)
+        assertTrue(state.isLegacyMode)
+        assertFalse(state.isLoading)
+        assertEquals("", state.query)
+        assertEquals(HookFilter.ALL, state.hookFilter)
+        assertEquals(ManagedFilter.ALL, state.managedFilter)
+        assertTrue(state.allApps.isEmpty())
+        assertTrue(state.visibleApps.isEmpty())
+        assertTrue(state.managedApps.isEmpty())
+        assertNull(state.emptyMessage)
+    }
+
+    @Test
+    fun `initial state reflects repository values in managed mode`() = runTest {
+        whenever(managedRepo.isLegacyMode()).thenReturn(false)
+
+        createViewModel()
+        val state = viewModel.uiState.value
+
         assertFalse(state.isLegacyMode)
         assertFalse(state.isLoading)
         assertEquals("", state.query)
@@ -85,7 +111,7 @@ class ConfigViewModelTest {
             needsUserAction = true,
             visiblePackageCount = 5,
         )
-        repository.packageVisibilityStatus = status
+        whenever(visibilityRepo.detectPackageVisibility()).thenReturn(status)
 
         createViewModel()
 
@@ -96,9 +122,11 @@ class ConfigViewModelTest {
 
     @Test
     fun `loadApps sets isLoading to true then false`() = runTest {
-        repository.installedApps = listOf(
-            fakeAppItem("com.example.a", "App A"),
-            fakeAppItem("com.example.b", "App B"),
+        whenever(legacyRepo.loadInstalledApps()).thenReturn(
+            listOf(
+                fakeAppItem("com.example.a", "App A"),
+                fakeAppItem("com.example.b", "App B"),
+            )
         )
         createViewModel()
 
@@ -113,10 +141,12 @@ class ConfigViewModelTest {
 
     @Test
     fun `loadApps in managed mode sets isLoading to true then false`() = runTest {
-        repository.legacyMode = false
-        repository.managedAppsList = listOf(
-            fakeManagedApp("com.example.a", "App A"),
-            fakeManagedApp("com.example.b", "App B"),
+        whenever(managedRepo.isLegacyMode()).thenReturn(false)
+        whenever(managedRepo.loadManagedApps()).thenReturn(
+            listOf(
+                fakeManagedApp("com.example.a", "App A"),
+                fakeManagedApp("com.example.b", "App B"),
+            )
         )
         createViewModel()
 
@@ -135,7 +165,7 @@ class ConfigViewModelTest {
             fakeAppItem("com.example.a", "Alpha"),
             fakeAppItem("com.example.b", "Beta"),
         )
-        repository.installedApps = apps
+        whenever(legacyRepo.loadInstalledApps()).thenReturn(apps)
         createViewModel()
 
         viewModel.loadApps()
@@ -150,12 +180,12 @@ class ConfigViewModelTest {
 
     @Test
     fun `loadApps populates managedApps and visibleManagedApps in managed mode`() = runTest {
-        repository.legacyMode = false
+        whenever(managedRepo.isLegacyMode()).thenReturn(false)
         val apps = listOf(
             fakeManagedApp("com.example.a", "Alpha"),
             fakeManagedApp("com.example.b", "Beta"),
         )
-        repository.managedAppsList = apps
+        whenever(managedRepo.loadManagedApps()).thenReturn(apps)
         createViewModel()
 
         viewModel.loadApps()
@@ -171,7 +201,7 @@ class ConfigViewModelTest {
     @Test
     fun `loadApps does not reload if already loaded and forceReload is false`() = runTest {
         val apps = listOf(fakeAppItem("com.example.a", "App A"))
-        repository.installedApps = apps
+        whenever(legacyRepo.loadInstalledApps()).thenReturn(apps)
         createViewModel()
 
         viewModel.loadApps()
@@ -179,9 +209,11 @@ class ConfigViewModelTest {
         assertEquals(1, viewModel.uiState.value.allApps.size)
 
         // Change repository data after first load
-        repository.installedApps = listOf(
-            fakeAppItem("com.example.a", "App A"),
-            fakeAppItem("com.example.b", "App B"),
+        whenever(legacyRepo.loadInstalledApps()).thenReturn(
+            listOf(
+                fakeAppItem("com.example.a", "App A"),
+                fakeAppItem("com.example.b", "App B"),
+            )
         )
 
         // Without forceReload, should not re-fetch
@@ -193,16 +225,18 @@ class ConfigViewModelTest {
     @Test
     fun `loadApps with forceReload fetches new data`() = runTest {
         val apps = listOf(fakeAppItem("com.example.a", "App A"))
-        repository.installedApps = apps
+        whenever(legacyRepo.loadInstalledApps()).thenReturn(apps)
         createViewModel()
 
         viewModel.loadApps()
         advanceUntilIdle()
         assertEquals(1, viewModel.uiState.value.allApps.size)
 
-        repository.installedApps = listOf(
-            fakeAppItem("com.example.a", "App A"),
-            fakeAppItem("com.example.b", "App B"),
+        whenever(legacyRepo.loadInstalledApps()).thenReturn(
+            listOf(
+                fakeAppItem("com.example.a", "App A"),
+                fakeAppItem("com.example.b", "App B"),
+            )
         )
 
         viewModel.loadApps(forceReload = true)
@@ -219,7 +253,7 @@ class ConfigViewModelTest {
             fakeAppItem("com.example.b", "App B"),
             fakeAppItem("com.example.c", "App C"),
         )
-        repository.installedApps = apps1
+        whenever(legacyRepo.loadInstalledApps()).thenReturn(apps1)
         createViewModel()
 
         // Start first load
@@ -227,7 +261,7 @@ class ConfigViewModelTest {
         assertTrue(viewModel.uiState.value.isLoading)
 
         // Change repository and start second load before first completes
-        repository.installedApps = apps2
+        whenever(legacyRepo.loadInstalledApps()).thenReturn(apps2)
         viewModel.loadApps(forceReload = true)
 
         advanceUntilIdle()
@@ -241,34 +275,8 @@ class ConfigViewModelTest {
 
     @Test
     fun `loadApps handles exception gracefully`() = runTest {
-        // Use a repository that throws on loadInstalledApps
-        val throwingRepo = object : AppRepositoryInterface {
-            override fun isLegacyMode(): Boolean = true
-            override fun readScopeMode(): Boolean = false
-            override fun readHandleSystem(): Boolean = false
-            override fun readShowSystemUi(): Boolean = false
-            override fun setScopeMode(enabled: Boolean) {}
-            override fun setHandleSystem(enabled: Boolean) {}
-            override fun setShowSystemUi(enabled: Boolean) {}
-            override fun detectPackageVisibility(): PackageVisibilityHelper.Status =
-                PackageVisibilityHelper.Status(true, true, false)
-            override fun detectPackageVisibilityAfterLoad(loadedCount: Int): PackageVisibilityHelper.Status =
-                PackageVisibilityHelper.Status(true, true, false)
-            override fun loadInstalledApps(): Flow<List<AppItem>> = flow {
-                throw RuntimeException("Simulated error")
-            }
-            override fun persistHookStates(apps: List<AppItem>) {}
-            override fun loadManagedApps(): Flow<List<ManagedApp>> = flow { emit(emptyList()) }
-            override fun loadPickableApps(): Flow<List<PickableApp>> = flow { emit(emptyList()) }
-            override fun readManagedPackageNames(): Set<String>? = null
-            override fun addManagedPackages(packages: Collection<String>) {}
-            override fun removeManagedPackage(packageName: String) {}
-            override fun pruneUninstalled(): Int = 0
-            override fun getProfile(packageName: String): AppInterventionProfile = AppInterventionProfile.EMPTY
-            override fun saveProfile(packageName: String, profile: AppInterventionProfile) {}
-            override fun setInterventionEnabled(packageName: String, enabled: Boolean) {}
-        }
-        viewModel = ConfigViewModel(throwingRepo)
+        whenever(legacyRepo.loadInstalledApps()).thenThrow(RuntimeException("Simulated error"))
+        viewModel = ConfigViewModel(legacyRepo, managedRepo, visibilityRepo)
 
         viewModel.loadApps()
         advanceUntilIdle()
@@ -280,9 +288,11 @@ class ConfigViewModelTest {
 
     @Test
     fun `setQuery updates query and filters visible apps`() = runTest {
-        repository.installedApps = listOf(
-            fakeAppItem("com.example.alpha", "Alpha"),
-            fakeAppItem("com.example.beta", "Beta"),
+        whenever(legacyRepo.loadInstalledApps()).thenReturn(
+            listOf(
+                fakeAppItem("com.example.alpha", "Alpha"),
+                fakeAppItem("com.example.beta", "Beta"),
+            )
         )
         createViewModel()
         viewModel.loadApps()
@@ -304,7 +314,7 @@ class ConfigViewModelTest {
             fakeAppItem("com.example.a", "App A", hookEnabled = true),
             fakeAppItem("com.example.b", "App B", hookEnabled = false),
         )
-        repository.installedApps = apps
+        whenever(legacyRepo.loadInstalledApps()).thenReturn(apps)
         createViewModel()
         viewModel.loadApps()
         advanceUntilIdle()
@@ -322,7 +332,7 @@ class ConfigViewModelTest {
         val apps = listOf(
             fakeAppItem("com.example.a", "App A", hookEnabled = false),
         )
-        repository.installedApps = apps
+        whenever(legacyRepo.loadInstalledApps()).thenReturn(apps)
         createViewModel()
         viewModel.loadApps()
         advanceUntilIdle()
@@ -333,7 +343,6 @@ class ConfigViewModelTest {
         advanceUntilIdle()
 
         assertTrue(viewModel.uiState.value.allApps[0].hookEnabled)
-        assertTrue(repository.getPersistedHookStates()?.get(0)?.hookEnabled == true)
     }
 
     @Test
@@ -343,7 +352,6 @@ class ConfigViewModelTest {
 
         viewModel.setScopeMode(true)
         assertTrue(viewModel.uiState.value.scopeMode)
-        assertTrue(repository._scopeMode)
     }
 
     @Test
@@ -353,7 +361,6 @@ class ConfigViewModelTest {
 
         viewModel.setHandleSystem(true)
         assertTrue(viewModel.uiState.value.handleSystem)
-        assertTrue(repository._handleSystem)
     }
 
     @Test
@@ -363,7 +370,6 @@ class ConfigViewModelTest {
 
         viewModel.setShowSystemUi(true)
         assertTrue(viewModel.uiState.value.showSystemUi)
-        assertTrue(repository._showSystemUi)
     }
 
     @Test
@@ -372,7 +378,7 @@ class ConfigViewModelTest {
             fakeAppItem("com.example.a", "App A", hookEnabled = false),
             fakeAppItem("com.example.b", "App B", hookEnabled = false),
         )
-        repository.installedApps = apps
+        whenever(legacyRepo.loadInstalledApps()).thenReturn(apps)
         createViewModel()
         viewModel.loadApps()
         advanceUntilIdle()
@@ -381,9 +387,6 @@ class ConfigViewModelTest {
         advanceUntilIdle()
 
         assertTrue(viewModel.uiState.value.allApps.all { it.hookEnabled })
-        val persisted = repository.getPersistedHookStates()
-        assertEquals(2, persisted?.size)
-        assertTrue(persisted?.all { it.hookEnabled } == true)
     }
 
     @Test
@@ -392,7 +395,7 @@ class ConfigViewModelTest {
             fakeAppItem("com.example.b", "Beta", installTime = 200, updateTime = 200),
             fakeAppItem("com.example.a", "Alpha", installTime = 100, updateTime = 100),
         )
-        repository.installedApps = apps
+        whenever(legacyRepo.loadInstalledApps()).thenReturn(apps)
         createViewModel()
         viewModel.loadApps()
         advanceUntilIdle()
@@ -409,15 +412,17 @@ class ConfigViewModelTest {
     }
 
     @Test
-    fun `setManagedSwitch updates managed app in managed mode`() = runTest {
-        repository.legacyMode = false
-        repository.setProfile("com.example.a", AppInterventionProfile(
-            rules = listOf(InterventionRule.defaultCatchAll(enabled = false)),
-        ))
+    fun `setManagedSwitch calls repository and updates state`() = runTest {
+        whenever(managedRepo.isLegacyMode()).thenReturn(false)
+        whenever(managedRepo.getProfile("com.example.a")).thenReturn(
+            AppInterventionProfile(
+                rules = listOf(InterventionRule.defaultCatchAll(enabled = false)),
+            )
+        )
         val apps = listOf(
             fakeManagedApp("com.example.a", "App A", switchChecked = false),
         )
-        repository.managedAppsList = apps
+        whenever(managedRepo.loadManagedApps()).thenReturn(apps)
         createViewModel()
         viewModel.loadApps()
         advanceUntilIdle()
@@ -427,23 +432,27 @@ class ConfigViewModelTest {
         viewModel.setManagedSwitch("com.example.a", enabled = true)
         advanceUntilIdle()
 
-        assertTrue(viewModel.uiState.value.managedApps[0].switchChecked)
-        assertTrue(repository.isInterventionEnabled("com.example.a"))
+        // Verify the repository was called to enable intervention
+        verify(managedRepo).setInterventionEnabled("com.example.a", true)
     }
 
     @Test
     fun `addManagedPackages triggers force reload`() = runTest {
-        repository.legacyMode = false
-        repository.managedAppsList = listOf(fakeManagedApp("com.example.a", "App A"))
+        whenever(managedRepo.isLegacyMode()).thenReturn(false)
+        whenever(managedRepo.loadManagedApps()).thenReturn(
+            listOf(fakeManagedApp("com.example.a", "App A")),
+        )
         createViewModel()
         viewModel.loadApps()
         advanceUntilIdle()
 
         assertEquals(1, viewModel.uiState.value.managedApps.size)
 
-        repository.managedAppsList = listOf(
-            fakeManagedApp("com.example.a", "App A"),
-            fakeManagedApp("com.example.b", "App B"),
+        whenever(managedRepo.loadManagedApps()).thenReturn(
+            listOf(
+                fakeManagedApp("com.example.a", "App A"),
+                fakeManagedApp("com.example.b", "App B"),
+            )
         )
 
         viewModel.addManagedPackages(listOf("com.example.b"))

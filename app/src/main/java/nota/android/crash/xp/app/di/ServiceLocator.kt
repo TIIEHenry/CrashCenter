@@ -1,8 +1,9 @@
 package nota.android.crash.xp.app.di
 
 import android.content.Context
-import nota.android.crash.xp.app.config.AppRepository
-import nota.android.crash.xp.app.config.AppRepositoryInterface
+import nota.android.crash.xp.app.config.LegacyAppRepository
+import nota.android.crash.xp.app.config.ManagedAppRepository
+import nota.android.crash.xp.app.config.PackageVisibilityRepository
 import nota.android.crash.xp.app.data.CrashLogRepository
 import nota.android.crash.xp.app.data.FileCrashLogRepository
 
@@ -13,15 +14,37 @@ import nota.android.crash.xp.app.data.FileCrashLogRepository
 object ServiceLocator {
 
     @Volatile
-    private var appRepository: AppRepositoryInterface? = null
+    private var legacyAppRepository: LegacyAppRepository? = null
+
+    @Volatile
+    private var managedAppRepository: ManagedAppRepository? = null
+
+    @Volatile
+    private var packageVisibilityRepository: PackageVisibilityRepository? = null
 
     @Volatile
     private var crashLogRepository: CrashLogRepository? = null
 
-    fun appRepository(context: Context): AppRepositoryInterface {
-        return appRepository ?: synchronized(this) {
-            appRepository ?: AppRepository(context.applicationContext).also {
-                appRepository = it
+    fun legacyAppRepository(context: Context): LegacyAppRepository {
+        return legacyAppRepository ?: synchronized(this) {
+            legacyAppRepository ?: LegacyAppRepository(context.applicationContext).also {
+                legacyAppRepository = it
+            }
+        }
+    }
+
+    fun managedAppRepository(context: Context): ManagedAppRepository {
+        return managedAppRepository ?: synchronized(this) {
+            managedAppRepository ?: ManagedAppRepository(context.applicationContext).also {
+                managedAppRepository = it
+            }
+        }
+    }
+
+    fun packageVisibilityRepository(context: Context): PackageVisibilityRepository {
+        return packageVisibilityRepository ?: synchronized(this) {
+            packageVisibilityRepository ?: PackageVisibilityRepository(context.applicationContext).also {
+                packageVisibilityRepository = it
             }
         }
     }
@@ -39,7 +62,9 @@ object ServiceLocator {
      */
     fun clear() {
         synchronized(this) {
-            appRepository = null
+            legacyAppRepository = null
+            managedAppRepository = null
+            packageVisibilityRepository = null
             crashLogRepository = null
         }
     }

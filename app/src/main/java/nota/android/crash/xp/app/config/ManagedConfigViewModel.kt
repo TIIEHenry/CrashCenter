@@ -1,13 +1,21 @@
 package nota.android.crash.xp.app.config
 
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import nota.android.crash.xp.app.PackageVisibilityHelper
 
 internal class ManagedConfigViewModel(
-    repository: AppRepositoryInterface,
+    private val repository: ManagedAppRepository,
+    private val visibilityRepository: PackageVisibilityRepository,
     scope: CoroutineScope,
-) : BaseConfigViewModel(repository, scope, isLegacyMode = false) {
+) : BaseConfigViewModel(
+    scope = scope,
+    isLegacyMode = false,
+    scopeMode = false,
+    handleSystem = false,
+    showSystemUi = false,
+    packageVisibility = visibilityRepository.detectPackageVisibility(),
+) {
 
     override fun loadApps(forceReload: Boolean) {
         val current = _uiState.value
@@ -18,17 +26,16 @@ internal class ManagedConfigViewModel(
         scope.launch {
             try {
                 repository.pruneUninstalled()
-                repository.loadManagedApps().collect { managedApps ->
-                    val visibility = repository.detectPackageVisibility()
-                    emitState {
-                        copy(
-                            isLoading = false,
-                            managedApps = managedApps,
-                            packageVisibility = visibility,
-                        )
-                    }
-                    applyFilters(preserveSort = false)
+                val managedApps = repository.loadManagedApps()
+                val visibility = visibilityRepository.detectPackageVisibility()
+                emitState {
+                    copy(
+                        isLoading = false,
+                        managedApps = managedApps,
+                        packageVisibility = visibility,
+                    )
                 }
+                applyFilters(preserveSort = false)
             } catch (_: Exception) {
                 emitState { copy(isLoading = false) }
             }
@@ -95,5 +102,5 @@ internal class ManagedConfigViewModel(
     }
 
     private suspend fun reloadManagedApp(packageName: String): ManagedApp? =
-        repository.loadManagedApps().first().firstOrNull { it.packageName == packageName }
+        repository.loadManagedApps().firstOrNull { it.packageName == packageName }
 }

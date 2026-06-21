@@ -34,7 +34,11 @@ class ConfigFragment : Fragment() {
 
     private val viewModel: ConfigViewModel by viewModels {
         ViewModelFactory {
-            ConfigViewModel(ServiceLocator.appRepository(requireContext()))
+            ConfigViewModel(
+                ServiceLocator.legacyAppRepository(requireContext()),
+                ServiceLocator.managedAppRepository(requireContext()),
+                ServiceLocator.packageVisibilityRepository(requireContext()),
+            )
         }
     }
 

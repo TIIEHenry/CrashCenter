@@ -28,7 +28,7 @@ class AddManagedAppBottomSheet : BottomSheetDialogFragment() {
 
     private val viewModel: AddManagedAppViewModel by viewModels {
         ViewModelFactory {
-            AddManagedAppViewModel(ServiceLocator.appRepository(requireContext()))
+            AddManagedAppViewModel(ServiceLocator.managedAppRepository(requireContext()))
         }
     }
 

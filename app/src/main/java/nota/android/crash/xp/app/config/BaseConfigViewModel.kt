@@ -3,20 +3,24 @@ package nota.android.crash.xp.app.config
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import nota.android.crash.xp.app.PackageVisibilityHelper
 
 internal abstract class BaseConfigViewModel(
-    protected val repository: AppRepositoryInterface,
     protected val scope: CoroutineScope,
     isLegacyMode: Boolean,
+    scopeMode: Boolean,
+    handleSystem: Boolean,
+    showSystemUi: Boolean,
+    packageVisibility: PackageVisibilityHelper.Status,
 ) : ConfigViewModelDelegate {
 
     protected val _uiState = MutableStateFlow(
         ConfigUiState(
             isLegacyMode = isLegacyMode,
-            scopeMode = repository.readScopeMode(),
-            handleSystem = repository.readHandleSystem(),
-            showSystemUi = repository.readShowSystemUi(),
-            packageVisibility = repository.detectPackageVisibility(),
+            scopeMode = scopeMode,
+            handleSystem = handleSystem,
+            showSystemUi = showSystemUi,
+            packageVisibility = packageVisibility,
         )
     )
     override val uiState: StateFlow<ConfigUiState> = _uiState
@@ -31,17 +35,14 @@ internal abstract class BaseConfigViewModel(
     }
 
     override fun setScopeMode(enabled: Boolean) {
-        repository.setScopeMode(enabled)
         emitState { copy(scopeMode = enabled) }
     }
 
     override fun setHandleSystem(enabled: Boolean) {
-        repository.setHandleSystem(enabled)
         emitState { copy(handleSystem = enabled) }
     }
 
     override fun setShowSystemUi(enabled: Boolean) {
-        repository.setShowSystemUi(enabled)
         emitState { copy(showSystemUi = enabled) }
         applyFilters(preserveSort = true)
     }

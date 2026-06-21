@@ -15,18 +15,23 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import org.mockito.kotlin.any
+import org.mockito.kotlin.argumentCaptor
+import org.mockito.kotlin.mock
+import org.mockito.kotlin.verify
+import org.mockito.kotlin.whenever
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class AppInterventionEditViewModelTest {
 
     private val testDispatcher = StandardTestDispatcher()
-    private lateinit var repository: FakeAppRepository
+    private lateinit var repository: ManagedAppRepository
     private val packageName = "com.example.test"
 
     @Before
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
-        repository = FakeAppRepository()
+        repository = mock()
     }
 
     @After
@@ -38,8 +43,16 @@ class AppInterventionEditViewModelTest {
         return AppInterventionEditViewModel(packageName, repository, ioDispatcher = testDispatcher)
     }
 
+    private fun captureSavedProfile(invocation: Int = 1): AppInterventionProfile {
+        val captor = argumentCaptor<AppInterventionProfile>()
+        verify(repository, org.mockito.kotlin.times(invocation)).saveProfile(any<String>(), captor.capture())
+        return captor.allValues.last()
+    }
+
     @Test
     fun `initial state is empty`() = runTest(testDispatcher) {
+        whenever(repository.getProfile(packageName)).thenReturn(AppInterventionProfile.EMPTY)
+
         val viewModel = createViewModel()
         advanceUntilIdle()
         val state = viewModel.uiState.value
@@ -52,8 +65,7 @@ class AppInterventionEditViewModelTest {
     @Test
     fun `init loads profile with catch-all rule`() = runTest(testDispatcher) {
         val catchAll = InterventionRule.defaultCatchAll(enabled = true)
-        repository.setProfile(
-            packageName,
+        whenever(repository.getProfile(packageName)).thenReturn(
             AppInterventionProfile(rules = listOf(catchAll)),
         )
 
@@ -70,8 +82,7 @@ class AppInterventionEditViewModelTest {
     @Test
     fun `toggleRuleEnabled disables catch-all`() = runTest(testDispatcher) {
         val catchAll = InterventionRule.defaultCatchAll(enabled = true)
-        repository.setProfile(
-            packageName,
+        whenever(repository.getProfile(packageName)).thenReturn(
             AppInterventionProfile(rules = listOf(catchAll)),
         )
 
@@ -84,15 +95,15 @@ class AppInterventionEditViewModelTest {
 
         assertTrue(viewModel.uiState.value.catchAllRule?.enabled == false)
         assertTrue(viewModel.uiState.value.saved)
-        val savedProfile = repository.getProfile(packageName)
-        assertTrue(savedProfile.rules.first().enabled == false)
+        val saved = captureSavedProfile()
+        assertEquals(1, saved.rules.size)
+        assertFalse(saved.rules[0].enabled)
     }
 
     @Test
     fun `toggleRuleEnabled enables catch-all`() = runTest(testDispatcher) {
         val catchAll = InterventionRule.defaultCatchAll(enabled = false)
-        repository.setProfile(
-            packageName,
+        whenever(repository.getProfile(packageName)).thenReturn(
             AppInterventionProfile(rules = listOf(catchAll)),
         )
 
@@ -105,15 +116,15 @@ class AppInterventionEditViewModelTest {
 
         assertTrue(viewModel.uiState.value.catchAllRule?.enabled == true)
         assertTrue(viewModel.uiState.value.saved)
-        val savedProfile = repository.getProfile(packageName)
-        assertTrue(savedProfile.rules.first().enabled == true)
+        val saved = captureSavedProfile()
+        assertEquals(1, saved.rules.size)
+        assertTrue(saved.rules[0].enabled)
     }
 
     @Test
     fun `updateShowNotify sets value`() = runTest(testDispatcher) {
         val catchAll = InterventionRule.defaultCatchAll(enabled = true)
-        repository.setProfile(
-            packageName,
+        whenever(repository.getProfile(packageName)).thenReturn(
             AppInterventionProfile(rules = listOf(catchAll)),
         )
 
@@ -126,15 +137,15 @@ class AppInterventionEditViewModelTest {
 
         assertTrue(viewModel.uiState.value.catchAllRule?.showNotify == true)
         assertTrue(viewModel.uiState.value.saved)
-        val savedProfile = repository.getProfile(packageName)
-        assertTrue(savedProfile.rules.first().showNotify == true)
+        val saved = captureSavedProfile()
+        assertEquals(1, saved.rules.size)
+        assertTrue(saved.rules[0].showNotify == true)
     }
 
     @Test
     fun `updateShowNotify clears value`() = runTest(testDispatcher) {
         val catchAll = InterventionRule.defaultCatchAll(enabled = true).copy(showNotify = true)
-        repository.setProfile(
-            packageName,
+        whenever(repository.getProfile(packageName)).thenReturn(
             AppInterventionProfile(rules = listOf(catchAll)),
         )
 
@@ -146,15 +157,15 @@ class AppInterventionEditViewModelTest {
         advanceUntilIdle()
 
         assertNull(viewModel.uiState.value.catchAllRule?.showNotify)
-        val savedProfile = repository.getProfile(packageName)
-        assertNull(savedProfile.rules.first().showNotify)
+        val saved = captureSavedProfile()
+        assertEquals(1, saved.rules.size)
+        assertNull(saved.rules[0].showNotify)
     }
 
     @Test
     fun `updateCrashLogEnabled sets value`() = runTest(testDispatcher) {
         val catchAll = InterventionRule.defaultCatchAll(enabled = true)
-        repository.setProfile(
-            packageName,
+        whenever(repository.getProfile(packageName)).thenReturn(
             AppInterventionProfile(rules = listOf(catchAll)),
         )
 
@@ -167,15 +178,15 @@ class AppInterventionEditViewModelTest {
 
         assertTrue(viewModel.uiState.value.catchAllRule?.crashLogEnabled == true)
         assertTrue(viewModel.uiState.value.saved)
-        val savedProfile = repository.getProfile(packageName)
-        assertTrue(savedProfile.rules.first().crashLogEnabled == true)
+        val saved = captureSavedProfile()
+        assertEquals(1, saved.rules.size)
+        assertTrue(saved.rules[0].crashLogEnabled == true)
     }
 
     @Test
     fun `saveProfile persists changes`() = runTest(testDispatcher) {
         val catchAll = InterventionRule.defaultCatchAll(enabled = true)
-        repository.setProfile(
-            packageName,
+        whenever(repository.getProfile(packageName)).thenReturn(
             AppInterventionProfile(rules = listOf(catchAll)),
         )
 
@@ -188,9 +199,9 @@ class AppInterventionEditViewModelTest {
         advanceUntilIdle()
 
         assertTrue(viewModel.uiState.value.saved)
-        val savedProfile = repository.getProfile(packageName)
-        assertEquals(1, savedProfile.rules.size)
-        val rule = savedProfile.rules.first()
+        val saved = captureSavedProfile(invocation = 3)
+        assertEquals(1, saved.rules.size)
+        val rule = saved.rules[0]
         assertFalse(rule.enabled)
         assertTrue(rule.showNotify == true)
         assertTrue(rule.crashLogEnabled == true)
@@ -198,6 +209,8 @@ class AppInterventionEditViewModelTest {
 
     @Test
     fun `addCatchAllRule creates rule when none exists`() = runTest(testDispatcher) {
+        whenever(repository.getProfile(packageName)).thenReturn(AppInterventionProfile.EMPTY)
+
         val viewModel = createViewModel()
         advanceUntilIdle()
         assertNull(viewModel.uiState.value.catchAllRule)
@@ -211,16 +224,16 @@ class AppInterventionEditViewModelTest {
         assertTrue(state.catchAllRule?.enabled == true)
         assertEquals(1, state.profile.rules.size)
         assertTrue(state.saved)
-        val savedProfile = repository.getProfile(packageName)
-        assertEquals(1, savedProfile.rules.size)
-        assertEquals(InterventionRuleType.CATCH_ALL, savedProfile.rules.first().type)
+        val saved = captureSavedProfile()
+        assertEquals(1, saved.rules.size)
+        assertEquals(InterventionRuleType.CATCH_ALL, saved.rules[0].type)
+        assertTrue(saved.rules[0].enabled)
     }
 
     @Test
     fun `deleteCatchAllRule removes rule`() = runTest(testDispatcher) {
         val catchAll = InterventionRule.defaultCatchAll(enabled = true)
-        repository.setProfile(
-            packageName,
+        whenever(repository.getProfile(packageName)).thenReturn(
             AppInterventionProfile(rules = listOf(catchAll)),
         )
 
@@ -235,25 +248,24 @@ class AppInterventionEditViewModelTest {
         assertNull(state.catchAllRule)
         assertEquals(AppInterventionProfile.EMPTY, state.profile)
         assertTrue(state.saved)
-        val savedProfile = repository.getProfile(packageName)
-        assertTrue(savedProfile.rules.isEmpty())
+        verify(repository).saveProfile(packageName, AppInterventionProfile.EMPTY)
     }
 
     @Test
     fun `removeManagedApp removes package from repository`() = runTest(testDispatcher) {
-        repository.legacyMode = false
-        repository.addManagedPackages(listOf(packageName))
-        assertTrue(repository.readManagedPackageNames()?.contains(packageName) == true)
+        whenever(repository.getProfile(packageName)).thenReturn(AppInterventionProfile.EMPTY)
 
         val viewModel = createViewModel()
         viewModel.removeManagedApp()
         advanceUntilIdle()
 
-        assertFalse(repository.readManagedPackageNames()?.contains(packageName) == true)
+        verify(repository).removeManagedPackage(packageName)
     }
 
     @Test
     fun `toggleRuleEnabled does nothing when no catch-all rule exists`() = runTest(testDispatcher) {
+        whenever(repository.getProfile(packageName)).thenReturn(AppInterventionProfile.EMPTY)
+
         val viewModel = createViewModel()
         advanceUntilIdle()
         assertNull(viewModel.uiState.value.catchAllRule)
@@ -267,6 +279,8 @@ class AppInterventionEditViewModelTest {
 
     @Test
     fun `updateShowNotify does nothing when no catch-all rule exists`() = runTest(testDispatcher) {
+        whenever(repository.getProfile(packageName)).thenReturn(AppInterventionProfile.EMPTY)
+
         val viewModel = createViewModel()
         advanceUntilIdle()
 
@@ -279,6 +293,8 @@ class AppInterventionEditViewModelTest {
 
     @Test
     fun `updateCrashLogEnabled does nothing when no catch-all rule exists`() = runTest(testDispatcher) {
+        whenever(repository.getProfile(packageName)).thenReturn(AppInterventionProfile.EMPTY)
+
         val viewModel = createViewModel()
         advanceUntilIdle()
 

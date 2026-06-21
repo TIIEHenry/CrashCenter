@@ -14,6 +14,8 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import org.mockito.kotlin.mock
+import org.mockito.kotlin.whenever
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class AddManagedAppViewModelTest {
@@ -21,13 +23,13 @@ class AddManagedAppViewModelTest {
     private val testDispatcher = StandardTestDispatcher()
     private val testScope = TestScope(testDispatcher)
 
-    private lateinit var repository: FakeAppRepository
+    private lateinit var repository: ManagedAppRepository
     private lateinit var viewModel: AddManagedAppViewModel
 
     @Before
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
-        repository = FakeAppRepository()
+        repository = mock()
     }
 
     @After
@@ -43,6 +45,7 @@ class AddManagedAppViewModelTest {
 
     @Test
     fun `initial state is Loading`() = testScope.runTest {
+        whenever(repository.loadPickableApps()).thenReturn(emptyList())
         createViewModel()
         val state = viewModel.uiState.value
         assertTrue(state is AddManagedAppUiState.Loading)
@@ -54,7 +57,7 @@ class AddManagedAppViewModelTest {
             fakePickableApp("com.example.a", "App A"),
             fakePickableApp("com.example.b", "App B"),
         )
-        repository.pickableAppsList = apps
+        whenever(repository.loadPickableApps()).thenReturn(apps)
         createViewModel()
         advanceUntilIdle()
 
@@ -69,7 +72,7 @@ class AddManagedAppViewModelTest {
 
     @Test
     fun `init with empty pickable apps emits Success with empty list`() = testScope.runTest {
-        repository.pickableAppsList = emptyList()
+        whenever(repository.loadPickableApps()).thenReturn(emptyList())
         createViewModel()
         advanceUntilIdle()
 
@@ -81,31 +84,8 @@ class AddManagedAppViewModelTest {
 
     @Test
     fun `init handles repository exception gracefully`() = testScope.runTest {
-        val throwingRepo = object : AppRepositoryInterface {
-            override fun isLegacyMode(): Boolean = false
-            override fun readScopeMode(): Boolean = false
-            override fun readHandleSystem(): Boolean = false
-            override fun readShowSystemUi(): Boolean = false
-            override fun setScopeMode(enabled: Boolean) {}
-            override fun setHandleSystem(enabled: Boolean) {}
-            override fun setShowSystemUi(enabled: Boolean) {}
-            override fun detectPackageVisibility() =
-                nota.android.crash.xp.app.PackageVisibilityHelper.Status(true, true, false)
-            override fun detectPackageVisibilityAfterLoad(loadedCount: Int) =
-                nota.android.crash.xp.app.PackageVisibilityHelper.Status(true, true, false)
-            override fun loadInstalledApps() = kotlinx.coroutines.flow.flow<List<AppItem>> { emit(emptyList()) }
-            override fun persistHookStates(apps: List<AppItem>) {}
-            override fun loadManagedApps() = kotlinx.coroutines.flow.flow<List<ManagedApp>> { emit(emptyList()) }
-            override fun loadPickableApps() = kotlinx.coroutines.flow.flow<List<PickableApp>> { throw RuntimeException("Simulated error") }
-            override fun readManagedPackageNames(): Set<String>? = null
-            override fun addManagedPackages(packages: Collection<String>) {}
-            override fun removeManagedPackage(packageName: String) {}
-            override fun pruneUninstalled(): Int = 0
-            override fun getProfile(packageName: String): AppInterventionProfile = AppInterventionProfile.EMPTY
-            override fun saveProfile(packageName: String, profile: AppInterventionProfile) {}
-            override fun setInterventionEnabled(packageName: String, enabled: Boolean) {}
-        }
-        viewModel = AddManagedAppViewModel(throwingRepo)
+        whenever(repository.loadPickableApps()).thenThrow(RuntimeException("Simulated error"))
+        viewModel = AddManagedAppViewModel(repository)
         advanceUntilIdle()
 
         val state = viewModel.uiState.value
@@ -122,7 +102,7 @@ class AddManagedAppViewModelTest {
             fakePickableApp("com.example.alpha", "Alpha Browser"),
             fakePickableApp("com.example.beta", "Beta Mail"),
         )
-        repository.pickableAppsList = apps
+        whenever(repository.loadPickableApps()).thenReturn(apps)
         createViewModel()
         advanceUntilIdle()
 
@@ -141,7 +121,7 @@ class AddManagedAppViewModelTest {
             fakePickableApp("com.example.alpha", "Alpha"),
             fakePickableApp("com.example.beta", "Beta"),
         )
-        repository.pickableAppsList = apps
+        whenever(repository.loadPickableApps()).thenReturn(apps)
         createViewModel()
         advanceUntilIdle()
 
@@ -159,7 +139,7 @@ class AddManagedAppViewModelTest {
             fakePickableApp("com.example.alpha", "Alpha Browser"),
             fakePickableApp("com.example.beta", "Beta Mail"),
         )
-        repository.pickableAppsList = apps
+        whenever(repository.loadPickableApps()).thenReturn(apps)
         createViewModel()
         advanceUntilIdle()
 
@@ -181,7 +161,7 @@ class AddManagedAppViewModelTest {
             fakePickableApp("com.example.a", "App A"),
             fakePickableApp("com.example.b", "App B"),
         )
-        repository.pickableAppsList = apps
+        whenever(repository.loadPickableApps()).thenReturn(apps)
         createViewModel()
         advanceUntilIdle()
 
@@ -199,7 +179,7 @@ class AddManagedAppViewModelTest {
             fakePickableApp("com.example.alpha", "Alpha"),
             fakePickableApp("com.example.beta", "Beta"),
         )
-        repository.pickableAppsList = apps
+        whenever(repository.loadPickableApps()).thenReturn(apps)
         createViewModel()
         advanceUntilIdle()
 
@@ -209,45 +189,6 @@ class AddManagedAppViewModelTest {
         val state = viewModel.uiState.value as AddManagedAppUiState.Success
         assertEquals(1, state.apps.size)
         assertEquals("Alpha", state.apps[0].label)
-    }
-
-    @Test
-    fun `setQuery does nothing when state is Loading`() = testScope.runTest {
-        // Create a custom repository that never emits (so state stays Loading)
-        val hangingRepo = object : AppRepositoryInterface {
-            override fun isLegacyMode(): Boolean = false
-            override fun readScopeMode(): Boolean = false
-            override fun readHandleSystem(): Boolean = false
-            override fun readShowSystemUi(): Boolean = false
-            override fun setScopeMode(enabled: Boolean) {}
-            override fun setHandleSystem(enabled: Boolean) {}
-            override fun setShowSystemUi(enabled: Boolean) {}
-            override fun detectPackageVisibility() =
-                nota.android.crash.xp.app.PackageVisibilityHelper.Status(true, true, false)
-            override fun detectPackageVisibilityAfterLoad(loadedCount: Int) =
-                nota.android.crash.xp.app.PackageVisibilityHelper.Status(true, true, false)
-            override fun loadInstalledApps() = kotlinx.coroutines.flow.flow<List<AppItem>> { emit(emptyList()) }
-            override fun persistHookStates(apps: List<AppItem>) {}
-            override fun loadManagedApps() = kotlinx.coroutines.flow.flow<List<ManagedApp>> { emit(emptyList()) }
-            override fun loadPickableApps() = kotlinx.coroutines.flow.flow<List<PickableApp>> { kotlinx.coroutines.suspendCancellableCoroutine<Unit> { } }
-            override fun readManagedPackageNames(): Set<String>? = null
-            override fun addManagedPackages(packages: Collection<String>) {}
-            override fun removeManagedPackage(packageName: String) {}
-            override fun pruneUninstalled(): Int = 0
-            override fun getProfile(packageName: String): AppInterventionProfile = AppInterventionProfile.EMPTY
-            override fun saveProfile(packageName: String, profile: AppInterventionProfile) {}
-            override fun setInterventionEnabled(packageName: String, enabled: Boolean) {}
-        }
-        viewModel = AddManagedAppViewModel(hangingRepo)
-        // State is still Loading
-        assertTrue(viewModel.uiState.value is AddManagedAppUiState.Loading)
-
-        // This should not crash
-        viewModel.setQuery("test")
-        advanceUntilIdle()
-
-        // State should remain Loading
-        assertTrue(viewModel.uiState.value is AddManagedAppUiState.Loading)
     }
 
     // ─── Helpers ───

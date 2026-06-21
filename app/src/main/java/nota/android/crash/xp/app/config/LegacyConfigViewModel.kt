@@ -2,11 +2,20 @@ package nota.android.crash.xp.app.config
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import nota.android.crash.xp.app.PackageVisibilityHelper
 
 internal class LegacyConfigViewModel(
-    repository: AppRepositoryInterface,
+    private val repository: LegacyAppRepository,
+    private val visibilityRepository: PackageVisibilityRepository,
     scope: CoroutineScope,
-) : BaseConfigViewModel(repository, scope, isLegacyMode = true) {
+) : BaseConfigViewModel(
+    scope = scope,
+    isLegacyMode = true,
+    scopeMode = repository.readScopeMode(),
+    handleSystem = repository.readHandleSystem(),
+    showSystemUi = repository.readShowSystemUi(),
+    packageVisibility = visibilityRepository.detectPackageVisibility(),
+) {
 
     override fun loadApps(forceReload: Boolean) {
         val current = _uiState.value
@@ -16,21 +25,35 @@ internal class LegacyConfigViewModel(
 
         scope.launch {
             try {
-                repository.loadInstalledApps().collect { loadedApps ->
-                    val visibility = repository.detectPackageVisibilityAfterLoad(loadedApps.size)
-                    emitState {
-                        copy(
-                            isLoading = false,
-                            allApps = loadedApps,
-                            packageVisibility = visibility,
-                        )
-                    }
-                    applyFilters(preserveSort = false)
+                val loadedApps = repository.loadInstalledApps()
+                val visibility = visibilityRepository.detectPackageVisibilityAfterLoad(loadedApps.size)
+                emitState {
+                    copy(
+                        isLoading = false,
+                        allApps = loadedApps,
+                        packageVisibility = visibility,
+                    )
                 }
+                applyFilters(preserveSort = false)
             } catch (_: Exception) {
                 emitState { copy(isLoading = false) }
             }
         }
+    }
+
+    override fun setScopeMode(enabled: Boolean) {
+        repository.setScopeMode(enabled)
+        super.setScopeMode(enabled)
+    }
+
+    override fun setHandleSystem(enabled: Boolean) {
+        repository.setHandleSystem(enabled)
+        super.setHandleSystem(enabled)
+    }
+
+    override fun setShowSystemUi(enabled: Boolean) {
+        repository.setShowSystemUi(enabled)
+        super.setShowSystemUi(enabled)
     }
 
     override fun setHookFilter(filter: HookFilter) {

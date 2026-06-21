@@ -17,7 +17,7 @@ data class AppInterventionEditUiState(
 
 class AppInterventionEditViewModel(
     private val packageName: String,
-    private val repository: AppRepositoryInterface,
+    private val repository: ManagedAppRepository,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) : ViewModel() {
 
