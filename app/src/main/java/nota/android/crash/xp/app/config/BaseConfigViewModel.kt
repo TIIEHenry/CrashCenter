@@ -82,23 +82,6 @@ internal abstract class BaseConfigViewModel(
         preserveSort: Boolean,
         filter: (ConfigUiState) -> List<T>,
         sortExtractors: SortExtractors<T>,
-        emptyMessage: (List<T>) -> String?,
-        setState: ConfigUiState.(List<T>) -> ConfigUiState,
-    ) {
-        val current = _uiState.value
-        val filtered = filter(current).toMutableList()
-        AppFilterEngine.sort(
-            filtered, current.sortMode,
-            sortExtractors.name, sortExtractors.installTime, sortExtractors.updateTime,
-        )
-        emitState { setState(filtered) }
-        emitState { copy(emptyMessage = emptyMessage(filtered)) }
-    }
-
-    protected fun <T> applyFilters(
-        preserveSort: Boolean,
-        filter: (ConfigUiState) -> List<T>,
-        sortExtractors: SortExtractors<T>,
         emptyMessage: (List<T>, List<T>) -> String?,
         setState: ConfigUiState.(List<T>) -> ConfigUiState,
         sourceExtractor: (ConfigUiState) -> List<T>,

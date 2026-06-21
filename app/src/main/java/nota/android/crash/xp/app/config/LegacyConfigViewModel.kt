@@ -81,9 +81,10 @@ internal class LegacyConfigViewModel(
             installTime = { it.installTime },
             updateTime = { it.updateTime },
         ),
-        emptyMessage = { filtered ->
+        emptyMessage = { filtered, _ ->
             if (filtered.isEmpty()) ConfigViewModel.EMPTY_FILTER else null
         },
         setState = { filtered -> copy(visibleApps = filtered) },
+        sourceExtractor = { it.allApps },
     )
 }
