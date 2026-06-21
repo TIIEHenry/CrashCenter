@@ -11,7 +11,15 @@ class FilterConfig<T : Any>(
     val chipToFilter: Map<Int, T>,
     val defaultFilter: T,
     val onFilterChanged: (T) -> Unit,
-)
+) {
+    companion object {
+        fun <T : Any> resolveFilter(
+            chipToFilter: Map<Int, T>,
+            defaultFilter: T,
+            checkedIds: List<Int>,
+        ): T = chipToFilter[checkedIds.firstOrNull()] ?: defaultFilter
+    }
+}
 
 class ConfigListController<T : Any>(
     binding: FragmentConfigBinding,
@@ -35,8 +43,9 @@ class ConfigListController<T : Any>(
             config.chipRowRoot,
             config.chipGroupId,
         ) { _, checkedIds ->
-            val filter = config.chipToFilter[checkedIds.firstOrNull()]
-                ?: config.defaultFilter
+            val filter = FilterConfig.resolveFilter(
+                config.chipToFilter, config.defaultFilter, checkedIds,
+            )
             config.onFilterChanged(filter)
         }
     }
