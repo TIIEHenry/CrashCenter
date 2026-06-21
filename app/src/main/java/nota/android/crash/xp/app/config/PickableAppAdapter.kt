@@ -2,19 +2,16 @@ package nota.android.crash.xp.app.config
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
-import androidx.recyclerview.widget.DiffUtil
-import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
+import nota.android.crash.xp.app.common.ui.adapter.BaseListAdapter
+import nota.android.crash.xp.app.common.ui.adapter.SimpleDiffCallback
 import nota.android.crash.xp.app.databinding.ItemPickableAppBinding
 
-class PickableAppAdapter : ListAdapter<PickableApp, PickableAppAdapter.VH>(DiffCallback()) {
+class PickableAppAdapter : BaseListAdapter<PickableApp, PickableAppAdapter.VH>(
+    SimpleDiffCallback { it.packageName }
+) {
 
     private val selectedPackages = linkedSetOf<String>()
-    private var onItemClickListener: ((PickableApp) -> Unit)? = null
-
-    fun onItemClick(f: (PickableApp) -> Unit) {
-        onItemClickListener = f
-    }
 
     fun toggleSelection(app: PickableApp) {
         if (!selectedPackages.add(app.packageName)) {
@@ -46,32 +43,19 @@ class PickableAppAdapter : ListAdapter<PickableApp, PickableAppAdapter.VH>(DiffC
     }
 
     inner class VH(private val binding: ItemPickableAppBinding) :
-        RecyclerView.ViewHolder(binding.root) {
+        BaseViewHolder<PickableApp>(binding.root) {
 
         init {
             binding.root.setOnClickListener {
-                val pos = bindingAdapterPosition
-                if (pos != RecyclerView.NO_POSITION) {
-                    onItemClickListener?.invoke(getItem(pos))
-                }
+                notifyItemClick(binding.root, bindingAdapterPosition)
             }
         }
 
-        fun bind(data: PickableApp) {
+        override fun bind(data: PickableApp) {
             binding.ivIcon.setImageDrawable(data.appInfo.loadIcon(binding.root.context.packageManager))
             binding.tvName.text = data.label
             binding.tvPackageName.text = data.packageName
             binding.checkbox.isChecked = selectedPackages.contains(data.packageName)
-        }
-    }
-
-    class DiffCallback : DiffUtil.ItemCallback<PickableApp>() {
-        override fun areItemsTheSame(oldItem: PickableApp, newItem: PickableApp): Boolean {
-            return oldItem.packageName == newItem.packageName
-        }
-
-        override fun areContentsTheSame(oldItem: PickableApp, newItem: PickableApp): Boolean {
-            return oldItem == newItem
         }
     }
 }

@@ -72,7 +72,7 @@ class AddManagedAppBottomSheet : BottomSheetDialogFragment() {
 
     private fun setupList() {
         adapter = PickableAppAdapter()
-        adapter.onItemClick { app ->
+        adapter.onItemClick { _, app, _ ->
             adapter.toggleSelection(app)
         }
         binding.recyclerPickable.layoutManager = LinearLayoutManager(requireContext())
