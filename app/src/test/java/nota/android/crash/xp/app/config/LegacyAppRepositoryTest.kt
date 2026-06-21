@@ -164,68 +164,6 @@ class LegacyAppRepositoryTest {
         assertTrue(disabled.contains(PrefManager.ITSELF))
     }
 
-    // ─── Companion: passesSystemFilter ───
-
-    @Test
-    fun `passesSystemFilter returns true for non-system app`() {
-        assertTrue(LegacyAppRepository.passesSystemFilter(isSystemApp = false, handleSystem = false))
-        assertTrue(LegacyAppRepository.passesSystemFilter(isSystemApp = false, handleSystem = true))
-    }
-
-    @Test
-    fun `passesSystemFilter returns true for system app when handleSystem true`() {
-        assertTrue(LegacyAppRepository.passesSystemFilter(isSystemApp = true, handleSystem = true))
-    }
-
-    @Test
-    fun `passesSystemFilter returns false for system app when handleSystem false`() {
-        assertFalse(LegacyAppRepository.passesSystemFilter(isSystemApp = true, handleSystem = false))
-    }
-
-    @Test
-    fun `passesSystemFilter all combinations`() {
-        val cases = listOf(
-            Triple(false, false, true),
-            Triple(false, true, true),
-            Triple(true, false, false),
-            Triple(true, true, true),
-        )
-        for ((isSystem, handleSystem, expected) in cases) {
-            assertEquals(
-                "Failed for isSystem=$isSystem, handleSystem=$handleSystem",
-                expected,
-                LegacyAppRepository.passesSystemFilter(isSystem, handleSystem),
-            )
-        }
-    }
-
-    // ─── Companion: isSystemPackage ───
-
-    @Test
-    fun `isSystemPackage returns false for unknown package`() {
-        assertFalse(LegacyAppRepository.isSystemPackage(context, "com.nonexistent.package"))
-    }
-
-    @Test
-    fun `isSystemPackage returns false for self package`() {
-        assertFalse(LegacyAppRepository.isSystemPackage(context, context.packageName))
-    }
-
-    // ─── Companion: enumerateInstalledPackageNames ───
-
-    @Test
-    fun `enumerateInstalledPackageNames returns non-empty set`() {
-        val names = LegacyAppRepository.enumerateInstalledPackageNames(context)
-        assertTrue(names.isNotEmpty())
-        assertFalse(names.contains(PrefManager.ITSELF))
-    }
-
-    @Test
-    fun `enumerateInstalledPackageNames excludes self`() {
-        val names = LegacyAppRepository.enumerateInstalledPackageNames(context)
-        assertFalse(names.contains(PrefManager.ITSELF))
-    }
-
     // ─── Helpers ───
 
     private fun fakeAppItem(

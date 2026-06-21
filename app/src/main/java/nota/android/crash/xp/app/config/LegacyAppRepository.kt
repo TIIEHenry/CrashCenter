@@ -1,8 +1,6 @@
 package nota.android.crash.xp.app.config
 
 import android.content.Context
-import android.content.pm.ApplicationInfo
-import android.content.pm.PackageManager
 import androidx.core.content.edit
 import nota.android.crash.xp.PrefManager.ITSELF
 import nota.android.crash.xp.PrefManager.PREF_HANDLE_SYSTEM
@@ -71,25 +69,4 @@ class LegacyAppRepository(context: Context) {
         prefs.edit { putStringSet(PREF_PACKAGE_LIST, disabled) }
     }
 
-    companion object {
-        fun passesSystemFilter(isSystemApp: Boolean, handleSystem: Boolean): Boolean =
-            !isSystemApp || handleSystem
-
-        fun isSystemPackage(context: Context, packageName: String): Boolean {
-            return try {
-                val appInfo = context.packageManager.getApplicationInfo(packageName, 0)
-                PackageInfoLoader.isSystemApp(appInfo)
-            } catch (_: PackageManager.NameNotFoundException) {
-                false
-            }
-        }
-
-        fun enumerateInstalledPackageNames(context: Context): Set<String> {
-            val packageManager = context.packageManager
-            val installedPackages = PackageVisibilityHelper.getInstalledPackagesCompat(packageManager)
-            return installedPackages.map { it.packageName }
-                .filter { packageName -> !PackageInfoLoader.isItself(packageName) }
-                .toSet()
-        }
-    }
 }

@@ -10,7 +10,7 @@ import nota.android.crash.xp.PrefMigrator
 import nota.android.crash.xp.app.config.AppInterventionProfile
 import nota.android.crash.xp.app.config.InterventionRule
 import nota.android.crash.xp.app.config.InterventionRulesCodec
-import nota.android.crash.xp.app.config.LegacyAppRepository
+import nota.android.crash.xp.app.config.PackageInfoLoader
 
 /**
  * Handles ADR-002 `package_list` → ADR-015 managed model migration.
@@ -79,7 +79,7 @@ object ManagedModelMigrator {
         val scopeMode = prefs.getBoolean(PrefManager.PREF_SCOPE_MODE, false)
         val handleSystem = prefs.getBoolean(PrefManager.PREF_HANDLE_SYSTEM, false)
         val disabled = prefs.getStringSet(PrefManager.PREF_PACKAGE_LIST, emptySet()) ?: emptySet()
-        val installed = LegacyAppRepository.enumerateInstalledPackageNames(context)
+        val installed = PackageInfoLoader.enumerateInstalledPackageNames(context)
 
         val managed = installed.filter { packageName ->
             packageName !in disabled
@@ -87,8 +87,8 @@ object ManagedModelMigrator {
             if (!scopeMode) {
                 true
             } else {
-                val isSystem = LegacyAppRepository.isSystemPackage(context, packageName)
-                LegacyAppRepository.passesSystemFilter(isSystem, handleSystem)
+                val isSystem = PackageInfoLoader.isSystemPackage(context, packageName)
+                PackageInfoLoader.passesSystemFilter(isSystem, handleSystem)
             }
         }.toSet()
 

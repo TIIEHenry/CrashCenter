@@ -1,7 +1,6 @@
 package nota.android.crash.xp.app.common.ui
 
 import android.view.View
-import android.widget.TextView
 import nota.android.crash.xp.app.databinding.ViewLoadingStateBinding
 
 object LoadingState {
