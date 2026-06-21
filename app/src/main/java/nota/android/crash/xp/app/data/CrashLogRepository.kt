@@ -9,6 +9,7 @@ import java.io.File
 import java.io.FileReader
 import java.io.FileWriter
 import java.util.Collections
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
@@ -44,8 +45,8 @@ class FileCrashLogRepository(context: Context) : CrashLogRepository {
     // Per-filter cache of matching events for a single request cycle (e.g., PagingSource load).
     // Key: filter hash + file mtime + file length. Null means cache miss / no file.
     // Avoids double-parse when getCount() and getAll() are called with the same filter.
-    private val cachedMatchingEvents = HashMap<Int, List<CrashEvent>>()
-    private val cachedFullyCollected = HashMap<Int, Boolean>()
+    private val cachedMatchingEvents = ConcurrentHashMap<Int, List<CrashEvent>>()
+    private val cachedFullyCollected = ConcurrentHashMap<Int, Boolean>()
 
     override fun getAll(filter: CrashFilter, limit: Int, offset: Int): List<CrashEvent> {
         return lock.read {
