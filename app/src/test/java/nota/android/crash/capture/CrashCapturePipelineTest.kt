@@ -23,6 +23,7 @@ import org.mockito.Mockito
 import org.mockito.Mockito.mock
 import org.mockito.kotlin.any
 import org.mockito.kotlin.eq
+import org.mockito.kotlin.never
 import org.mockito.kotlin.verify
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
@@ -171,6 +172,33 @@ class CrashCapturePipelineTest {
         assertNotEquals(events[0].id, events[1].id)
         assertTrue(events[0].id.isNotEmpty())
         assertTrue(events[1].id.isNotEmpty())
+    }
+
+    // --- Per-app crashLogEnabled gate ---
+
+    @Test
+    fun `crashLogEnabled false skips coordinator but still calls feedback`() {
+        val disabledDecision = ScopeDecision(shouldHook = true, showNotify = true, crashLogEnabled = false)
+        val throwable = RuntimeException("boom")
+
+        CrashCapturePipeline.onException(
+            application = app,
+            packageName = "com.example.app",
+            appInfo = appInfo,
+            throwable = throwable,
+            source = "uncaught",
+            decision = disabledDecision,
+        )
+
+        verify(mockCoordinator, never()).logAsync(any<Application>(), any<CrashEvent>())
+        verify(mockFeedback).show(
+            eq<Application>(app),
+            eq<String>("com.example.app"),
+            eq<ApplicationInfo>(appInfo),
+            eq<Throwable>(throwable),
+            any<String>(),
+            eq<Boolean>(true),
+        )
     }
 
     // --- Field population ---

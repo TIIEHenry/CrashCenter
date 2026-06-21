@@ -51,10 +51,13 @@ object CrashCapturePipeline {
             )
 
             // Observation and feedback are independent failure domains (ADR-011).
-            try {
-                (testCoordinator ?: CrashLogCoordinator).logAsync(application, event)
-            } catch (t: Throwable) {
-                XposedBridge.log(t)
+            // Per-app crashLogEnabled from ScopeDecision gates log writes.
+            if (decision.crashLogEnabled) {
+                try {
+                    (testCoordinator ?: CrashLogCoordinator).logAsync(application, event)
+                } catch (t: Throwable) {
+                    XposedBridge.log(t)
+                }
             }
 
             XposedBridge.log(throwable)
