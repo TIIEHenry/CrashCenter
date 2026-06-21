@@ -48,14 +48,14 @@ CrashLogIngestCoordinator (defer 4B-β)
 
 | 项 | as-built |
 |----|----------|
-| 接口 | `getAll`、`getById`、`getCount`、`deleteById(id): Boolean`、`clear()`、`observeChanges(): Flow<Unit>`、`applyRetention()` |
+| 接口 | `getAll`、`getById`、`getCount`、`deleteById(id): Boolean`、`clear()`、`applyRetention()` |
 | 实现 | `FileCrashLogRepository` — 顺序读 `events.jsonl`，逐行 JSON parse；流式扫描支持 early termination |
 | 缓存 | LRU **200** 条（`CACHE_CAPACITY`）；`lastModified` + 文件长度变更时 invalidate |
-| 并发 | `ReentrantReadWriteLock`；无 `FileObserver` / `observeChanges` 返回 `emptyFlow()` |
+| 并发 | `ReentrantReadWriteLock`；无 `FileObserver` 变更通知（defer 4D） |
 | 列表 UI | `CrashHistoryViewModel` → `Pager` + **`CrashEventPagingSource`** + `CrashHistoryPagingAdapter` |
 | DI | `ServiceLocator.crashLogRepository()` 单例 |
 
-**不在 as-built**：`observeChanges()` 为 stub（返回 `emptyFlow()`）、`StatsAggregator`。`clear()`、`deleteById()`、`applyRetention()` 已落地。
+**不在 as-built**：`observeChanges()`（4D 目标，未定义于接口）、`StatsAggregator`。`clear()`、`deleteById()`、`applyRetention()` 已落地。
 
 ## CrashLogRepository
 
@@ -68,7 +68,6 @@ interface CrashLogRepository {
     fun getCount(filter: CrashFilter): Int
     fun deleteById(id: String): Boolean
     fun clear()
-    fun observeChanges(): Flow<Unit>
     fun applyRetention()
 }
 

@@ -71,7 +71,7 @@ hook 侧观测层 MVP 与模块 UI Shell 已落地：
 | `CanonicalJsonlWriter` | `nota.android.crash.log` | canonical `events.jsonl` append + 500 条 / 8 MB retention |
 | `CrashLogProvider` | `nota.android.crash.xp.app` | exported Provider IPC（无 signature permission） |
 | `FileCrashLogRepository` | `nota.android.crash.xp.app.data` | 读 canonical：getAll/getById/getCount、LRU 200 |
-| `ServiceLocator` | `nota.android.crash.xp.app.di` | `AppRepository` + `CrashLogRepository` 单例 |
+| `ServiceLocator` | `nota.android.crash.xp.app.di` | `LegacyAppRepository` + `ManagedAppRepository` + `CrashLogRepository` 单例 |
 | `MainShellActivity` | `nota.android.crash.xp.app.shell` | Launcher；底栏 配置 \| 观测 |
 | `ConfigFragment` | `nota.android.crash.xp.app.config` | 受管应用列表、scope、干预入口 |
 | `ObserveHostFragment` | `nota.android.crash.xp.app.observe` | 观测 tab；嵌入 `CrashHistoryFragment`（Paging3） |
@@ -87,8 +87,8 @@ hook 侧观测层 MVP 与模块 UI Shell 已落地：
 
 | 组件 | 源码 | 职责 |
 |------|------|------|
-| Xposed 入口 | `XposedEntry.java` | 包过滤、hook 安装、委托 `CrashCapturePipeline` |
-| 崩溃拦截 | `CrashHandler.java` | Looper 续命 + 异常处理器替换 |
+| Xposed 入口 | `XposedEntry.kt` | 包过滤、hook 安装、委托 `CrashCapturePipeline` |
+| 崩溃拦截 | `CrashHandler.kt` | Looper 续命 + 异常处理器替换 |
 | 崩溃采集管道 | `capture/CrashCapturePipeline.kt` | hook 单入口：观测 + 反馈并行、失败域隔离 |
 | 日志协调 | `log/CrashLogCoordinator.kt` | hook 侧 Phase 2 多后端并行写入 |
 | 日志 Provider | `xp/app/CrashLogProvider.kt` | exported ContentProvider IPC append |
