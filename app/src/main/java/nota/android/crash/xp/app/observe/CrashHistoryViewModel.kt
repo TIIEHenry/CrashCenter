@@ -27,6 +27,10 @@ class CrashHistoryViewModel(
     private val _uiState = MutableStateFlow(CrashHistoryUiState())
     val uiState: StateFlow<CrashHistoryUiState> = _uiState
 
+    private fun emitState(transform: CrashHistoryUiState.() -> CrashHistoryUiState) {
+        _uiState.value = _uiState.value.transform()
+    }
+
     private var loadJob: Job? = null
 
     val pagingData: Flow<PagingData<CrashEvent>> = Pager(
@@ -41,27 +45,25 @@ class CrashHistoryViewModel(
     fun loadEvents() {
         loadJob?.cancel()
         loadJob = viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true)
+            emitState { copy(isLoading = true) }
             try {
                 val count = withContext(ioDispatcher) {
                     repository.getCount(CrashFilter())
                 }
-                _uiState.value = _uiState.value.copy(
-                    isLoading = false,
-                    eventCount = count,
-                )
+                emitState {
+                    copy(isLoading = false, eventCount = count)
+                }
             } catch (e: Exception) {
                 safeLog("CrashHistoryViewModel", "loadEvents failed", e)
-                _uiState.value = _uiState.value.copy(
-                    isLoading = false,
-                    errorMessage = e.message,
-                )
+                emitState {
+                    copy(isLoading = false, errorMessage = e.message)
+                }
             }
         }
     }
 
     fun clearError() {
-        _uiState.value = _uiState.value.copy(errorMessage = null)
+        emitState { copy(errorMessage = null) }
     }
 
     companion object {

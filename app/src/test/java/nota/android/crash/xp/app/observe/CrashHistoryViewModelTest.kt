@@ -157,6 +157,21 @@ class CrashHistoryViewModelTest {
         assertEquals(1, viewModel.uiState.value.eventCount)
     }
 
+    // ─── clearError ───
+
+    @Test
+    fun `clearError resets errorMessage to null`() = testScope.runTest {
+        repository.throwOnGetCount = true
+        createViewModel()
+
+        viewModel.loadEvents()
+        advanceUntilIdle()
+        assert(viewModel.uiState.value.errorMessage != null)
+
+        viewModel.clearError()
+        assertEquals(null, viewModel.uiState.value.errorMessage)
+    }
+
     // ─── Re-entrancy / Deduplication ───
 
     @Test
