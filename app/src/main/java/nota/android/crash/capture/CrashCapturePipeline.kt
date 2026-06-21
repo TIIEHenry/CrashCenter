@@ -14,6 +14,14 @@ import nota.android.crash.xp.ScopeDecision
  */
 object CrashCapturePipeline {
 
+    /** Test-only: replace coordinator call; null uses real [CrashLogCoordinator]. */
+    @JvmStatic
+    var testCoordinator: CrashLogCoordinator? = null
+
+    /** Test-only: replace feedback call; null uses real [CrashFeedbackFacade]. */
+    @JvmStatic
+    var testFeedback: CrashFeedbackFacade? = null
+
     @JvmStatic
     fun onException(
         application: Application,
@@ -39,16 +47,27 @@ object CrashCapturePipeline {
                 source = source,
             )
 
-            CrashLogCoordinator.logAsync(application, event)
+            // Observation and feedback are independent failure domains (ADR-011).
+            try {
+                (testCoordinator ?: CrashLogCoordinator).logAsync(application, event)
+            } catch (t: Throwable) {
+                XposedBridge.log(t)
+            }
+
             XposedBridge.log(throwable)
-            CrashFeedbackFacade.show(
-                application,
-                packageName,
-                appInfo,
-                throwable,
-                event.id,
-                decision.showNotify,
-            )
+
+            try {
+                (testFeedback ?: CrashFeedbackFacade).show(
+                    application,
+                    packageName,
+                    appInfo,
+                    throwable,
+                    event.id,
+                    decision.showNotify,
+                )
+            } catch (t: Throwable) {
+                XposedBridge.log(t)
+            }
         } catch (t: Throwable) {
             XposedBridge.log(t)
         }

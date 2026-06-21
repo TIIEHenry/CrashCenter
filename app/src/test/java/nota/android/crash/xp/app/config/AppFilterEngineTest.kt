@@ -750,6 +750,82 @@ class AppFilterEngineTest {
         assertTrue(AppFilterEngine.matchesCrashEvent(event, filter))
     }
 
+    // ─── matchesCrashEvent: additional filter criteria ───
+
+    @Test
+    fun `matchesCrashEvent packageName only filter matches correctly`() {
+        val event = makeTestEvent(packageName = "com.target.app")
+        assertTrue(AppFilterEngine.matchesCrashEvent(event, CrashFilter(packageName = "com.target.app")))
+        assertFalse(AppFilterEngine.matchesCrashEvent(event, CrashFilter(packageName = "com.other.app")))
+    }
+
+    @Test
+    fun `matchesCrashEvent sinceMs filters by event timestamp`() {
+        val event = makeTestEvent(timestampMs = 5000L)
+        assertTrue(AppFilterEngine.matchesCrashEvent(event, CrashFilter(sinceMs = 5000L)))
+        assertTrue(AppFilterEngine.matchesCrashEvent(event, CrashFilter(sinceMs = 4999L)))
+        assertFalse(AppFilterEngine.matchesCrashEvent(event, CrashFilter(sinceMs = 5001L)))
+    }
+
+    @Test
+    fun `matchesCrashEvent untilMs filters by event timestamp`() {
+        val event = makeTestEvent(timestampMs = 5000L)
+        assertTrue(AppFilterEngine.matchesCrashEvent(event, CrashFilter(untilMs = 5000L)))
+        assertTrue(AppFilterEngine.matchesCrashEvent(event, CrashFilter(untilMs = 5001L)))
+        assertFalse(AppFilterEngine.matchesCrashEvent(event, CrashFilter(untilMs = 4999L)))
+    }
+
+    @Test
+    fun `matchesCrashEvent source matches and non-matching source rejects`() {
+        val event = makeTestEvent(source = "anr")
+        assertTrue(AppFilterEngine.matchesCrashEvent(event, CrashFilter(source = "anr")))
+        assertFalse(AppFilterEngine.matchesCrashEvent(event, CrashFilter(source = "uncaught")))
+    }
+
+    @Test
+    fun `matchesCrashEvent with multiple criteria combined`() {
+        val event = makeTestEvent(
+            packageName = "com.example.app",
+            timestampMs = 5000L,
+            source = "uncaught",
+        )
+        val allMatch = CrashFilter(
+            packageName = "com.example.app",
+            sinceMs = 4000L,
+            untilMs = 6000L,
+            source = "uncaught",
+        )
+        assertTrue(AppFilterEngine.matchesCrashEvent(event, allMatch))
+
+        val oneFieldMismatch = allMatch.copy(source = "anr")
+        assertFalse(AppFilterEngine.matchesCrashEvent(event, oneFieldMismatch))
+    }
+
+    @Test
+    fun `matchesCrashEvent empty filter matches any event including null fields`() {
+        val event = makeTestEvent()
+        assertTrue(AppFilterEngine.matchesCrashEvent(event, CrashFilter()))
+        assertTrue(AppFilterEngine.matchesCrashEvent(event, CrashFilter(query = null, packageName = null)))
+    }
+
+    private fun makeTestEvent(
+        id: String = "test-evt",
+        timestampMs: Long = 1000L,
+        packageName: String = "com.example.app",
+        appLabel: String? = "Example",
+        exceptionClass: String = "java.lang.Exception",
+        message: String? = "test error",
+        source: String? = "uncaught",
+    ) = CrashEvent(
+        id = id,
+        timestampMs = timestampMs,
+        packageName = packageName,
+        appLabel = appLabel,
+        exceptionClass = exceptionClass,
+        message = message,
+        source = source,
+    )
+
     // ─── Helpers ───
 
     private fun fakeAppItem(
