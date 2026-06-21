@@ -4,7 +4,7 @@ type: architecture
 status: accepted
 phase: N/A
 updated: 2026-06-21
-summary: "配置域从 ActivityMain 单体演进为 MainShellActivity + ConfigFragment + ConfigUiState；复用 Fluent Design System 与 Phase 3 单屏 IA"
+summary: "配置域以 MainShellActivity 为壳层起点，ActivityMain 已废弃，页面职责由 ConfigFragment 承载；复用 Fluent Design System 与 Phase 3 单屏 IA"
 ---
 
 # 配置域 UI 架构
@@ -32,7 +32,7 @@ summary: "配置域从 ActivityMain 单体演进为 MainShellActivity + ConfigFr
 | 层 | 职责 | 目标类 / 包 |
 |----|------|-------------|
 | **Shell** | 应用级 Toolbar、Xposed 状态条、BottomNavigation、全局菜单、WindowInsets、跨 tab 状态保持 | `shell/MainShellActivity`、`ShellViewModel` |
-| **Design System / common ui** | Fluent token、共享 banner、搜索、Chip、列表行、空态/加载态、Toolbar inset helper | `common/ui/*`、`common/design/*` |
+| **Design System / common ui** | Fluent token、共享 banner、搜索、Chip、列表行、空态/加载态、Toolbar inset helper | `common/ui/*` |
 | **Domain Page** | 配置域页面编排，不拥有全局壳层；只处理配置页控件与列表 | `config/ConfigFragment`、`ConfigListController`、`AppListRenderer`、`EmptyStateRenderer`、`PermissionBannerRenderer` |
 | **Feature State** | 配置页可测试状态、应用列表加载、过滤、排序、prefs 写入 | `ConfigViewModel`、`ConfigViewModelDelegate`（接口）、`LegacyConfigViewModel` / `ManagedConfigViewModel`（子类）、`ConfigUiState`、`LegacyAppRepository` + `ManagedAppRepository` |
 
@@ -57,8 +57,8 @@ Shell 只处理跨域结构：
 | `PermissionBanner` | 配置域、未来观测导入提示 | 包可见性或数据权限提示 |
 | `FilterChipRow` | 配置、统计、单应用观测 | 横向 Chip 组，支持计数/选中态 |
 | `DenseSearchField` | 配置、历史列表 | 名称/包名/异常过滤 |
-| `AppToggleRow` | 配置 | per-app hook Switch 行 |
-| `CrashEventRow` | 观测历史、单应用观测 | 崩溃事件行；配置域只可选显示角标，不复用为开关行 |
+| `AppToggleAdapter` | 配置 | per-app hook Switch 行 |
+| `CrashEventBinder` | 观测历史、单应用观测 | 崩溃事件行；配置域只可选显示角标，不复用为开关行 |
 | `EmptyState` / `LoadingState` | 所有域 | 列表空态和加载态 |
 | `ToolbarHeaderInsets` | Shell、详情 Activity | 统一 status bar inset 处理 |
 
@@ -156,7 +156,7 @@ Legacy 字段 `apps` / `hookFilter` 在迁移完成后移除。
 
 ---
 
-## ActivityMain（Legacy 验收基线 — 已重构为 ConfigFragment）
+## ActivityMain（Legacy 验收基线 — 已废弃，已重构为 ConfigFragment）
 
 ### 布局结构
 
@@ -184,9 +184,9 @@ Legacy 字段 `apps` / `hookFilter` 在迁移完成后移除。
 
 - 后台线程加载已安装包（`applicationContext` + `Handler`）；`PackageManager` 调用包在 try/catch 内
 - 加载中显示列表区 `CircularProgressIndicator`；无匹配结果时显示空状态文案
-- `App` 数据类：label、icon、get_it、packageName、isSystem、时间戳
+- `AppItem` 数据类（实现 `AppListItem` 接口）：label、icon、get_it、packageName、isSystem、时间戳
 - 列表项不再展示安装/更新时间（排序仍可用）
-- 点击行切换 hook → `updatePref()` 写入 `package_list`
+- 点击行切换 hook → `LegacyConfigViewModel.toggleApp()` → `repository.persistHookStates()` 写入 `package_list`
 
 ### 包可见性（QUERY_ALL_PACKAGES）
 
