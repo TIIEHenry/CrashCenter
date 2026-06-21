@@ -10,8 +10,7 @@ object AppFilterEngine {
         hookFilter: HookFilter,
         showSystemUi: Boolean,
     ): List<AppItem> {
-        val queryLower = query.lowercase(Locale.getDefault())
-        return apps.filter { app ->
+        val filtered = apps.filter { app ->
             val systemMatch = showSystemUi && app.isSystemApp ||
                 !showSystemUi && !app.isSystemApp
             if (!systemMatch) return@filter false
@@ -21,12 +20,9 @@ object AppFilterEngine {
                 HookFilter.OFF -> !app.hookEnabled
                 HookFilter.ALL -> true
             }
-            if (!hookMatch) return@filter false
-
-            if (queryLower.isEmpty()) return@filter true
-            app.name.lowercase(Locale.getDefault()).contains(queryLower) ||
-                app.packageName.lowercase(Locale.getDefault()).contains(queryLower)
+            hookMatch
         }
+        return filterByQuery(filtered, query, { it.name }, { it.packageName })
     }
 
     fun filterManagedApps(
@@ -34,19 +30,14 @@ object AppFilterEngine {
         query: String,
         managedFilter: ManagedFilter,
     ): List<ManagedApp> {
-        val queryLower = query.lowercase(Locale.getDefault())
-        return apps.filter { app ->
-            val filterMatch = when (managedFilter) {
+        val filtered = apps.filter { app ->
+            when (managedFilter) {
                 ManagedFilter.ENABLED -> app.interventionStatus == InterventionStatus.ENABLED
                 ManagedFilter.PENDING -> app.interventionStatus == InterventionStatus.PENDING
                 ManagedFilter.ALL -> true
             }
-            if (!filterMatch) return@filter false
-
-            if (queryLower.isEmpty()) return@filter true
-            app.label.lowercase(Locale.getDefault()).contains(queryLower) ||
-                app.packageName.lowercase(Locale.getDefault()).contains(queryLower)
         }
+        return filterByQuery(filtered, query, { it.label }, { it.packageName })
     }
 
     fun <T> filterByQuery(
