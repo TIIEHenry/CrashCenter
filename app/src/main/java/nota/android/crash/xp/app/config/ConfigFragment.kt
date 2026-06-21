@@ -221,7 +221,7 @@ class ConfigFragment : Fragment() {
 
         emptyStateRenderer.render(state, listCount)
 
-        requireContext().showErrorToast(state.errorMessage)
+        requireContext().showErrorToast(state.errorMessage) { viewModel.clearError() }
 
         if (!state.isLoading && !xposedDialogShown) {
             xposedDialogShown = dialogHelper.showXposedInactiveDialogIfNeeded(xposedDialogShown)

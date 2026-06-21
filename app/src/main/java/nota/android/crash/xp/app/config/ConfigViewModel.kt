@@ -30,6 +30,7 @@ class ConfigViewModel(
     fun addManagedPackages(packages: Collection<String>) = delegate.addManagedPackages(packages)
     fun selectAll(enabled: Boolean) = delegate.selectAll(enabled)
     fun setSortMode(mode: SortMode) = delegate.setSortMode(mode)
+    fun clearError() = delegate.clearError()
 
     private fun createDelegate(
         legacyRepository: LegacyAppRepository,
@@ -63,4 +64,5 @@ internal interface ConfigViewModelDelegate {
     fun addManagedPackages(packages: Collection<String>)
     fun selectAll(enabled: Boolean)
     fun setSortMode(mode: SortMode)
+    fun clearError()
 }

@@ -78,6 +78,10 @@ internal abstract class BaseConfigViewModel(
         // No-op by default; override in legacy
     }
 
+    override fun clearError() {
+        emitState { copy(errorMessage = null) }
+    }
+
     protected fun <T : AppListItem> applyFilters(
         preserveSort: Boolean,
         filter: (ConfigUiState) -> List<T>,

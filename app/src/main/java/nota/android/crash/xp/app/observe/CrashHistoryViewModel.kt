@@ -60,6 +60,10 @@ class CrashHistoryViewModel(
         }
     }
 
+    fun clearError() {
+        _uiState.value = _uiState.value.copy(errorMessage = null)
+    }
+
     companion object {
         const val PAGE_SIZE = 50
         const val PREFETCH_DISTANCE = 50

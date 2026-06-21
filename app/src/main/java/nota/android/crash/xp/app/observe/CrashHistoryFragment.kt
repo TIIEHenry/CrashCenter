@@ -116,7 +116,7 @@ class CrashHistoryFragment : Fragment() {
         if (state.eventCount > 0) {
             binding.eventCount.text = resources.getQuantityString(R.plurals.crash_history_count, state.eventCount, state.eventCount)
         }
-        requireContext().showErrorToast(state.errorMessage)
+        requireContext().showErrorToast(state.errorMessage) { viewModel.clearError() }
     }
 
     companion object {
