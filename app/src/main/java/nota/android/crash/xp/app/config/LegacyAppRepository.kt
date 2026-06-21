@@ -49,11 +49,11 @@ class LegacyAppRepository(context: Context) {
         return installedPackages.map { packageInfo ->
             val appInfo = packageInfo.applicationInfo ?: return@map null
             AppItem(
-                name = PackageInfoLoader.loadLabel(packageManager, appInfo),
+                label = PackageInfoLoader.loadLabel(packageManager, appInfo),
                 appInfo = appInfo,
                 hookEnabled = prefWhiteList == null || !prefWhiteList.contains(packageInfo.packageName),
                 packageName = packageInfo.packageName,
-                isSystemApp = PackageInfoLoader.isSystemApp(appInfo),
+                isSystem = PackageInfoLoader.isSystemApp(appInfo),
                 updateTime = packageInfo.lastUpdateTime,
                 installTime = packageInfo.firstInstallTime,
             )

@@ -36,7 +36,7 @@ class AppFilterEngineTest {
             showSystemUi = true,
         )
         assertEquals(1, result.size)
-        assertEquals("App B", result[0].name)
+        assertEquals("App B", result[0].label)
     }
 
     @Test
@@ -52,7 +52,7 @@ class AppFilterEngineTest {
             showSystemUi = false,
         )
         assertEquals(1, result.size)
-        assertEquals("App A", result[0].name)
+        assertEquals("App A", result[0].label)
     }
 
     @Test
@@ -68,7 +68,7 @@ class AppFilterEngineTest {
             showSystemUi = true,
         )
         assertEquals(1, result.size)
-        assertEquals("System", result[0].name)
+        assertEquals("System", result[0].label)
     }
 
     @Test
@@ -84,7 +84,7 @@ class AppFilterEngineTest {
             showSystemUi = false,
         )
         assertEquals(1, result.size)
-        assertEquals("App A", result[0].name)
+        assertEquals("App A", result[0].label)
     }
 
     @Test
@@ -100,7 +100,7 @@ class AppFilterEngineTest {
             showSystemUi = false,
         )
         assertEquals(1, result.size)
-        assertEquals("App B", result[0].name)
+        assertEquals("App B", result[0].label)
     }
 
     @Test
@@ -116,7 +116,7 @@ class AppFilterEngineTest {
             showSystemUi = false,
         )
         assertEquals(1, result.size)
-        assertEquals("Alpha Browser", result[0].name)
+        assertEquals("Alpha Browser", result[0].label)
     }
 
     @Test
@@ -132,7 +132,7 @@ class AppFilterEngineTest {
             showSystemUi = false,
         )
         assertEquals(1, result.size)
-        assertEquals("Mail", result[0].name)
+        assertEquals("Mail", result[0].label)
     }
 
     @Test
@@ -573,19 +573,19 @@ class AppFilterEngineTest {
 
     private fun fakeAppItem(
         packageName: String,
-        name: String,
+        label: String,
         isSystem: Boolean = false,
         hookEnabled: Boolean = false,
         updateTime: Long = 0L,
         installTime: Long = 0L,
     ): AppItem = AppItem(
-        name = name,
+        label = label,
         appInfo = ApplicationInfo().apply {
             this.packageName = packageName
         },
         hookEnabled = hookEnabled,
         packageName = packageName,
-        isSystemApp = isSystem,
+        isSystem = isSystem,
         updateTime = updateTime,
         installTime = installTime,
     )

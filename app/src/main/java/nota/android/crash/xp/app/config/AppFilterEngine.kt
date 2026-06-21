@@ -13,8 +13,8 @@ object AppFilterEngine {
         showSystemUi: Boolean,
     ): List<AppItem> {
         val filtered = apps.filter { app ->
-            val systemMatch = showSystemUi && app.isSystemApp ||
-                !showSystemUi && !app.isSystemApp
+            val systemMatch = showSystemUi && app.isSystem ||
+                !showSystemUi && !app.isSystem
             if (!systemMatch) return@filter false
 
             val hookMatch = when (hookFilter) {
@@ -24,7 +24,7 @@ object AppFilterEngine {
             }
             hookMatch
         }
-        return filterByQuery(filtered, query, { it.name }, { it.packageName })
+        return filterByQuery(filtered, query, { it.label }, { it.packageName })
     }
 
     fun filterManagedApps(

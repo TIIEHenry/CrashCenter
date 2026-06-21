@@ -231,16 +231,16 @@ class LegacyAppRepositoryTest {
     private fun fakeAppItem(
         packageName: String,
         hookEnabled: Boolean = true,
-        isSystemApp: Boolean = false,
+        isSystem: Boolean = false,
     ): AppItem = AppItem(
-        name = packageName,
+        label = packageName,
         appInfo = ApplicationInfo().apply {
             this.packageName = packageName
-            flags = if (isSystemApp) ApplicationInfo.FLAG_SYSTEM else 0
+            flags = if (isSystem) ApplicationInfo.FLAG_SYSTEM else 0
         },
         hookEnabled = hookEnabled,
         packageName = packageName,
-        isSystemApp = isSystemApp,
+        isSystem = isSystem,
         updateTime = 0L,
         installTime = 0L,
     )

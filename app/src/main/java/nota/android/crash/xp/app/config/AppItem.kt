@@ -3,11 +3,11 @@ package nota.android.crash.xp.app.config
 import android.content.pm.ApplicationInfo
 
 data class AppItem(
-    val name: String,
+    val label: String,
     val appInfo: ApplicationInfo,
     val hookEnabled: Boolean,
     val packageName: String,
-    val isSystemApp: Boolean,
+    val isSystem: Boolean,
     val updateTime: Long,
     val installTime: Long,
 )

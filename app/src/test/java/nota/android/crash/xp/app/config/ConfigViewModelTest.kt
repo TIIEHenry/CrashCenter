@@ -174,8 +174,8 @@ class ConfigViewModelTest {
         val state = viewModel.uiState.value
         assertEquals(2, state.allApps.size)
         assertEquals(2, state.visibleApps.size)
-        assertEquals("Alpha", state.visibleApps[0].name)
-        assertEquals("Beta", state.visibleApps[1].name)
+        assertEquals("Alpha", state.visibleApps[0].label)
+        assertEquals("Beta", state.visibleApps[1].label)
     }
 
     @Test
@@ -269,8 +269,8 @@ class ConfigViewModelTest {
         // Second load should win; first load's result is discarded
         val state = viewModel.uiState.value
         assertEquals(2, state.allApps.size)
-        assertEquals("App B", state.allApps[0].name)
-        assertEquals("App C", state.allApps[1].name)
+        assertEquals("App B", state.allApps[0].label)
+        assertEquals("App C", state.allApps[1].label)
     }
 
     @Test
@@ -306,7 +306,7 @@ class ConfigViewModelTest {
 
         assertEquals("Alp", viewModel.uiState.value.query)
         assertEquals(1, viewModel.uiState.value.visibleApps.size)
-        assertEquals("Alpha", viewModel.uiState.value.visibleApps[0].name)
+        assertEquals("Alpha", viewModel.uiState.value.visibleApps[0].label)
     }
 
     @Test
@@ -325,7 +325,7 @@ class ConfigViewModelTest {
 
         assertEquals(HookFilter.ON, viewModel.uiState.value.hookFilter)
         assertEquals(1, viewModel.uiState.value.visibleApps.size)
-        assertEquals("App A", viewModel.uiState.value.visibleApps[0].name)
+        assertEquals("App A", viewModel.uiState.value.visibleApps[0].label)
     }
 
     @Test
@@ -402,14 +402,14 @@ class ConfigViewModelTest {
         advanceUntilIdle()
 
         // Default sort is UPDATE_TIME_DESC, so Beta should be first
-        assertEquals("Beta", viewModel.uiState.value.visibleApps[0].name)
+        assertEquals("Beta", viewModel.uiState.value.visibleApps[0].label)
 
         viewModel.setSortMode(SortMode.NAME_ASC)
         advanceUntilIdle()
 
         assertEquals(SortMode.NAME_ASC, viewModel.uiState.value.sortMode)
-        assertEquals("Alpha", viewModel.uiState.value.visibleApps[0].name)
-        assertEquals("Beta", viewModel.uiState.value.visibleApps[1].name)
+        assertEquals("Alpha", viewModel.uiState.value.visibleApps[0].label)
+        assertEquals("Beta", viewModel.uiState.value.visibleApps[1].label)
     }
 
     @Test
@@ -466,20 +466,20 @@ class ConfigViewModelTest {
 
     private fun fakeAppItem(
         packageName: String,
-        name: String,
+        label: String,
         hookEnabled: Boolean = false,
-        isSystemApp: Boolean = false,
+        isSystem: Boolean = false,
         installTime: Long = 0L,
         updateTime: Long = 0L,
     ): AppItem = AppItem(
-        name = name,
+        label = label,
         appInfo = ApplicationInfo().apply {
             this.packageName = packageName
-            flags = if (isSystemApp) ApplicationInfo.FLAG_SYSTEM else 0
+            flags = if (isSystem) ApplicationInfo.FLAG_SYSTEM else 0
         },
         hookEnabled = hookEnabled,
         packageName = packageName,
-        isSystemApp = isSystemApp,
+        isSystem = isSystem,
         updateTime = updateTime,
         installTime = installTime,
     )

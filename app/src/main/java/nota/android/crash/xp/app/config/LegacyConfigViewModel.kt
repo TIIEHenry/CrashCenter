@@ -77,7 +77,7 @@ internal class LegacyConfigViewModel(
             )
         },
         sortExtractors = SortExtractors(
-            name = { it.name },
+            name = { it.label },
             installTime = { it.installTime },
             updateTime = { it.updateTime },
         ),
