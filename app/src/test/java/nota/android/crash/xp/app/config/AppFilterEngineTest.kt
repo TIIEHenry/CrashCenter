@@ -445,6 +445,39 @@ class AppFilterEngineTest {
         assertEquals("Only", list[0].label)
     }
 
+    @Test
+    fun `sort PickableApp NAME_ASC sorts ascending`() {
+        val list = mutableListOf(
+            fakePickableApp("com.c", "Charlie"),
+            fakePickableApp("com.a", "Alpha"),
+            fakePickableApp("com.b", "Beta"),
+        )
+        AppFilterEngine.sort(list = list, mode = SortMode.NAME_ASC)
+        assertEquals(listOf("Alpha", "Beta", "Charlie"), list.map { it.label })
+    }
+
+    @Test
+    fun `sort PickableApp INSTALL_TIME_ASC sorts ascending`() {
+        val list = mutableListOf(
+            fakePickableApp("com.c", "C", installTime = 3),
+            fakePickableApp("com.a", "A", installTime = 1),
+            fakePickableApp("com.b", "B", installTime = 2),
+        )
+        AppFilterEngine.sort(list = list, mode = SortMode.INSTALL_TIME_ASC)
+        assertEquals(listOf(1L, 2L, 3L), list.map { it.installTime })
+    }
+
+    @Test
+    fun `sort PickableApp UPDATE_TIME_DESC sorts descending`() {
+        val list = mutableListOf(
+            fakePickableApp("com.c", "C", updateTime = 3),
+            fakePickableApp("com.a", "A", updateTime = 1),
+            fakePickableApp("com.b", "B", updateTime = 2),
+        )
+        AppFilterEngine.sort(list = list, mode = SortMode.UPDATE_TIME_DESC)
+        assertEquals(listOf(3L, 2L, 1L), list.map { it.updateTime })
+    }
+
     // ─── matchesCrashEvent ───
 
     private val sampleEvent = CrashEvent(
@@ -599,6 +632,23 @@ class AppFilterEngineTest {
             this.packageName = packageName
         },
         hookEnabled = hookEnabled,
+        packageName = packageName,
+        isSystem = isSystem,
+        updateTime = updateTime,
+        installTime = installTime,
+    )
+
+    private fun fakePickableApp(
+        packageName: String,
+        label: String,
+        isSystem: Boolean = false,
+        updateTime: Long = 0L,
+        installTime: Long = 0L,
+    ): PickableApp = PickableApp(
+        label = label,
+        appInfo = ApplicationInfo().apply {
+            this.packageName = packageName
+        },
         packageName = packageName,
         isSystem = isSystem,
         updateTime = updateTime,
