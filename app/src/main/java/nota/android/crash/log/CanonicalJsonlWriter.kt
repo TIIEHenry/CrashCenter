@@ -39,6 +39,9 @@ object CanonicalJsonlWriter {
         val lines = readNonEmptyLines(eventsFile)
         if (lines.isEmpty()) return
 
+        // Fast path: if well under both limits, skip all trimming work.
+        if (lines.size <= MAX_ENTRIES && byteSize(lines) <= MAX_BYTES) return
+
         var trimmed = lines
         while (trimmed.size > MAX_ENTRIES) {
             trimmed = trimmed.drop(1)
