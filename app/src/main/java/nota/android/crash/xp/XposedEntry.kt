@@ -1,7 +1,6 @@
 package nota.android.crash.xp
 
 import android.app.Application
-import android.util.Log
 import de.robv.android.xposed.IXposedHookLoadPackage
 import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.XC_MethodReplacement
@@ -71,7 +70,7 @@ class XposedEntry : IXposedHookLoadPackage {
 
     private fun selfCheck(lpparam: XC_LoadPackage.LoadPackageParam): Boolean {
         if (lpparam.packageName == PACKAGE_NAME) {
-            Log.e("XposedEntry", "selfCheck:pkg: ${lpparam.packageName}")
+            hookSafeLog("XposedEntry", "selfCheck:pkg: ${lpparam.packageName}")
             try {
                 XposedHelpers.findAndHookMethod(
                     ModuleActivation::class.java.name,
@@ -80,7 +79,6 @@ class XposedEntry : IXposedHookLoadPackage {
                     XC_MethodReplacement.returnConstant(true)
                 )
             } catch (e: Exception) {
-                Log.e("XposedEntry", "selfCheckException: ${e.message}")
                 hookSafeLog("XposedEntry", "selfCheckException", e)
             }
             return true

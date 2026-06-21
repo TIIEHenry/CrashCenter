@@ -4,7 +4,6 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import nota.android.crash.xp.app.SystemBars
-import nota.android.crash.xp.app.common.ui.ToolbarHeaderInsets
 import nota.android.crash.xp.app.di.ServiceLocator
 import nota.android.crash.xp.app.databinding.ActivityCrashinfoBinding
 import nota.android.crash.xp.app.observe.CrashDetailBottomSheet
@@ -20,7 +19,7 @@ class ActivityCrashInfo : AppCompatActivity() {
         setContentView(binding.root)
 
         SystemBars.setup(this)
-        ToolbarHeaderInsets.apply(binding.toolbarHeader)
+        SystemBars.applyToolbarHeaderInsets(binding.toolbarHeader)
 
         setSupportActionBar(binding.toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)

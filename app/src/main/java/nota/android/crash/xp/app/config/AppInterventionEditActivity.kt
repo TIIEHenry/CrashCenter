@@ -15,7 +15,6 @@ import nota.android.crash.xp.app.R
 import nota.android.crash.xp.app.SystemBars
 import nota.android.crash.xp.app.common.ui.CallbackSuppressor
 import nota.android.crash.xp.app.common.ui.showErrorToast
-import nota.android.crash.xp.app.common.ui.ToolbarHeaderInsets
 import nota.android.crash.xp.app.di.ServiceLocator
 import nota.android.crash.xp.app.di.appInterventionEditViewModelFactory
 import nota.android.crash.xp.app.databinding.ActivityAppInterventionEditBinding
@@ -42,7 +41,7 @@ class AppInterventionEditActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         SystemBars.setup(this)
-        ToolbarHeaderInsets.apply(binding.toolbarHeader)
+        SystemBars.applyToolbarHeaderInsets(binding.toolbarHeader)
 
         setSupportActionBar(binding.toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)

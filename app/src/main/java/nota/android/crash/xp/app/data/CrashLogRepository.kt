@@ -126,9 +126,7 @@ class FileCrashLogRepository(context: Context) : CrashLogRepository {
                 } else {
                     tempFile.renameTo(eventsFile)
                 }
-                cache.clear()
-                lastFileModified.set(0L)
-                lastFileLength.set(0L)
+                invalidateCache()
             } else {
                 tempFile.delete()
             }
@@ -140,9 +138,7 @@ class FileCrashLogRepository(context: Context) : CrashLogRepository {
     override fun clear() {
         lock.write {
             eventsFile.delete()
-            cache.clear()
-            lastFileModified.set(0L)
-            lastFileLength.set(0L)
+            invalidateCache()
         }
     }
 
@@ -185,10 +181,14 @@ class FileCrashLogRepository(context: Context) : CrashLogRepository {
     override fun applyRetention() {
         lock.write {
             CanonicalJsonlWriter.applyRetention(eventsFile)
-            cache.clear()
-            lastFileModified.set(0L)
-            lastFileLength.set(0L)
+            invalidateCache()
         }
+    }
+
+    private fun invalidateCache() {
+        cache.clear()
+        lastFileModified.set(0L)
+        lastFileLength.set(0L)
     }
 
     companion object {

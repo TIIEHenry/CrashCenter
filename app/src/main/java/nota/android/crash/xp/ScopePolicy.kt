@@ -1,11 +1,11 @@
 package nota.android.crash.xp
 
-import android.content.pm.ApplicationInfo
 import de.robv.android.xposed.XSharedPreferences
 import de.robv.android.xposed.callbacks.XC_LoadPackage
 import nota.android.crash.xp.app.config.AppInterventionProfile
 import nota.android.crash.xp.app.config.InterventionRule
 import nota.android.crash.xp.app.config.InterventionRulesCodec
+import nota.android.crash.xp.app.config.PackageInfoLoader
 
 object ScopePolicy {
 
@@ -24,7 +24,7 @@ object ScopePolicy {
         if (lpparam.appInfo == null) {
             return ScopeDecision(shouldHook = false, showNotify = false)
         }
-        val isSystemApp = lpparam.appInfo.flags and ApplicationInfo.FLAG_SYSTEM != 0
+        val isSystemApp = PackageInfoLoader.isSystemApp(lpparam.appInfo)
         return evaluate(
             packageName = lpparam.packageName,
             isSystemApp = isSystemApp,

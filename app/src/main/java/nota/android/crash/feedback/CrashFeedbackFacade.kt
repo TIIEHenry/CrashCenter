@@ -57,7 +57,7 @@ object CrashFeedbackFacade {
                     tip + label + " " + throwable.localizedMessage,
                     Toast.LENGTH_LONG,
                 ).show()
-                showNotification(packageName, application, appInfo, throwable, crashId)
+                showNotification(packageName, application, appInfo, label, throwable, crashId)
             } catch (t: Throwable) {
                 try {
                     XposedBridge.log(t)
@@ -72,6 +72,7 @@ object CrashFeedbackFacade {
         pkgName: String,
         application: Application,
         appInfo: ApplicationInfo,
+        appName: String,
         throwable: Throwable,
         crashId: String,
     ) {
@@ -91,8 +92,6 @@ object CrashFeedbackFacade {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED
             putExtra("crash_id", crashId)
         }
-
-        val appName = appInfo.loadLabel(application.packageManager).toString()
         val root = throwable.cause ?: throwable
         val stackTrace = buildString {
             for (element in root.stackTrace) {

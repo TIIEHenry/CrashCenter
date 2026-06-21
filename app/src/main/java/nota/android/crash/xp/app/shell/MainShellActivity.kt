@@ -18,7 +18,6 @@ import nota.android.crash.xp.app.di.ServiceLocator
 import nota.android.crash.xp.app.R
 import nota.android.crash.xp.app.SystemBars
 import nota.android.crash.xp.app.common.ui.StatusBanner
-import nota.android.crash.xp.app.common.ui.ToolbarHeaderInsets
 import nota.android.crash.xp.app.databinding.ActivityMainShellBinding
 
 class MainShellActivity : AppCompatActivity() {
@@ -37,7 +36,7 @@ class MainShellActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         SystemBars.setup(this)
-        ToolbarHeaderInsets.apply(binding.toolbarHeader)
+        SystemBars.applyToolbarHeaderInsets(binding.toolbarHeader)
 
         setSupportActionBar(binding.toolbar)
         setupStatusBanner()
