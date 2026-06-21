@@ -41,12 +41,12 @@ class AddManagedAppViewModel(
 
     fun setQuery(query: String) {
         val current = _uiState.value as? AddManagedAppUiState.Success ?: return
-        val normalized = query.lowercase(java.util.Locale.getDefault())
-        val visible = allApps.filter { app ->
-            if (normalized.isEmpty()) return@filter true
-            app.label.lowercase(java.util.Locale.getDefault()).contains(normalized) ||
-                app.packageName.lowercase(java.util.Locale.getDefault()).contains(normalized)
-        }
+        val visible = AppFilterEngine.filterByQuery(
+            items = allApps,
+            query = query,
+            labelExtractor = { it.label },
+            packageNameExtractor = { it.packageName },
+        )
         _uiState.value = current.copy(apps = visible, query = query)
     }
 }

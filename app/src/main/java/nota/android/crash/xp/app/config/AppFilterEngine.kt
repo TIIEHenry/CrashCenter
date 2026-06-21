@@ -49,6 +49,20 @@ object AppFilterEngine {
         }
     }
 
+    fun <T> filterByQuery(
+        items: List<T>,
+        query: String,
+        labelExtractor: (T) -> String,
+        packageNameExtractor: (T) -> String,
+    ): List<T> {
+        val queryLower = query.lowercase(Locale.getDefault())
+        if (queryLower.isEmpty()) return items
+        return items.filter { item ->
+            labelExtractor(item).lowercase(Locale.getDefault()).contains(queryLower) ||
+                packageNameExtractor(item).lowercase(Locale.getDefault()).contains(queryLower)
+        }
+    }
+
     fun <T> sort(
         list: MutableList<T>,
         mode: SortMode,
