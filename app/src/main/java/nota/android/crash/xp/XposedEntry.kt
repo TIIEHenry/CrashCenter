@@ -6,8 +6,8 @@ import de.robv.android.xposed.IXposedHookLoadPackage
 import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.XC_MethodReplacement
 import de.robv.android.xposed.XSharedPreferences
-import de.robv.android.xposed.XposedBridge
 import de.robv.android.xposed.XposedHelpers
+import nota.android.crash.log.hookSafeLog
 import de.robv.android.xposed.callbacks.XC_LoadPackage
 import nota.android.crash.CrashHandler
 import nota.android.crash.capture.CrashCapturePipeline
@@ -36,7 +36,7 @@ class XposedEntry : IXposedHookLoadPackage {
             return
         }
 
-        XposedBridge.log("catch package: ${lpparam.packageName}")
+        hookSafeLog("catch package: ${lpparam.packageName}")
         XposedHelpers.findAndHookMethod(
             "android.app.Application",
             lpparam.classLoader,
@@ -44,7 +44,7 @@ class XposedEntry : IXposedHookLoadPackage {
             object : XC_MethodHook() {
                 override fun afterHookedMethod(param: MethodHookParam) {
                     super.afterHookedMethod(param)
-                    XposedBridge.log("onCreate")
+                    hookSafeLog("onCreate")
                     hookToGrabCrash(lpparam, param, decision)
                 }
             }
@@ -81,7 +81,7 @@ class XposedEntry : IXposedHookLoadPackage {
                 )
             } catch (e: Exception) {
                 Log.e("XposedEntry", "selfCheckException: ${e.message}")
-                XposedBridge.log(e)
+                hookSafeLog("XposedEntry", "selfCheckException", e)
             }
             return true
         }
