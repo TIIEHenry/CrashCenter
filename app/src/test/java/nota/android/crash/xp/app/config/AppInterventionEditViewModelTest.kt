@@ -40,7 +40,12 @@ class AppInterventionEditViewModelTest {
     }
 
     private fun createViewModel(): AppInterventionEditViewModel {
-        return AppInterventionEditViewModel(packageName, repository, ioDispatcher = testDispatcher)
+        return AppInterventionEditViewModel(
+            packageName,
+            repository,
+            ioDispatcher = testDispatcher,
+            mainDispatcher = testDispatcher,
+        )
     }
 
     private fun captureSavedProfile(invocation: Int = 1): AppInterventionProfile {

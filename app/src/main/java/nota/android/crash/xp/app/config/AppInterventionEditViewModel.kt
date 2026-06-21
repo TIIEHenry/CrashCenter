@@ -19,6 +19,7 @@ class AppInterventionEditViewModel(
     private val packageName: String,
     private val repository: ManagedAppRepository,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
+    private val mainDispatcher: CoroutineDispatcher = Dispatchers.Main,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(AppInterventionEditUiState())
@@ -88,7 +89,7 @@ class AppInterventionEditViewModel(
     private fun saveProfile() {
         viewModelScope.launch(ioDispatcher) {
             repository.saveProfile(packageName, _uiState.value.profile)
-            withContext(Dispatchers.Main) {
+            withContext(mainDispatcher) {
                 _uiState.value = _uiState.value.copy(saved = true)
             }
         }
