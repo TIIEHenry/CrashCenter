@@ -55,11 +55,6 @@ class AppInterventionEditViewModel(
         updateCatchAllRule(current.copy(showNotify = showNotify))
     }
 
-    fun updateCrashLogEnabled(crashLogEnabled: Boolean?) {
-        val current = _uiState.value.catchAllRule ?: return
-        updateCatchAllRule(current.copy(crashLogEnabled = crashLogEnabled))
-    }
-
     fun addCatchAllRule() {
         val newRule = InterventionRule.defaultCatchAll(enabled = true)
         _uiState.value = _uiState.value.copy(

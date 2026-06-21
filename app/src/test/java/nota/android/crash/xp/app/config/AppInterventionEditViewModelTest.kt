@@ -168,27 +168,6 @@ class AppInterventionEditViewModelTest {
     }
 
     @Test
-    fun `updateCrashLogEnabled sets value`() = runTest(testDispatcher) {
-        val catchAll = InterventionRule.defaultCatchAll(enabled = true)
-        whenever(repository.getProfile(packageName)).thenReturn(
-            AppInterventionProfile(rules = listOf(catchAll)),
-        )
-
-        val viewModel = createViewModel()
-        advanceUntilIdle()
-        assertNull(viewModel.uiState.value.catchAllRule?.crashLogEnabled)
-
-        viewModel.updateCrashLogEnabled(true)
-        advanceUntilIdle()
-
-        assertTrue(viewModel.uiState.value.catchAllRule?.crashLogEnabled == true)
-        assertTrue(viewModel.uiState.value.saved)
-        val saved = captureSavedProfile()
-        assertEquals(1, saved.rules.size)
-        assertTrue(saved.rules[0].crashLogEnabled == true)
-    }
-
-    @Test
     fun `saveProfile persists changes`() = runTest(testDispatcher) {
         val catchAll = InterventionRule.defaultCatchAll(enabled = true)
         whenever(repository.getProfile(packageName)).thenReturn(
@@ -200,16 +179,14 @@ class AppInterventionEditViewModelTest {
 
         viewModel.toggleRuleEnabled(false)
         viewModel.updateShowNotify(true)
-        viewModel.updateCrashLogEnabled(true)
         advanceUntilIdle()
 
         assertTrue(viewModel.uiState.value.saved)
-        val saved = captureSavedProfile(invocation = 3)
+        val saved = captureSavedProfile(invocation = 2)
         assertEquals(1, saved.rules.size)
         val rule = saved.rules[0]
         assertFalse(rule.enabled)
         assertTrue(rule.showNotify == true)
-        assertTrue(rule.crashLogEnabled == true)
     }
 
     @Test
@@ -294,40 +271,6 @@ class AppInterventionEditViewModelTest {
 
         assertNull(viewModel.uiState.value.catchAllRule)
         assertEquals(AppInterventionProfile.EMPTY, viewModel.uiState.value.profile)
-    }
-
-    @Test
-    fun `updateCrashLogEnabled does nothing when no catch-all rule exists`() = runTest(testDispatcher) {
-        whenever(repository.getProfile(packageName)).thenReturn(AppInterventionProfile.EMPTY)
-
-        val viewModel = createViewModel()
-        advanceUntilIdle()
-
-        viewModel.updateCrashLogEnabled(true)
-        advanceUntilIdle()
-
-        assertNull(viewModel.uiState.value.catchAllRule)
-        assertEquals(AppInterventionProfile.EMPTY, viewModel.uiState.value.profile)
-    }
-
-    @Test
-    fun `updateCrashLogEnabled clears value`() = runTest(testDispatcher) {
-        val catchAll = InterventionRule.defaultCatchAll(enabled = true).copy(crashLogEnabled = true)
-        whenever(repository.getProfile(packageName)).thenReturn(
-            AppInterventionProfile(rules = listOf(catchAll)),
-        )
-
-        val viewModel = createViewModel()
-        advanceUntilIdle()
-        assertTrue(viewModel.uiState.value.catchAllRule?.crashLogEnabled == true)
-
-        viewModel.updateCrashLogEnabled(null)
-        advanceUntilIdle()
-
-        assertNull(viewModel.uiState.value.catchAllRule?.crashLogEnabled)
-        val saved = captureSavedProfile()
-        assertEquals(1, saved.rules.size)
-        assertNull(saved.rules[0].crashLogEnabled)
     }
 
     @Test
