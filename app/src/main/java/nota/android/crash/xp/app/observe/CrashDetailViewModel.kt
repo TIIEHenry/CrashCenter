@@ -1,14 +1,12 @@
 package nota.android.crash.xp.app.observe
 
 import androidx.lifecycle.SavedStateHandle
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import nota.android.crash.xp.app.common.BaseFlowViewModel
 import nota.android.crash.xp.app.common.safeLog
 import nota.android.crash.xp.app.data.CrashDetailLoader
 import nota.android.crash.xp.app.data.CrashLogRepository
@@ -29,12 +27,9 @@ class CrashDetailViewModel(
     private val repository: CrashLogRepository,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
     savedStateHandle: SavedStateHandle,
-) : ViewModel() {
+) : BaseFlowViewModel<CrashDetailUiState>(CrashDetailUiState.Loading) {
 
     private val crashId: String = savedStateHandle.get<String>(ARG_CRASH_ID).orEmpty()
-
-    private val _uiState = MutableStateFlow<CrashDetailUiState>(CrashDetailUiState.Loading)
-    val uiState: StateFlow<CrashDetailUiState> = _uiState
 
     init {
         loadCrashDetail()
@@ -51,12 +46,14 @@ class CrashDetailViewModel(
                 val title = event?.shortExceptionClass
                     ?: CrashDetailLoader.titleFromStackTrace(stackTrace)
                     ?: "Crash Info"
-                _uiState.value = CrashDetailUiState.Success(title, stackTrace)
+                emitState { CrashDetailUiState.Success(title, stackTrace) }
             } catch (e: Exception) {
                 safeLog("CrashDetailViewModel", "loadCrashDetail failed", e)
-                _uiState.value = CrashDetailUiState.Error(
-                    message = e.message ?: "Unknown error"
-                )
+                emitState {
+                    CrashDetailUiState.Error(
+                        message = e.message ?: "Unknown error"
+                    )
+                }
             }
         }
     }

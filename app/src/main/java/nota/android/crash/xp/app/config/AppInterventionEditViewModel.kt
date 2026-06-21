@@ -29,13 +29,15 @@ class AppInterventionEditViewModel(
                     repository.getProfile(packageName)
                 }
                 val catchAll = profile.rules.firstOrNull { it.type == InterventionRuleType.CATCH_ALL }
-                _uiState.value = AppInterventionEditUiState(
-                    profile = profile,
-                    catchAllRule = catchAll,
-                )
+                emitState {
+                    AppInterventionEditUiState(
+                        profile = profile,
+                        catchAllRule = catchAll,
+                    )
+                }
             } catch (e: Exception) {
                 safeLog("AppInterventionEditViewModel", "loadProfile failed", e)
-                _uiState.value = _uiState.value.copy(errorMessage = e.message)
+                emitState { copy(errorMessage = e.message) }
             }
         }
     }
@@ -52,18 +54,22 @@ class AppInterventionEditViewModel(
 
     fun addCatchAllRule() {
         val newRule = InterventionRule.defaultCatchAll(enabled = true)
-        _uiState.value = _uiState.value.copy(
-            catchAllRule = newRule,
-            profile = AppInterventionProfile(rules = listOf(newRule)),
-        )
+        emitState {
+            copy(
+                catchAllRule = newRule,
+                profile = AppInterventionProfile(rules = listOf(newRule)),
+            )
+        }
         saveProfile()
     }
 
     fun deleteCatchAllRule() {
-        _uiState.value = _uiState.value.copy(
-            catchAllRule = null,
-            profile = AppInterventionProfile.EMPTY,
-        )
+        emitState {
+            copy(
+                catchAllRule = null,
+                profile = AppInterventionProfile.EMPTY,
+            )
+        }
         saveProfile()
     }
 
@@ -80,10 +86,12 @@ class AppInterventionEditViewModel(
     private fun updateCatchAllRule(updatedRule: InterventionRule) {
         val otherRules = _uiState.value.profile.rules.filter { it.type != InterventionRuleType.CATCH_ALL }
         val newProfile = _uiState.value.profile.copy(rules = otherRules + updatedRule)
-        _uiState.value = _uiState.value.copy(
-            catchAllRule = updatedRule,
-            profile = newProfile,
-        )
+        emitState {
+            copy(
+                catchAllRule = updatedRule,
+                profile = newProfile,
+            )
+        }
         saveProfile()
     }
 
@@ -91,7 +99,7 @@ class AppInterventionEditViewModel(
         viewModelScope.launch(ioDispatcher) {
             repository.saveProfile(packageName, _uiState.value.profile)
             withContext(mainDispatcher) {
-                _uiState.value = _uiState.value.copy(saved = true)
+                emitState { copy(saved = true) }
             }
         }
     }

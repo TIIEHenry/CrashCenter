@@ -32,10 +32,10 @@ class AddManagedAppViewModel(
             try {
                 val loaded = repository.loadPickableApps()
                 allApps = loaded
-                _uiState.value = AddManagedAppUiState.Success(apps = loaded)
+                emitState { AddManagedAppUiState.Success(apps = loaded) }
             } catch (e: Exception) {
                 safeLog("AddManagedAppViewModel", "loadPickableApps failed", e)
-                _uiState.value = AddManagedAppUiState.Error(e.message ?: "Unknown error")
+                emitState { AddManagedAppUiState.Error(e.message ?: "Unknown error") }
             }
         }
     }
@@ -48,6 +48,6 @@ class AddManagedAppViewModel(
             labelExtractor = { it.label },
             packageNameExtractor = { it.packageName },
         )
-        _uiState.value = current.copy(apps = visible, query = query)
+        emitState { (this as AddManagedAppUiState.Success).copy(apps = visible, query = query) }
     }
 }
