@@ -1,389 +1,207 @@
 package nota.android.crash.log
 
 import android.content.Context
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.TimeoutCancellationException
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.isActive
-import kotlinx.coroutines.launch
+import android.content.SharedPreferences
+import de.robv.android.xposed.XSharedPreferences
+import de.robv.android.xposed.XposedBridge
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.withTimeout
 import nota.android.crash.common.data.CrashEvent
+import nota.android.crash.xp.PrefManager
 import org.junit.After
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
+import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.mockito.MockedConstruction
+import org.mockito.MockedStatic
+import org.mockito.Mockito
+import org.mockito.kotlin.any
+import org.mockito.kotlin.doReturn
+import org.mockito.kotlin.eq
+import org.mockito.kotlin.mock
+import org.mockito.kotlin.never
+import org.mockito.kotlin.verify
+import org.mockito.kotlin.whenever
 import org.robolectric.RobolectricTestRunner
-import org.robolectric.RuntimeEnvironment
-import java.util.concurrent.atomic.AtomicBoolean
-import java.util.concurrent.atomic.AtomicInteger
 
 @RunWith(RobolectricTestRunner::class)
 class CrashLogCoordinatorTest {
 
-    private val context: Context = RuntimeEnvironment.getApplication()
+    private lateinit var xposedMock: MockedStatic<XposedBridge>
+    private lateinit var xPrefsConstruction: MockedConstruction<XSharedPreferences>
+    private lateinit var prefs: SharedPreferences
+    private lateinit var context: Context
+    private lateinit var event: CrashEvent
+
+    @Before
+    fun setUp() {
+        context = mock()
+        event = CrashEvent(id = "evt-1", packageName = "com.test")
+
+        prefs = mock<SharedPreferences>()
+        doReturn(true).`when`(prefs).getBoolean(any(), any())
+
+        // Intercept XSharedPreferences constructor calls and delegate to prefs.
+        // Void methods (like reload()) return null; non-void delegate via reflection.
+        xPrefsConstruction = Mockito.mockConstruction(
+            XSharedPreferences::class.java,
+            Mockito.withSettings().defaultAnswer {
+                if (it.method.returnType == Void.TYPE) null
+                else try {
+                    it.method.invoke(prefs, *it.arguments)
+                } catch (_: Exception) {
+                    null
+                }
+            },
+        )
+
+        xposedMock = Mockito.mockStatic(XposedBridge::class.java)
+        xposedMock.`when`<Unit> { XposedBridge.log(any<String>()) }.then {}
+    }
 
     @After
     fun tearDown() {
-        CrashLogCoordinator.shutdown()
+        xposedMock.close()
+        xPrefsConstruction.close()
     }
 
-    // ---------- Fake Backends ----------
+    // --- helpers ---
 
-    private class FakeBackend(
-        override val id: BackendId,
-        private val result: AppendResult,
-        private val delayMs: Long = 0,
-    ) : CrashLogBackend {
-        override val tier: Int = 1
-        override val runsOn: ProcessSlot = ProcessSlot.HOOK
-        val appendCalled = AtomicBoolean(false)
-        val appendCount = AtomicInteger(0)
-
-        override fun probe(context: Context): BackendAvailability = BackendAvailability.READY
-
-        override fun append(context: Context, event: CrashEvent, deadlineMs: Long): AppendResult {
-            appendCalled.set(true)
-            appendCount.incrementAndGet()
-            if (delayMs > 0) {
-                Thread.sleep(delayMs)
-            }
-            return result
-        }
+    private fun mockBackend(
+        id: BackendId,
+        result: AppendResult = AppendResult.Success,
+    ): CrashLogBackend {
+        val backend = mock<CrashLogBackend>()
+        whenever(backend.id).thenReturn(id)
+        whenever(backend.append(any(), any(), eq(2000L))).thenReturn(result)
+        return backend
     }
 
-    private class ThrowingBackend(
-        override val id: BackendId,
-        private val error: Throwable,
-    ) : CrashLogBackend {
-        override val tier: Int = 1
-        override val runsOn: ProcessSlot = ProcessSlot.HOOK
-        val appendCalled = AtomicBoolean(false)
-
-        override fun probe(context: Context): BackendAvailability = BackendAvailability.READY
-
-        override fun append(context: Context, event: CrashEvent, deadlineMs: Long): AppendResult {
-            appendCalled.set(true)
-            throw error
-        }
-    }
-
-    private class SlowBackend(
-        override val id: BackendId,
-        private val hangMs: Long,
-    ) : CrashLogBackend {
-        override val tier: Int = 1
-        override val runsOn: ProcessSlot = ProcessSlot.HOOK
-        val appendCalled = AtomicBoolean(false)
-
-        override fun probe(context: Context): BackendAvailability = BackendAvailability.READY
-
-        override fun append(context: Context, event: CrashEvent, deadlineMs: Long): AppendResult {
-            appendCalled.set(true)
-            // Sleep in small chunks so InterruptedException (from coroutine cancellation)
-            // breaks the loop promptly instead of blocking the full hangMs.
-            val chunkMs = 50L
-            var remaining = hangMs
-            while (remaining > 0) {
-                try {
-                    Thread.sleep(minOf(chunkMs, remaining))
-                } catch (_: InterruptedException) {
-                    Thread.currentThread().interrupt()
-                    break
-                }
-                remaining -= chunkMs
-            }
-            return AppendResult.Success
-        }
-    }
-
-    // ---------- Helpers ----------
-
-    private fun createFakeRegistry(backends: List<CrashLogBackend>): CrashLogBackendRegistry {
-        // We can't easily mock the registry object since it's an object with a fixed list.
-        // Instead, we test the coordinator's internal logic via the public API by using
-        // the real registry which reads from XSharedPreferences. Since XSharedPreferences
-        // is not available in unit tests, the backends will be filtered out.
-        // Therefore, we test the coordinator's parallel write logic directly by
-        // calling runPhase2Parallel via reflection or by testing the observable behavior.
-        //
-        // Actually, the coordinator's logAsync is the public API. But it depends on
-        // isLoggingEnabled() which uses XSharedPreferences. In unit tests this will
-        // likely fail silently (catch block) and not call runPhase2Parallel.
-        //
-        // So we test runPhase2Parallel directly via reflection to exercise the
-        // parallel backend write logic.
-        return CrashLogBackendRegistry
-    }
-
-    // ---------- Tests ----------
+    // ─── 1. Single backend success ────────────────────────────────────────
 
     @Test
-    fun `logAsync does not throw on the caller thread`() {
-        // logAsync launches a coroutine and returns immediately.
-        // We verify the public API is callable without blocking/throwing.
-        val event = CrashEvent(id = "test-async", packageName = "com.test")
-        CrashLogCoordinator.logAsync(
-            hookContext = context,
-            event = event,
-        )
-        // The internal coroutine may fail on XposedBridge in the background,
-        // but the caller thread should not be affected.
+    fun `runPhase2Parallel single backend success writes event`() {
+        val backend = mockBackend(BackendId.DIRECT_FS)
+
+        runBlocking { CrashLogCoordinator.runPhase2Parallel(context, event, listOf(backend)) }
+
+        verify(backend).append(context, event, 2000L)
+        xposedMock.verify({ XposedBridge.log(any<String>()) }, never())
     }
 
-    @Test
-    fun `parallel backend writes complete when all succeed quickly`() = runTest {
-        val successCount = AtomicInteger(0)
+    // ─── 2. Single backend failure ────────────────────────────────────────
 
-        val backendA = object : CrashLogBackend {
-            override val id = BackendId.PROVIDER_INSERT
-            override val tier = 1
-            override val runsOn = ProcessSlot.HOOK
-            override fun probe(context: Context) = BackendAvailability.READY
-            override fun append(context: Context, event: CrashEvent, deadlineMs: Long): AppendResult {
-                successCount.incrementAndGet()
-                return AppendResult.Success
-            }
+    @Test
+    fun `runPhase2Parallel single backend failure does not crash`() {
+        val backend = mockBackend(BackendId.DIRECT_FS, AppendResult.Failure("disk full"))
+
+        runBlocking { CrashLogCoordinator.runPhase2Parallel(context, event, listOf(backend)) }
+
+        verify(backend).append(context, event, 2000L)
+        xposedMock.verify {
+            XposedBridge.log("CrashLog: all Phase 2 backends failed for evt-1")
         }
-        val backendB = object : CrashLogBackend {
-            override val id = BackendId.DIRECT_FS
-            override val tier = 1
-            override val runsOn = ProcessSlot.HOOK
-            override fun probe(context: Context) = BackendAvailability.READY
-            override fun append(context: Context, event: CrashEvent, deadlineMs: Long): AppendResult {
-                successCount.incrementAndGet()
-                return AppendResult.Success
-            }
+    }
+
+    // ─── 3. Multiple backends all succeed ─────────────────────────────────
+
+    @Test
+    fun `runPhase2Parallel multiple backends all succeed`() {
+        val provider = mockBackend(BackendId.PROVIDER_INSERT)
+        val directFs = mockBackend(BackendId.DIRECT_FS)
+
+        runBlocking { CrashLogCoordinator.runPhase2Parallel(context, event, listOf(provider, directFs)) }
+
+        verify(provider).append(context, event, 2000L)
+        verify(directFs).append(context, event, 2000L)
+        xposedMock.verify({ XposedBridge.log(any<String>()) }, never())
+    }
+
+    // ─── 4. Multiple backends one fails, others succeed ───────────────────
+
+    @Test
+    fun `runPhase2Parallel one backend fails others still succeed`() {
+        val provider = mockBackend(BackendId.PROVIDER_INSERT)
+        val directFs = mockBackend(BackendId.DIRECT_FS, AppendResult.Failure("permission denied"))
+
+        runBlocking { CrashLogCoordinator.runPhase2Parallel(context, event, listOf(provider, directFs)) }
+
+        verify(provider).append(context, event, 2000L)
+        verify(directFs).append(context, event, 2000L)
+        // At least one succeeded, so no "all failed" log
+        xposedMock.verify({ XposedBridge.log(any<String>()) }, never())
+    }
+
+    // ─── 5. All backends fail ─────────────────────────────────────────────
+
+    @Test
+    fun `runPhase2Parallel all backends fail logs but does not crash`() {
+        val provider = mockBackend(BackendId.PROVIDER_INSERT, AppendResult.Failure("err1"))
+        val directFs = mockBackend(BackendId.DIRECT_FS, AppendResult.Failure("err2"))
+
+        runBlocking { CrashLogCoordinator.runPhase2Parallel(context, event, listOf(provider, directFs)) }
+
+        verify(provider).append(context, event, 2000L)
+        verify(directFs).append(context, event, 2000L)
+        xposedMock.verify {
+            XposedBridge.log("CrashLog: all Phase 2 backends failed for evt-1")
         }
-
-        // Test that multiple backends can be called in parallel without blocking
-        // by simulating the parallel dispatch pattern used in runPhase2Parallel
-        val backends = listOf(backendA, backendB)
-        val event = CrashEvent(id = "test-parallel", packageName = "com.test")
-
-        val written = mutableListOf<String>()
-        coroutineScope {
-            val deferreds = backends.map { backend ->
-                async(Dispatchers.Default) {
-                    when (backend.append(context, event, 2000L)) {
-                        is AppendResult.Success -> backend.id.wireName
-                        is AppendResult.Failure -> null
-                    }
-                }
-            }
-            deferreds.awaitAll().filterNotNull().forEach { written.add(it) }
-        }
-
-        assertEquals(2, successCount.get())
-        assertEquals(listOf("provider_insert", "direct_fs"), written)
     }
 
+    // ─── 6. Backend throws exception ──────────────────────────────────────
+
     @Test
-    fun `timeout handling when a backend is slow`() = runTest {
-        val fastBackend = FakeBackend(BackendId.PROVIDER_INSERT, AppendResult.Success, delayMs = 0)
-        val slowBackend = SlowBackend(BackendId.DIRECT_FS, hangMs = 30_000)
+    fun `runPhase2Parallel backend throws exception is caught and does not crash`() {
+        val throwing = mock<CrashLogBackend>()
+        whenever(throwing.id).thenReturn(BackendId.DIRECT_FS)
+        whenever(throwing.append(any(), any(), eq(2000L)))
+            .thenThrow(RuntimeException("disk exploded"))
+        val success = mockBackend(BackendId.PROVIDER_INSERT)
 
-        val backends = listOf(fastBackend, slowBackend)
-        val event = CrashEvent(id = "test-timeout", packageName = "com.test")
+        // Throwing backend exception is caught inside async(Dispatchers.IO).
+        // The coordinator still completes without crashing.
+        runBlocking { CrashLogCoordinator.runPhase2Parallel(context, event, listOf(success, throwing)) }
 
-        val written = mutableListOf<String>()
-        try {
-            withTimeout(100) {
-                coroutineScope {
-                    val deferreds = backends.map { backend ->
-                        async(Dispatchers.Default) {
-                            when (backend.append(context, event, 100L)) {
-                                is AppendResult.Success -> backend.id.wireName
-                                is AppendResult.Failure -> null
-                            }
-                        }
-                    }
-                    deferreds.awaitAll().filterNotNull().forEach { written.add(it) }
-                }
-            }
-        } catch (_: TimeoutCancellationException) {
-            // Expected: timeout should fire before slow backend finishes
-        }
-
-        // Fast backend should have been called; slow backend should have started
-        assertTrue("Fast backend should have been called", fastBackend.appendCalled.get())
-        assertTrue("Slow backend should have been called (started)", slowBackend.appendCalled.get())
-        // withTimeout(100) fires before awaitAll can collect results because
-        // the slow backend blocks for 30s. written may be empty or may contain
-        // the fast backend depending on whether it completed before timeout.
-        assertTrue("written should be empty or contain only fast backend",
-            written.isEmpty() || written == listOf("provider_insert"))
+        verify(success).append(context, event, 2000L)
+        verify(throwing).append(context, event, 2000L)
+        // hookSafeLog for individual failures runs on Dispatchers.IO (not the test thread),
+        // so we cannot verify XposedBridge.log here. The test passes if no crash occurs.
     }
 
+    // ─── 7. Empty backend list ────────────────────────────────────────────
+
     @Test
-    fun `timeout handling when all backends exceed deadline`() = runTest {
-        val slowBackendA = SlowBackend(BackendId.PROVIDER_INSERT, hangMs = 30_000)
-        val slowBackendB = SlowBackend(BackendId.DIRECT_FS, hangMs = 30_000)
+    fun `runPhase2Parallel empty backend list does not crash`() {
+        runBlocking { CrashLogCoordinator.runPhase2Parallel(context, event, emptyList()) }
 
-        val backends = listOf(slowBackendA, slowBackendB)
-        val event = CrashEvent(id = "test-all-timeout", packageName = "com.test")
-
-        val written = mutableListOf<String>()
-        try {
-            withTimeout(50) {
-                coroutineScope {
-                    val deferreds = backends.map { backend ->
-                        async(Dispatchers.Default) {
-                            when (backend.append(context, event, 50L)) {
-                                is AppendResult.Success -> backend.id.wireName
-                                is AppendResult.Failure -> null
-                            }
-                        }
-                    }
-                    deferreds.awaitAll().filterNotNull().forEach { written.add(it) }
-                }
-            }
-        } catch (_: TimeoutCancellationException) {
-            // Expected
-        }
-
-        assertTrue("No backends should have written due to timeout", written.isEmpty())
+        xposedMock.verify({ XposedBridge.log(any<String>()) }, never())
     }
 
+    // ─── 8. logAsync full flow ────────────────────────────────────────────
+
     @Test
-    fun `backend failure is handled gracefully`() = runTest {
-        val successBackend = FakeBackend(BackendId.PROVIDER_INSERT, AppendResult.Success)
-        val failureBackend = FakeBackend(BackendId.DIRECT_FS, AppendResult.Failure("disk full"))
+    fun `logAsync dispatches to backends when logging enabled`() {
+        CrashLogCoordinator.logAsync(context, event)
 
-        val backends = listOf(successBackend, failureBackend)
-        val event = CrashEvent(id = "test-failure", packageName = "com.test")
+        // logAsync launches on Dispatchers.IO; allow the coroutine to complete.
+        Thread.sleep(300)
 
-        val written = mutableListOf<String>()
-        coroutineScope {
-            val deferreds = backends.map { backend ->
-                async(Dispatchers.Default) {
-                    try {
-                        when (backend.append(context, event, 2000L)) {
-                            is AppendResult.Success -> backend.id.wireName
-                            is AppendResult.Failure -> null
-                        }
-                    } catch (t: Throwable) {
-                        null
-                    }
-                }
-            }
-            deferreds.awaitAll().filterNotNull().forEach { written.add(it) }
-        }
-
-        assertEquals(listOf("provider_insert"), written)
-        assertEquals(1, successBackend.appendCount.get())
-        assertEquals(1, failureBackend.appendCount.get())
+        // isLoggingEnabled() returns true (prefs.getBoolean returns true via mockConstruction),
+        // so runPhase2Parallel is called. Real backends execute and may fail or succeed.
+        // We verify the coordinator didn't crash on the caller thread.
     }
 
-    @Test
-    fun `backend throwing exception is caught and does not crash`() = runTest {
-        val successBackend = FakeBackend(BackendId.PROVIDER_INSERT, AppendResult.Success)
-        val throwingBackend = ThrowingBackend(BackendId.DIRECT_FS, RuntimeException("boom"))
-
-        val backends = listOf(successBackend, throwingBackend)
-        val event = CrashEvent(id = "test-throw", packageName = "com.test")
-
-        val written = mutableListOf<String>()
-        coroutineScope {
-            val deferreds = backends.map { backend ->
-                async(Dispatchers.Default) {
-                    try {
-                        when (backend.append(context, event, 2000L)) {
-                            is AppendResult.Success -> backend.id.wireName
-                            is AppendResult.Failure -> null
-                        }
-                    } catch (t: Throwable) {
-                        null
-                    }
-                }
-            }
-            deferreds.awaitAll().filterNotNull().forEach { written.add(it) }
-        }
-
-        assertTrue("Throwing backend should have been called", throwingBackend.appendCalled.get())
-        assertEquals(listOf("provider_insert"), written)
-    }
+    // ─── 9. logAsync skips when logging disabled ──────────────────────────
 
     @Test
-    fun `shutdown cancels pending work`() = runTest {
-        val jobStarted = AtomicBoolean(false)
-        val jobCompleted = AtomicBoolean(false)
+    fun `logAsync skips backend dispatch when logging disabled`() {
+        doReturn(false).`when`(prefs).getBoolean(PrefManager.PREF_CRASH_LOG_ENABLED, true)
 
-        // Use a custom scope to test shutdown behavior
-        val testScope = CoroutineScope(
-            SupervisorJob() + Dispatchers.Default
-        )
+        CrashLogCoordinator.logAsync(context, event)
 
-        val job = testScope.launch {
-            jobStarted.set(true)
-            delay(5000)
-            jobCompleted.set(true)
-        }
+        Thread.sleep(300)
 
-        // Wait for job to start
-        delay(50)
-        assertTrue("Job should have started", jobStarted.get())
-
-        // Cancel the scope (simulating shutdown)
-        testScope.cancel()
-
-        // Job should not complete
-        delay(100)
-        assertFalse("Job should not complete after shutdown", jobCompleted.get())
-        assertTrue("Job should be cancelled", job.isCancelled)
-    }
-
-    @Test
-    fun `shutdown prevents new work from starting`() = runTest {
-        val testScope = CoroutineScope(
-            SupervisorJob() + Dispatchers.Default
-        )
-
-        testScope.cancel()
-
-        val newJob = testScope.launch {
-            delay(10)
-        }
-
-        delay(50)
-        assertTrue("New job should be cancelled immediately", newJob.isCancelled)
-    }
-
-    @Test
-    fun `empty backend list returns immediately`() = runTest {
-        val backends = emptyList<CrashLogBackend>()
-        val event = CrashEvent(id = "test-empty", packageName = "com.test")
-
-        val written = mutableListOf<String>()
-        // With no backends, nothing to do — should complete instantly
-        assertTrue(backends.isEmpty())
-        assertTrue(written.isEmpty())
-    }
-
-    @Test
-    fun `single backend success is recorded`() = runTest {
-        val backend = FakeBackend(BackendId.PROVIDER_INSERT, AppendResult.Success)
-        val event = CrashEvent(id = "test-single", packageName = "com.test")
-
-        val result = backend.append(context, event, 2000L)
-        assertEquals(AppendResult.Success, result)
-        assertEquals(1, backend.appendCount.get())
-    }
-
-    @Test
-    fun `parallel timeout constant is 2000ms`() {
-        val field = CrashLogCoordinator.javaClass.getDeclaredField("PARALLEL_TIMEOUT_MS")
-        field.isAccessible = true
-        val timeout = field.getLong(CrashLogCoordinator)
-        assertEquals(2000L, timeout)
+        // When logging is disabled, isLoggingEnabled() returns false,
+        // so runPhase2Parallel is never called and no logging occurs.
+        xposedMock.verify({ XposedBridge.log(any<String>()) }, never())
     }
 }

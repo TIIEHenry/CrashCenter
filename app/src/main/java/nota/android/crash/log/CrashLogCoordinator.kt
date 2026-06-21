@@ -41,11 +41,21 @@ object CrashLogCoordinator {
         }
     }
 
-    private suspend fun runPhase2Parallel(
+    @androidx.annotation.VisibleForTesting
+    internal suspend fun runPhase2Parallel(
         hookContext: Context,
         event: nota.android.crash.common.data.CrashEvent,
     ) {
         val backends = CrashLogBackendRegistry.enabledHookPhase2Backends(hookContext)
+        runPhase2Parallel(hookContext, event, backends)
+    }
+
+    @androidx.annotation.VisibleForTesting
+    internal suspend fun runPhase2Parallel(
+        hookContext: Context,
+        event: nota.android.crash.common.data.CrashEvent,
+        backends: List<CrashLogBackend>,
+    ) {
         if (backends.isEmpty()) return
 
         val written = mutableListOf<String>()
@@ -80,7 +90,8 @@ object CrashLogCoordinator {
         coordinatorScope.cancel()
     }
 
-    private fun isLoggingEnabled(): Boolean {
+    @androidx.annotation.VisibleForTesting
+    internal fun isLoggingEnabled(): Boolean {
         val prefs = XSharedPreferences(PrefManager.PACKAGE_NAME, PrefManager.PREF_NAME)
         prefs.reload()
         return prefs.getBoolean(PrefManager.PREF_CRASH_LOG_ENABLED, true)
