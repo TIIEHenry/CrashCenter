@@ -1,9 +1,7 @@
 package nota.android.crash.log
 
 import nota.android.crash.common.data.CrashEvent
-import java.io.BufferedReader
 import java.io.File
-import java.io.FileReader
 import java.io.RandomAccessFile
 
 /**
@@ -27,16 +25,34 @@ object CanonicalJsonlWriter {
                 raf.seek(raf.length())
                 raf.write(line.toByteArray(Charsets.UTF_8))
                 raf.write('\n'.code)
+
+                // Retention runs inside the same lock to prevent races where
+                // concurrent writers see partially-trimmed files and lose entries.
+                applyRetentionLocked(raf)
             } finally {
                 lock.release()
             }
         }
-        applyRetention(eventsFile)
     }
 
     fun applyRetention(eventsFile: File) {
         if (!eventsFile.isFile) return
-        val lines = readNonEmptyLines(eventsFile)
+        RandomAccessFile(eventsFile, "rw").use { raf ->
+            val lock = raf.channel.lock()
+            try {
+                applyRetentionLocked(raf)
+            } finally {
+                lock.release()
+            }
+        }
+    }
+
+    /**
+     * Trims the oldest lines when entry count or byte size limits are exceeded.
+     * Caller must hold [RandomAccessFile.channel]'s lock for the duration.
+     */
+    private fun applyRetentionLocked(raf: RandomAccessFile) {
+        val lines = readLinesUtf8(raf)
         if (lines.isEmpty()) return
 
         // Fast path: if well under both limits, skip all trimming work.
@@ -51,33 +67,26 @@ object CanonicalJsonlWriter {
         }
         if (trimmed == lines) return
 
-        RandomAccessFile(eventsFile, "rw").use { raf ->
-            val lock = raf.channel.lock()
-            try {
-                raf.setLength(0)
-                trimmed.forEach { line ->
-                    raf.write(line.toByteArray(Charsets.UTF_8))
-                    raf.write('\n'.code)
-                }
-            } finally {
-                lock.release()
-            }
+        raf.setLength(0)
+        raf.seek(0)
+        trimmed.forEach { line ->
+            raf.write(line.toByteArray(Charsets.UTF_8))
+            raf.write('\n'.code)
         }
     }
 
     private fun byteSize(lines: List<String>): Long =
         lines.sumOf { it.toByteArray(Charsets.UTF_8).size + 1L }
 
-    private fun readNonEmptyLines(file: File): List<String> {
-        val lines = mutableListOf<String>()
-        BufferedReader(FileReader(file)).use { reader ->
-            reader.lineSequence().forEach { line ->
-                val trimmed = line.trim()
-                if (trimmed.isNotEmpty()) {
-                    lines.add(trimmed)
-                }
-            }
-        }
-        return lines
+    private fun readLinesUtf8(raf: RandomAccessFile): List<String> {
+        val len = raf.length().toInt()
+        if (len == 0) return emptyList()
+        val bytes = ByteArray(len)
+        raf.seek(0)
+        raf.readFully(bytes)
+        return String(bytes, Charsets.UTF_8)
+            .split("\n")
+            .map { it.trim() }
+            .filter { it.isNotEmpty() }
     }
 }
