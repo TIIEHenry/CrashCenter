@@ -3,12 +3,12 @@ package nota.android.crash.xp.app.data
 import android.content.Context
 import nota.android.crash.common.data.CrashEvent
 import nota.android.crash.log.CanonicalJsonlWriter
+import nota.android.crash.xp.app.config.AppFilterEngine
 import java.io.BufferedReader
 import java.io.File
 import java.io.FileReader
 import java.io.FileWriter
 import java.util.Collections
-import java.util.Locale
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
@@ -182,31 +182,8 @@ class FileCrashLogRepository(context: Context) : CrashLogRepository {
         }
     }
 
-    private fun matchesFilter(event: CrashEvent, filter: CrashFilter): Boolean {
-        filter.packageName?.let { pkg ->
-            if (event.packageName != pkg) return false
-        }
-        filter.source?.let { source ->
-            if (event.source != source) return false
-        }
-        filter.sinceMs?.let { since ->
-            if (event.timestampMs < since) return false
-        }
-        filter.untilMs?.let { until ->
-            if (event.timestampMs > until) return false
-        }
-        filter.query?.trim()?.takeIf { it.isNotEmpty() }?.let { query ->
-            val q = query.lowercase(Locale.getDefault())
-            val haystack = listOfNotNull(
-                event.appLabel,
-                event.packageName,
-                event.exceptionClass,
-                event.message,
-            ).joinToString(" ").lowercase(Locale.getDefault())
-            if (!haystack.contains(q)) return false
-        }
-        return true
-    }
+    private fun matchesFilter(event: CrashEvent, filter: CrashFilter): Boolean =
+        AppFilterEngine.matchesCrashEvent(event, filter)
 
     override fun applyRetention() {
         lock.write {

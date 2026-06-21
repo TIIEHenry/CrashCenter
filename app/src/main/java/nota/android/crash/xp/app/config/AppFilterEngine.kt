@@ -1,5 +1,7 @@
 package nota.android.crash.xp.app.config
 
+import nota.android.crash.common.data.CrashEvent
+import nota.android.crash.xp.app.data.CrashFilter
 import java.util.Locale
 
 object AppFilterEngine {
@@ -38,6 +40,24 @@ object AppFilterEngine {
             }
         }
         return filterByQuery(filtered, query, { it.label }, { it.packageName })
+    }
+
+    fun matchesCrashEvent(event: CrashEvent, filter: CrashFilter): Boolean {
+        filter.packageName?.let { if (event.packageName != it) return false }
+        filter.source?.let { if (event.source != it) return false }
+        filter.sinceMs?.let { if (event.timestampMs < it) return false }
+        filter.untilMs?.let { if (event.timestampMs > it) return false }
+        filter.query?.trim()?.takeIf { it.isNotEmpty() }?.let { query ->
+            val q = query.lowercase(Locale.getDefault())
+            val haystack = listOfNotNull(
+                event.appLabel,
+                event.packageName,
+                event.exceptionClass,
+                event.message,
+            ).joinToString(" ").lowercase(Locale.getDefault())
+            if (!haystack.contains(q)) return false
+        }
+        return true
     }
 
     fun <T> filterByQuery(

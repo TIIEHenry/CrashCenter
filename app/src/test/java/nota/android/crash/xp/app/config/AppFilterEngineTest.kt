@@ -1,7 +1,10 @@
 package nota.android.crash.xp.app.config
 
 import android.content.pm.ApplicationInfo
+import nota.android.crash.common.data.CrashEvent
+import nota.android.crash.xp.app.data.CrashFilter
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -425,6 +428,145 @@ class AppFilterEngineTest {
             updateTimeExtractor = { 0L },
         )
         assertEquals(listOf("Only"), list)
+    }
+
+    // ─── matchesCrashEvent ───
+
+    private val sampleEvent = CrashEvent(
+        id = "evt-1",
+        timestampMs = 1000L,
+        packageName = "com.example.app",
+        appLabel = "Example App",
+        exceptionClass = "java.lang.NullPointerException",
+        message = "Attempt to invoke virtual method on null reference",
+        source = "uncaught",
+    )
+
+    @Test
+    fun `matchesCrashEvent empty filter matches any event`() {
+        assertTrue(AppFilterEngine.matchesCrashEvent(sampleEvent, CrashFilter()))
+    }
+
+    @Test
+    fun `matchesCrashEvent packageName match`() {
+        val filter = CrashFilter(packageName = "com.example.app")
+        assertTrue(AppFilterEngine.matchesCrashEvent(sampleEvent, filter))
+    }
+
+    @Test
+    fun `matchesCrashEvent packageName mismatch`() {
+        val filter = CrashFilter(packageName = "com.other.app")
+        assertFalse(AppFilterEngine.matchesCrashEvent(sampleEvent, filter))
+    }
+
+    @Test
+    fun `matchesCrashEvent source match`() {
+        val filter = CrashFilter(source = "uncaught")
+        assertTrue(AppFilterEngine.matchesCrashEvent(sampleEvent, filter))
+    }
+
+    @Test
+    fun `matchesCrashEvent source mismatch`() {
+        val filter = CrashFilter(source = "anr")
+        assertFalse(AppFilterEngine.matchesCrashEvent(sampleEvent, filter))
+    }
+
+    @Test
+    fun `matchesCrashEvent sinceMs excludes older events`() {
+        val filter = CrashFilter(sinceMs = 1001L)
+        assertFalse(AppFilterEngine.matchesCrashEvent(sampleEvent, filter))
+    }
+
+    @Test
+    fun `matchesCrashEvent sinceMs includes exact boundary`() {
+        val filter = CrashFilter(sinceMs = 1000L)
+        assertTrue(AppFilterEngine.matchesCrashEvent(sampleEvent, filter))
+    }
+
+    @Test
+    fun `matchesCrashEvent untilMs excludes newer events`() {
+        val filter = CrashFilter(untilMs = 999L)
+        assertFalse(AppFilterEngine.matchesCrashEvent(sampleEvent, filter))
+    }
+
+    @Test
+    fun `matchesCrashEvent untilMs includes exact boundary`() {
+        val filter = CrashFilter(untilMs = 1000L)
+        assertTrue(AppFilterEngine.matchesCrashEvent(sampleEvent, filter))
+    }
+
+    @Test
+    fun `matchesCrashEvent query matches appLabel case insensitive`() {
+        val filter = CrashFilter(query = "EXAMPLE")
+        assertTrue(AppFilterEngine.matchesCrashEvent(sampleEvent, filter))
+    }
+
+    @Test
+    fun `matchesCrashEvent query matches packageName`() {
+        val filter = CrashFilter(query = "com.example")
+        assertTrue(AppFilterEngine.matchesCrashEvent(sampleEvent, filter))
+    }
+
+    @Test
+    fun `matchesCrashEvent query matches exceptionClass`() {
+        val filter = CrashFilter(query = "NullPointer")
+        assertTrue(AppFilterEngine.matchesCrashEvent(sampleEvent, filter))
+    }
+
+    @Test
+    fun `matchesCrashEvent query matches message`() {
+        val filter = CrashFilter(query = "null reference")
+        assertTrue(AppFilterEngine.matchesCrashEvent(sampleEvent, filter))
+    }
+
+    @Test
+    fun `matchesCrashEvent query with no match returns false`() {
+        val filter = CrashFilter(query = "zzzzz")
+        assertFalse(AppFilterEngine.matchesCrashEvent(sampleEvent, filter))
+    }
+
+    @Test
+    fun `matchesCrashEvent query blank is ignored`() {
+        val filter = CrashFilter(query = "   ")
+        assertTrue(AppFilterEngine.matchesCrashEvent(sampleEvent, filter))
+    }
+
+    @Test
+    fun `matchesCrashEvent full filter all match`() {
+        val filter = CrashFilter(
+            packageName = "com.example.app",
+            source = "uncaught",
+            sinceMs = 500L,
+            untilMs = 1500L,
+            query = "null",
+        )
+        assertTrue(AppFilterEngine.matchesCrashEvent(sampleEvent, filter))
+    }
+
+    @Test
+    fun `matchesCrashEvent full filter one field mismatch`() {
+        val filter = CrashFilter(
+            packageName = "com.example.app",
+            source = "anr",
+            sinceMs = 500L,
+            untilMs = 1500L,
+            query = "null",
+        )
+        assertFalse(AppFilterEngine.matchesCrashEvent(sampleEvent, filter))
+    }
+
+    @Test
+    fun `matchesCrashEvent null appLabel and message still matches packageName`() {
+        val event = CrashEvent(
+            id = "evt-2",
+            timestampMs = 2000L,
+            packageName = "com.minimal.app",
+            appLabel = null,
+            exceptionClass = "java.lang.Exception",
+            message = null,
+        )
+        val filter = CrashFilter(query = "minimal")
+        assertTrue(AppFilterEngine.matchesCrashEvent(event, filter))
     }
 
     // ─── Helpers ───
