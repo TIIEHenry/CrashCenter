@@ -3,6 +3,7 @@ package nota.android.crash.xp.app.config
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
 import nota.android.crash.xp.app.PackageVisibilityHelper
 
 internal abstract class BaseConfigViewModel(
@@ -76,5 +77,58 @@ internal abstract class BaseConfigViewModel(
         // No-op by default; override in legacy
     }
 
+    protected fun <T> applyFilters(
+        preserveSort: Boolean,
+        filter: (ConfigUiState) -> List<T>,
+        sortExtractors: SortExtractors<T>,
+        emptyMessage: (List<T>) -> String?,
+        setState: ConfigUiState.(List<T>) -> ConfigUiState,
+    ) {
+        val current = _uiState.value
+        val filtered = filter(current).toMutableList()
+        AppFilterEngine.sort(
+            filtered, current.sortMode,
+            sortExtractors.name, sortExtractors.installTime, sortExtractors.updateTime,
+        )
+        emitState { setState(filtered) }
+        emitState { copy(emptyMessage = emptyMessage(filtered)) }
+    }
+
+    protected fun <T> applyFilters(
+        preserveSort: Boolean,
+        filter: (ConfigUiState) -> List<T>,
+        sortExtractors: SortExtractors<T>,
+        emptyMessage: (List<T>, List<T>) -> String?,
+        setState: ConfigUiState.(List<T>) -> ConfigUiState,
+        sourceExtractor: (ConfigUiState) -> List<T>,
+    ) {
+        val current = _uiState.value
+        val filtered = filter(current).toMutableList()
+        val source = sourceExtractor(current)
+        AppFilterEngine.sort(
+            filtered, current.sortMode,
+            sortExtractors.name, sortExtractors.installTime, sortExtractors.updateTime,
+        )
+        emitState { setState(filtered) }
+        emitState { copy(emptyMessage = emptyMessage(filtered, source)) }
+    }
+
+    protected fun loadWithState(block: suspend () -> Unit) {
+        emitState { copy(isLoading = true) }
+        scope.launch {
+            try {
+                block()
+            } catch (_: Exception) {
+                emitState { copy(isLoading = false) }
+            }
+        }
+    }
+
     abstract fun applyFilters(preserveSort: Boolean)
 }
+
+internal data class SortExtractors<T>(
+    val name: (T) -> String,
+    val installTime: (T) -> Long,
+    val updateTime: (T) -> Long,
+)

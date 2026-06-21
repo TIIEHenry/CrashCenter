@@ -21,24 +21,12 @@ internal class ManagedConfigViewModel(
         val current = _uiState.value
         if (!forceReload && current.managedApps.isNotEmpty()) return
 
-        emitState { copy(isLoading = true) }
-
-        scope.launch {
-            try {
-                repository.pruneUninstalled()
-                val managedApps = repository.loadManagedApps()
-                val visibility = visibilityRepository.detectPackageVisibility()
-                emitState {
-                    copy(
-                        isLoading = false,
-                        managedApps = managedApps,
-                        packageVisibility = visibility,
-                    )
-                }
-                applyFilters(preserveSort = false)
-            } catch (_: Exception) {
-                emitState { copy(isLoading = false) }
-            }
+        loadWithState {
+            repository.pruneUninstalled()
+            val managedApps = repository.loadManagedApps()
+            val visibility = visibilityRepository.detectPackageVisibility()
+            emitState { copy(isLoading = false, managedApps = managedApps, packageVisibility = visibility) }
+            applyFilters(preserveSort = false)
         }
     }
 
@@ -77,29 +65,28 @@ internal class ManagedConfigViewModel(
         loadApps(forceReload = true)
     }
 
-    override fun applyFilters(preserveSort: Boolean) {
-        val current = _uiState.value
-        val filtered = AppFilterEngine.filterManagedApps(
-            current.managedApps,
-            current.query,
-            current.managedFilter,
-        ).toMutableList()
-
-        AppFilterEngine.sort(filtered, current.sortMode, { it.label }, { it.installTime }, { it.updateTime })
-
-        val emptyMessage = when {
-            filtered.isNotEmpty() -> null
-            current.managedApps.isEmpty() -> ConfigViewModel.EMPTY_MANAGED_LIST
-            else -> ConfigViewModel.EMPTY_FILTER
-        }
-
-        emitState {
-            copy(
-                visibleManagedApps = filtered,
-                emptyMessage = emptyMessage,
+    override fun applyFilters(preserveSort: Boolean) = applyFilters(
+        preserveSort = preserveSort,
+        filter = { state ->
+            AppFilterEngine.filterManagedApps(
+                state.managedApps, state.query, state.managedFilter,
             )
-        }
-    }
+        },
+        sortExtractors = SortExtractors(
+            name = { it.label },
+            installTime = { it.installTime },
+            updateTime = { it.updateTime },
+        ),
+        emptyMessage = { filtered, source ->
+            when {
+                filtered.isNotEmpty() -> null
+                source.isEmpty() -> ConfigViewModel.EMPTY_MANAGED_LIST
+                else -> ConfigViewModel.EMPTY_FILTER
+            }
+        },
+        setState = { filtered -> copy(visibleManagedApps = filtered) },
+        sourceExtractor = { it.managedApps },
+    )
 
     private suspend fun reloadManagedApp(packageName: String): ManagedApp? =
         repository.loadManagedApps().firstOrNull { it.packageName == packageName }

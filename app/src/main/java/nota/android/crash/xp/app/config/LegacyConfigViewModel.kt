@@ -1,7 +1,6 @@
 package nota.android.crash.xp.app.config
 
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
 import nota.android.crash.xp.app.PackageVisibilityHelper
 
 internal class LegacyConfigViewModel(
@@ -21,23 +20,11 @@ internal class LegacyConfigViewModel(
         val current = _uiState.value
         if (!forceReload && current.allApps.isNotEmpty()) return
 
-        emitState { copy(isLoading = true) }
-
-        scope.launch {
-            try {
-                val loadedApps = repository.loadInstalledApps()
-                val visibility = visibilityRepository.detectPackageVisibilityAfterLoad(loadedApps.size)
-                emitState {
-                    copy(
-                        isLoading = false,
-                        allApps = loadedApps,
-                        packageVisibility = visibility,
-                    )
-                }
-                applyFilters(preserveSort = false)
-            } catch (_: Exception) {
-                emitState { copy(isLoading = false) }
-            }
+        loadWithState {
+            val loadedApps = repository.loadInstalledApps()
+            val visibility = visibilityRepository.detectPackageVisibilityAfterLoad(loadedApps.size)
+            emitState { copy(isLoading = false, allApps = loadedApps, packageVisibility = visibility) }
+            applyFilters(preserveSort = false)
         }
     }
 
@@ -82,22 +69,21 @@ internal class LegacyConfigViewModel(
         applyFilters(preserveSort = true)
     }
 
-    override fun applyFilters(preserveSort: Boolean) {
-        val current = _uiState.value
-        val filtered = AppFilterEngine.filterLegacyApps(
-            current.allApps,
-            current.query,
-            current.hookFilter,
-            current.showSystemUi,
-        ).toMutableList()
-
-        AppFilterEngine.sort(filtered, current.sortMode, { it.name }, { it.installTime }, { it.updateTime })
-
-        emitState {
-            copy(
-                visibleApps = filtered,
-                emptyMessage = if (filtered.isEmpty()) ConfigViewModel.EMPTY_FILTER else null,
+    override fun applyFilters(preserveSort: Boolean) = applyFilters(
+        preserveSort = preserveSort,
+        filter = { state ->
+            AppFilterEngine.filterLegacyApps(
+                state.allApps, state.query, state.hookFilter, state.showSystemUi,
             )
-        }
-    }
+        },
+        sortExtractors = SortExtractors(
+            name = { it.name },
+            installTime = { it.installTime },
+            updateTime = { it.updateTime },
+        ),
+        emptyMessage = { filtered ->
+            if (filtered.isEmpty()) ConfigViewModel.EMPTY_FILTER else null
+        },
+        setState = { filtered -> copy(visibleApps = filtered) },
+    )
 }
