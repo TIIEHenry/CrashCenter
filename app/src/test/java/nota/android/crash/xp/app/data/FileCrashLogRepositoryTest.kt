@@ -51,6 +51,7 @@ class FileCrashLogRepositoryTest {
         exceptionClass: String = "RuntimeException",
         message: String? = "test",
         source: String? = "xposed",
+        appLabel: String? = null,
     ) = CrashEvent(
         id = id,
         timestampMs = timestampMs,
@@ -58,6 +59,7 @@ class FileCrashLogRepositoryTest {
         exceptionClass = exceptionClass,
         message = message,
         source = source,
+        appLabel = appLabel,
     )
 
     @Test
@@ -224,6 +226,36 @@ class FileCrashLogRepositoryTest {
         assertTrue(result.all { it.packageName == "com.foo" })
 
         val result2 = repo.getAll(CrashFilter(query = "Illegal"), limit = 100, offset = 0)
+        assertEquals(2, result2.size)
+    }
+
+    @Test
+    fun filterByQueryIsCaseInsensitive() {
+        writeEvent(event(id = "1", exceptionClass = "NullPointerException"))
+        writeEvent(event(id = "2", exceptionClass = "IllegalStateException"))
+
+        // Mixed-case query should match regardless of case
+        val result = repo.getAll(CrashFilter(query = "nullpointer"), limit = 100, offset = 0)
+        assertEquals(1, result.size)
+        assertEquals("NullPointerException", result[0].exceptionClass)
+
+        val result2 = repo.getAll(CrashFilter(query = "ILLEGALSTATE"), limit = 100, offset = 0)
+        assertEquals(1, result2.size)
+        assertEquals("IllegalStateException", result2[0].exceptionClass)
+    }
+
+    @Test
+    fun filterByQueryMatchesAppLabel() {
+        writeEvent(event(id = "1", packageName = "com.a", appLabel = "MyApp"))
+        writeEvent(event(id = "2", packageName = "com.b", appLabel = "OtherApp"))
+        writeEvent(event(id = "3", packageName = "com.c", appLabel = "MyApp Pro"))
+
+        val result = repo.getAll(CrashFilter(query = "MyApp"), limit = 100, offset = 0)
+        assertEquals(2, result.size)
+        assertTrue(result.all { it.appLabel?.contains("MyApp") == true })
+
+        // appLabel match is case-insensitive
+        val result2 = repo.getAll(CrashFilter(query = "myapp"), limit = 100, offset = 0)
         assertEquals(2, result2.size)
     }
 

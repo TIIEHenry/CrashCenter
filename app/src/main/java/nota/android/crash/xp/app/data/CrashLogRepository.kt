@@ -8,6 +8,7 @@ import java.io.File
 import java.io.FileReader
 import java.io.FileWriter
 import java.util.Collections
+import java.util.Locale
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
@@ -195,13 +196,13 @@ class FileCrashLogRepository(context: Context) : CrashLogRepository {
             if (event.timestampMs > until) return false
         }
         filter.query?.trim()?.takeIf { it.isNotEmpty() }?.let { query ->
-            val q = query.lowercase()
+            val q = query.lowercase(Locale.getDefault())
             val haystack = listOfNotNull(
                 event.appLabel,
                 event.packageName,
                 event.exceptionClass,
                 event.message,
-            ).joinToString(" ").lowercase()
+            ).joinToString(" ").lowercase(Locale.getDefault())
             if (!haystack.contains(q)) return false
         }
         return true
