@@ -36,8 +36,8 @@ class ConfigFragment : Fragment() {
         ServiceLocator.configViewModelFactory(requireContext())
     }
 
-    private lateinit var legacyController: LegacyConfigController
-    private lateinit var managedController: ManagedConfigController
+    private lateinit var legacyController: ConfigListController<AppItem>
+    private lateinit var managedController: ConfigListController<ManagedApp>
     private lateinit var permissionBannerRenderer: PermissionBannerRenderer
     private lateinit var emptyStateRenderer: EmptyStateRenderer
     private lateinit var optionsMenuHelper: ConfigOptionsMenuHelper
@@ -123,16 +123,45 @@ class ConfigFragment : Fragment() {
     }
 
     private fun setupControllers() {
-        legacyController = LegacyConfigController(
+        val legacyAdapter = AppToggleAdapter().apply {
+            onItemClick { _, data, _ -> viewModel.toggleApp(data.packageName) }
+        }
+        legacyController = ConfigListController(
             binding = binding,
-            onToggleApp = viewModel::toggleApp,
-            onHookFilterChanged = viewModel::setHookFilter,
+            adapter = legacyAdapter,
+            countLabelId = R.id.hook_countLabel,
+            dataSelector = { it.visibleApps },
+            filterConfig = FilterConfig(
+                chipRowRoot = binding.hookFilterChipRow.root,
+                chipGroupId = R.id.hook_chipGroup,
+                chipToFilter = mapOf(
+                    R.id.hook_chipOn to HookFilter.ON,
+                    R.id.hook_chipOff to HookFilter.OFF,
+                ),
+                defaultFilter = HookFilter.ALL,
+                onFilterChanged = viewModel::setHookFilter,
+            ),
         )
-        managedController = ManagedConfigController(
+
+        val managedAdapter = ManagedAppAdapter().apply {
+            onSwitchChanged = { app, enabled -> viewModel.setManagedSwitch(app.packageName, enabled) }
+            onItemClick { _, data, _ -> openInterventionEdit(data.packageName) }
+        }
+        managedController = ConfigListController(
             binding = binding,
-            onSwitchChanged = { app, enabled -> viewModel.setManagedSwitch(app.packageName, enabled) },
-            onItemClick = { app -> openInterventionEdit(app.packageName) },
-            onManagedFilterChanged = viewModel::setManagedFilter,
+            adapter = managedAdapter,
+            countLabelId = R.id.managed_countLabel,
+            dataSelector = { it.visibleManagedApps },
+            filterConfig = FilterConfig(
+                chipRowRoot = binding.managedFilterChipRow.root,
+                chipGroupId = R.id.managed_chipGroup,
+                chipToFilter = mapOf(
+                    R.id.managed_chipEnabled to ManagedFilter.ENABLED,
+                    R.id.managed_chipPending to ManagedFilter.PENDING,
+                ),
+                defaultFilter = ManagedFilter.ALL,
+                onFilterChanged = viewModel::setManagedFilter,
+            ),
         )
     }
 
