@@ -76,11 +76,6 @@ internal class LegacyConfigViewModel(
                 state.allApps, state.query, state.hookFilter, state.showSystemUi,
             )
         },
-        sortExtractors = SortExtractors(
-            name = { it.label },
-            installTime = { it.installTime },
-            updateTime = { it.updateTime },
-        ),
         emptyMessage = { filtered, _ ->
             if (filtered.isEmpty()) ConfigViewModel.EMPTY_FILTER else null
         },

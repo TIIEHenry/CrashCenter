@@ -74,20 +74,17 @@ object AppFilterEngine {
         }
     }
 
-    fun <T> sort(
+    fun <T : AppListItem> sort(
         list: MutableList<T>,
         mode: SortMode,
-        nameExtractor: (T) -> String,
-        installTimeExtractor: (T) -> Long,
-        updateTimeExtractor: (T) -> Long,
     ) {
         when (mode) {
-            SortMode.NAME_ASC -> list.sortWith(compareBy { nameExtractor(it) })
-            SortMode.NAME_DESC -> list.sortWith(compareByDescending { nameExtractor(it) })
-            SortMode.INSTALL_TIME_ASC -> list.sortWith(compareBy { installTimeExtractor(it) })
-            SortMode.INSTALL_TIME_DESC -> list.sortWith(compareByDescending { installTimeExtractor(it) })
-            SortMode.UPDATE_TIME_ASC -> list.sortWith(compareBy { updateTimeExtractor(it) })
-            SortMode.UPDATE_TIME_DESC -> list.sortWith(compareByDescending { updateTimeExtractor(it) })
+            SortMode.NAME_ASC -> list.sortWith(compareBy { it.label })
+            SortMode.NAME_DESC -> list.sortWith(compareByDescending { it.label })
+            SortMode.INSTALL_TIME_ASC -> list.sortWith(compareBy { it.installTime })
+            SortMode.INSTALL_TIME_DESC -> list.sortWith(compareByDescending { it.installTime })
+            SortMode.UPDATE_TIME_ASC -> list.sortWith(compareBy { it.updateTime })
+            SortMode.UPDATE_TIME_DESC -> list.sortWith(compareByDescending { it.updateTime })
         }
     }
 }

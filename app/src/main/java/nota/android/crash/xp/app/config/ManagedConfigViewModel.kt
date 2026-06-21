@@ -72,11 +72,6 @@ internal class ManagedConfigViewModel(
                 state.managedApps, state.query, state.managedFilter,
             )
         },
-        sortExtractors = SortExtractors(
-            name = { it.label },
-            installTime = { it.installTime },
-            updateTime = { it.updateTime },
-        ),
         emptyMessage = { filtered, source ->
             when {
                 filtered.isNotEmpty() -> null

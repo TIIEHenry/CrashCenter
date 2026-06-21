@@ -3,14 +3,14 @@ package nota.android.crash.xp.app.config
 import android.content.pm.ApplicationInfo
 
 data class AppItem(
-    val label: String,
-    val appInfo: ApplicationInfo,
+    override val label: String,
+    override val appInfo: ApplicationInfo,
     val hookEnabled: Boolean,
-    val packageName: String,
-    val isSystem: Boolean,
-    val updateTime: Long,
-    val installTime: Long,
-)
+    override val packageName: String,
+    override val isSystem: Boolean,
+    override val updateTime: Long,
+    override val installTime: Long,
+) : AppListItem
 
 enum class HookFilter {
     ALL, ON, OFF,

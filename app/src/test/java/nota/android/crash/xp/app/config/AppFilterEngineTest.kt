@@ -328,106 +328,82 @@ class AppFilterEngineTest {
 
     @Test
     fun `sort NAME_ASC sorts ascending`() {
-        val list = mutableListOf("Charlie", "Alpha", "Beta")
-        AppFilterEngine.sort(
-            list = list,
-            mode = SortMode.NAME_ASC,
-            nameExtractor = { it },
-            installTimeExtractor = { 0L },
-            updateTimeExtractor = { 0L },
+        val list = mutableListOf(
+            fakeAppItem("com.c", "Charlie"),
+            fakeAppItem("com.a", "Alpha"),
+            fakeAppItem("com.b", "Beta"),
         )
-        assertEquals(listOf("Alpha", "Beta", "Charlie"), list)
+        AppFilterEngine.sort(list = list, mode = SortMode.NAME_ASC)
+        assertEquals(listOf("Alpha", "Beta", "Charlie"), list.map { it.label })
     }
 
     @Test
     fun `sort NAME_DESC sorts descending`() {
-        val list = mutableListOf("Charlie", "Alpha", "Beta")
-        AppFilterEngine.sort(
-            list = list,
-            mode = SortMode.NAME_DESC,
-            nameExtractor = { it },
-            installTimeExtractor = { 0L },
-            updateTimeExtractor = { 0L },
+        val list = mutableListOf(
+            fakeAppItem("com.c", "Charlie"),
+            fakeAppItem("com.a", "Alpha"),
+            fakeAppItem("com.b", "Beta"),
         )
-        assertEquals(listOf("Charlie", "Beta", "Alpha"), list)
+        AppFilterEngine.sort(list = list, mode = SortMode.NAME_DESC)
+        assertEquals(listOf("Charlie", "Beta", "Alpha"), list.map { it.label })
     }
 
     @Test
     fun `sort INSTALL_TIME_ASC sorts ascending`() {
-        val list = mutableListOf(3L, 1L, 2L)
-        AppFilterEngine.sort(
-            list = list,
-            mode = SortMode.INSTALL_TIME_ASC,
-            nameExtractor = { "" },
-            installTimeExtractor = { it },
-            updateTimeExtractor = { 0L },
+        val list = mutableListOf(
+            fakeAppItem("com.c", "C", installTime = 3),
+            fakeAppItem("com.a", "A", installTime = 1),
+            fakeAppItem("com.b", "B", installTime = 2),
         )
-        assertEquals(listOf(1L, 2L, 3L), list)
+        AppFilterEngine.sort(list = list, mode = SortMode.INSTALL_TIME_ASC)
+        assertEquals(listOf(1L, 2L, 3L), list.map { it.installTime })
     }
 
     @Test
     fun `sort INSTALL_TIME_DESC sorts descending`() {
-        val list = mutableListOf(3L, 1L, 2L)
-        AppFilterEngine.sort(
-            list = list,
-            mode = SortMode.INSTALL_TIME_DESC,
-            nameExtractor = { "" },
-            installTimeExtractor = { it },
-            updateTimeExtractor = { 0L },
+        val list = mutableListOf(
+            fakeAppItem("com.c", "C", installTime = 3),
+            fakeAppItem("com.a", "A", installTime = 1),
+            fakeAppItem("com.b", "B", installTime = 2),
         )
-        assertEquals(listOf(3L, 2L, 1L), list)
+        AppFilterEngine.sort(list = list, mode = SortMode.INSTALL_TIME_DESC)
+        assertEquals(listOf(3L, 2L, 1L), list.map { it.installTime })
     }
 
     @Test
     fun `sort UPDATE_TIME_ASC sorts ascending`() {
-        val list = mutableListOf(3L, 1L, 2L)
-        AppFilterEngine.sort(
-            list = list,
-            mode = SortMode.UPDATE_TIME_ASC,
-            nameExtractor = { "" },
-            installTimeExtractor = { 0L },
-            updateTimeExtractor = { it },
+        val list = mutableListOf(
+            fakeAppItem("com.c", "C", updateTime = 3),
+            fakeAppItem("com.a", "A", updateTime = 1),
+            fakeAppItem("com.b", "B", updateTime = 2),
         )
-        assertEquals(listOf(1L, 2L, 3L), list)
+        AppFilterEngine.sort(list = list, mode = SortMode.UPDATE_TIME_ASC)
+        assertEquals(listOf(1L, 2L, 3L), list.map { it.updateTime })
     }
 
     @Test
     fun `sort UPDATE_TIME_DESC sorts descending`() {
-        val list = mutableListOf(3L, 1L, 2L)
-        AppFilterEngine.sort(
-            list = list,
-            mode = SortMode.UPDATE_TIME_DESC,
-            nameExtractor = { "" },
-            installTimeExtractor = { 0L },
-            updateTimeExtractor = { it },
+        val list = mutableListOf(
+            fakeAppItem("com.c", "C", updateTime = 3),
+            fakeAppItem("com.a", "A", updateTime = 1),
+            fakeAppItem("com.b", "B", updateTime = 2),
         )
-        assertEquals(listOf(3L, 2L, 1L), list)
+        AppFilterEngine.sort(list = list, mode = SortMode.UPDATE_TIME_DESC)
+        assertEquals(listOf(3L, 2L, 1L), list.map { it.updateTime })
     }
 
     @Test
     fun `sort with empty list does not throw`() {
-        val list = mutableListOf<String>()
-        AppFilterEngine.sort(
-            list = list,
-            mode = SortMode.NAME_ASC,
-            nameExtractor = { it },
-            installTimeExtractor = { 0L },
-            updateTimeExtractor = { 0L },
-        )
+        val list = mutableListOf<AppItem>()
+        AppFilterEngine.sort(list = list, mode = SortMode.NAME_ASC)
         assertTrue(list.isEmpty())
     }
 
     @Test
     fun `sort with single element is stable`() {
-        val list = mutableListOf("Only")
-        AppFilterEngine.sort(
-            list = list,
-            mode = SortMode.NAME_DESC,
-            nameExtractor = { it },
-            installTimeExtractor = { 0L },
-            updateTimeExtractor = { 0L },
-        )
-        assertEquals(listOf("Only"), list)
+        val list = mutableListOf(fakeAppItem("com.a", "Only"))
+        AppFilterEngine.sort(list = list, mode = SortMode.NAME_DESC)
+        assertEquals("Only", list[0].label)
     }
 
     // ─── matchesCrashEvent ───
