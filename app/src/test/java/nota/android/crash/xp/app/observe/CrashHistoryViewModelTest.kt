@@ -168,11 +168,13 @@ class CrashHistoryViewModelTest {
 
         // First call
         viewModel.loadEvents()
+        val firstJob = viewModel.loadJob
         // Second call before first completes
         viewModel.loadEvents()
 
         advanceUntilIdle()
 
+        assertTrue("first job should be cancelled", firstJob?.isCancelled == true)
         val state = viewModel.uiState.value
         assertFalse(state.isLoading)
         assertEquals(1, state.eventCount)

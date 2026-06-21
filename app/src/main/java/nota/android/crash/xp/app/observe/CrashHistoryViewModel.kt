@@ -8,6 +8,7 @@ import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -25,6 +26,8 @@ class CrashHistoryViewModel(
     private val _uiState = MutableStateFlow(CrashHistoryUiState())
     val uiState: StateFlow<CrashHistoryUiState> = _uiState
 
+    internal var loadJob: Job? = null
+
     val pagingData: Flow<PagingData<CrashEvent>> = Pager(
         config = PagingConfig(
             pageSize = PAGE_SIZE,
@@ -35,7 +38,8 @@ class CrashHistoryViewModel(
     ).flow.cachedIn(viewModelScope)
 
     fun loadEvents() {
-        viewModelScope.launch {
+        loadJob?.cancel()
+        loadJob = viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
             try {
                 val count = withContext(ioDispatcher) {
