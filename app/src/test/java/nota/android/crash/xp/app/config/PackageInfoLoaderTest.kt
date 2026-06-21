@@ -1,6 +1,7 @@
 package nota.android.crash.xp.app.config
 
 import android.content.Context
+import android.content.pm.PackageInfo
 import nota.android.crash.xp.PrefManager
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -10,6 +11,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
+import org.robolectric.Shadows
 
 @RunWith(RobolectricTestRunner::class)
 class PackageInfoLoaderTest {
@@ -19,6 +21,13 @@ class PackageInfoLoaderTest {
     @Before
     fun setUp() {
         context = RuntimeEnvironment.getApplication()
+        val shadowPm = Shadows.shadowOf(context.packageManager)
+        // Install a fake third-party package so enumerateInstalledPackageNames
+        // returns a non-empty set even when Robolectric applies package visibility.
+        val fake = PackageInfo().apply {
+            packageName = "com.example.fake"
+        }
+        shadowPm.installPackage(fake)
     }
 
     // ─── passesSystemFilter ───
