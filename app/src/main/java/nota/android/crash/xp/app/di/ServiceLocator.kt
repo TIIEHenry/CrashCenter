@@ -8,6 +8,7 @@ import nota.android.crash.xp.app.config.ManagedAppRepository
 import nota.android.crash.xp.app.config.PackageVisibilityRepository
 import nota.android.crash.xp.app.data.CrashLogRepository
 import nota.android.crash.xp.app.data.FileCrashLogRepository
+import kotlin.reflect.KMutableProperty0
 
 /**
  * Manual service locator for singleton dependencies.
@@ -30,45 +31,41 @@ object ServiceLocator {
     @Volatile
     private var crashLogRepository: CrashLogRepository? = null
 
-    fun prefs(context: Context): SharedPreferences {
-        return prefs ?: synchronized(this) {
-            prefs ?: context.applicationContext
+    /**
+     * Double-checked locking helper. Returns the existing value in [slot],
+     * or creates one via [factory] under a synchronized lock and stores it.
+     */
+    private fun <T> getOrCreate(slot: KMutableProperty0<T?>, factory: () -> T): T {
+        return slot.get() ?: synchronized(this) {
+            slot.get() ?: factory().also { slot.set(it) }
+        }
+    }
+
+    fun prefs(context: Context): SharedPreferences =
+        getOrCreate(::prefs) {
+            context.applicationContext
                 .getSharedPreferences(PrefManager.PREF_NAME, Context.MODE_PRIVATE)
-                .also { prefs = it }
         }
-    }
 
-    fun legacyAppRepository(context: Context): LegacyAppRepository {
-        return legacyAppRepository ?: synchronized(this) {
-            legacyAppRepository ?: LegacyAppRepository(context.applicationContext, prefs(context)).also {
-                legacyAppRepository = it
-            }
+    fun legacyAppRepository(context: Context): LegacyAppRepository =
+        getOrCreate(::legacyAppRepository) {
+            LegacyAppRepository(context.applicationContext, prefs(context))
         }
-    }
 
-    fun managedAppRepository(context: Context): ManagedAppRepository {
-        return managedAppRepository ?: synchronized(this) {
-            managedAppRepository ?: ManagedAppRepository(context.applicationContext, prefs(context)).also {
-                managedAppRepository = it
-            }
+    fun managedAppRepository(context: Context): ManagedAppRepository =
+        getOrCreate(::managedAppRepository) {
+            ManagedAppRepository(context.applicationContext, prefs(context))
         }
-    }
 
-    fun packageVisibilityRepository(context: Context): PackageVisibilityRepository {
-        return packageVisibilityRepository ?: synchronized(this) {
-            packageVisibilityRepository ?: PackageVisibilityRepository(context.applicationContext).also {
-                packageVisibilityRepository = it
-            }
+    fun packageVisibilityRepository(context: Context): PackageVisibilityRepository =
+        getOrCreate(::packageVisibilityRepository) {
+            PackageVisibilityRepository(context.applicationContext)
         }
-    }
 
-    fun crashLogRepository(context: Context): CrashLogRepository {
-        return crashLogRepository ?: synchronized(this) {
-            crashLogRepository ?: FileCrashLogRepository(context.applicationContext).also {
-                crashLogRepository = it
-            }
+    fun crashLogRepository(context: Context): CrashLogRepository =
+        getOrCreate(::crashLogRepository) {
+            FileCrashLogRepository(context.applicationContext)
         }
-    }
 
     /**
      * Clears all singletons. Useful for testing.
