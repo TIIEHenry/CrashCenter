@@ -36,25 +36,21 @@ class CrashDetailViewModel(
     }
 
     private fun loadCrashDetail() {
-        viewModelScope.launch {
-            try {
-                val event = withContext(ioDispatcher) {
-                    repository.getById(crashId)
-                }
-                val stackTrace = event?.let { CrashDetailLoader.stackTraceFrom(it) }
-                    ?: "Crash detail not found: $crashId"
-                val title = event?.shortExceptionClass
-                    ?: CrashDetailLoader.titleFromStackTrace(stackTrace)
-                    ?: "Crash Info"
-                emitState { CrashDetailUiState.Success(title, stackTrace) }
-            } catch (e: Exception) {
-                safeLog("CrashDetailViewModel", "loadCrashDetail failed", e)
-                emitState {
-                    CrashDetailUiState.Error(
-                        message = e.message ?: "Unknown error"
-                    )
-                }
+        launchWithErrorHandling(
+            scope = viewModelScope,
+            onError = { e ->
+                emitState { CrashDetailUiState.Error(message = e.message ?: "Unknown error") }
+            },
+        ) {
+            val event = withContext(ioDispatcher) {
+                repository.getById(crashId)
             }
+            val stackTrace = event?.let { CrashDetailLoader.stackTraceFrom(it) }
+                ?: "Crash detail not found: $crashId"
+            val title = event?.shortExceptionClass
+                ?: CrashDetailLoader.titleFromStackTrace(stackTrace)
+                ?: "Crash Info"
+            emitState { CrashDetailUiState.Success(title, stackTrace) }
         }
     }
 

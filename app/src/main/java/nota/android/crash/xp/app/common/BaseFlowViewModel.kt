@@ -47,6 +47,24 @@ abstract class BaseFlowViewModel<S>(initialState: S) : ViewModel() {
 
     @Suppress("UNCHECKED_CAST")
     fun clearError() {
-        _uiState.value = (_uiState.value as HasErrorMessage).withNoErrorMessage() as S
+        val current = _uiState.value
+        if (current is HasErrorMessage) {
+            _uiState.value = current.withNoErrorMessage() as S
+        }
+    }
+
+    protected fun launchWithErrorHandling(
+        scope: CoroutineScope,
+        onError: (Throwable) -> Unit,
+        block: suspend () -> Unit,
+    ) {
+        scope.launch {
+            try {
+                block()
+            } catch (e: Throwable) {
+                safeLog("BaseFlowViewModel", "Operation failed", e)
+                onError(e)
+            }
+        }
     }
 }

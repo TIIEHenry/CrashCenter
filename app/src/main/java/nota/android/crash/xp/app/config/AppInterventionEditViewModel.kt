@@ -26,21 +26,19 @@ class AppInterventionEditViewModel(
 ) : BaseFlowViewModel<AppInterventionEditUiState>(AppInterventionEditUiState()) {
 
     init {
-        viewModelScope.launch {
-            try {
-                val profile = withContext(ioDispatcher) {
-                    repository.getProfile(packageName)
-                }
-                val catchAll = profile.rules.firstOrNull { it.type == InterventionRuleType.CATCH_ALL }
-                emitState {
-                    AppInterventionEditUiState(
-                        profile = profile,
-                        catchAllRule = catchAll,
-                    )
-                }
-            } catch (e: Exception) {
-                safeLog("AppInterventionEditViewModel", "loadProfile failed", e)
-                emitState { copy(errorMessage = e.message) }
+        launchWithErrorHandling(
+            scope = viewModelScope,
+            onError = { e -> emitState { copy(errorMessage = e.message) } },
+        ) {
+            val profile = withContext(ioDispatcher) {
+                repository.getProfile(packageName)
+            }
+            val catchAll = profile.rules.firstOrNull { it.type == InterventionRuleType.CATCH_ALL }
+            emitState {
+                AppInterventionEditUiState(
+                    profile = profile,
+                    catchAllRule = catchAll,
+                )
             }
         }
     }

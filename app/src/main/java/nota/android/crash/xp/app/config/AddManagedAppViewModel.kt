@@ -28,15 +28,15 @@ class AddManagedAppViewModel(
     }
 
     private fun loadPickableApps() {
-        viewModelScope.launch {
-            try {
-                val loaded = repository.loadPickableApps()
-                allApps = loaded
-                emitState { AddManagedAppUiState.Success(apps = loaded) }
-            } catch (e: Exception) {
-                safeLog("AddManagedAppViewModel", "loadPickableApps failed", e)
+        launchWithErrorHandling(
+            scope = viewModelScope,
+            onError = { e ->
                 emitState { AddManagedAppUiState.Error(e.message ?: "Unknown error") }
-            }
+            },
+        ) {
+            val loaded = repository.loadPickableApps()
+            allApps = loaded
+            emitState { AddManagedAppUiState.Success(apps = loaded) }
         }
     }
 
