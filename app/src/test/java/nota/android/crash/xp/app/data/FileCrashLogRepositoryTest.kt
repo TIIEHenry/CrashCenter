@@ -130,6 +130,33 @@ class FileCrashLogRepositoryTest {
     }
 
     @Test
+    fun getByIdCacheMissReadsFromFile() {
+        val e1 = event(id = "miss1", message = "from-file")
+        writeEvent(e1)
+
+        // Directly append another event to change mtime/length, invalidating cache
+        Thread.sleep(50) // ensure different mtime
+        writeEvent(event(id = "miss2", message = "later"))
+
+        // Even though cache was populated for miss1, the file change should invalidate it
+        val result = repo.getById("miss1")
+        assertNotNull(result)
+        assertEquals("from-file", result?.message)
+    }
+
+    @Test
+    fun getByIdOnMissingFileReturnsNull() {
+        assertFalse(eventsFile.exists())
+        assertNull(repo.getById("anything"))
+    }
+
+    @Test
+    fun deleteByIdOnMissingFileReturnsFalse() {
+        assertFalse(eventsFile.exists())
+        assertFalse(repo.deleteById("anything"))
+    }
+
+    @Test
     fun threadSafetyUnderConcurrentReads() {
         repeat(50) { i ->
             writeEvent(event(id = "concurrent-$i", timestampMs = i.toLong()))
@@ -170,6 +197,15 @@ class FileCrashLogRepositoryTest {
     }
 
     @Test
+    fun noFileReturnsEmptyList() {
+        assertFalse(eventsFile.exists())
+        val all = repo.getAll(CrashFilter(), limit = 100, offset = 0)
+        assertTrue(all.isEmpty())
+        assertEquals(0, repo.getCount(CrashFilter()))
+        assertNull(repo.getById("anything"))
+    }
+
+    @Test
     fun offsetSkipsEvents() {
         repeat(5) { i ->
             writeEvent(event(id = "$i", timestampMs = (i * 1000).toLong()))
@@ -180,6 +216,13 @@ class FileCrashLogRepositoryTest {
         assertEquals("2", result[0].id)
         assertEquals("3", result[1].id)
         assertEquals("4", result[2].id)
+    }
+
+    @Test
+    fun offsetBeyondSizeReturnsEmpty() {
+        writeEvent(event(id = "1", timestampMs = 1000))
+        val result = repo.getAll(CrashFilter(), limit = 10, offset = 5)
+        assertTrue(result.isEmpty())
     }
 
     @Test
@@ -213,6 +256,28 @@ class FileCrashLogRepositoryTest {
         val result = repo.getAll(CrashFilter(sinceMs = 1500, untilMs = 2500), limit = 100, offset = 0)
         assertEquals(1, result.size)
         assertEquals("2", result[0].id)
+    }
+
+    @Test
+    fun filterBySinceMsStandalone() {
+        writeEvent(event(id = "1", timestampMs = 1000))
+        writeEvent(event(id = "2", timestampMs = 2000))
+        writeEvent(event(id = "3", timestampMs = 3000))
+
+        val result = repo.getAll(CrashFilter(sinceMs = 2000), limit = 100, offset = 0)
+        assertEquals(2, result.size)
+        assertTrue(result.all { it.timestampMs >= 2000 })
+    }
+
+    @Test
+    fun filterByUntilMsStandalone() {
+        writeEvent(event(id = "1", timestampMs = 1000))
+        writeEvent(event(id = "2", timestampMs = 2000))
+        writeEvent(event(id = "3", timestampMs = 3000))
+
+        val result = repo.getAll(CrashFilter(untilMs = 2000), limit = 100, offset = 0)
+        assertEquals(2, result.size)
+        assertTrue(result.all { it.timestampMs <= 2000 })
     }
 
     @Test
@@ -318,6 +383,23 @@ class FileCrashLogRepositoryTest {
 
         repo.clear()
         assertNull(repo.getById("cache-clr"))
+    }
+
+    @Test
+    fun fileModificationInvalidatesCacheOnGetAll() {
+        writeEvent(event(id = "ext-1", timestampMs = 1000))
+
+        // Read to populate cache
+        val first = repo.getAll(CrashFilter(), limit = 100, offset = 0)
+        assertEquals(1, first.size)
+
+        // Simulate external writer appending an event (mtime/length change)
+        Thread.sleep(50)
+        writeEvent(event(id = "ext-2", timestampMs = 2000))
+
+        // Cache should be invalidated — file mtime/length changed
+        val second = repo.getAll(CrashFilter(), limit = 100, offset = 0)
+        assertEquals(2, second.size)
     }
 
     @Test
