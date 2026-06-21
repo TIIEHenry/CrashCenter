@@ -4,16 +4,6 @@ import nota.android.crash.common.data.CrashEvent
 
 object CrashDetailLoader {
 
-    fun loadStackTraceById(repository: CrashLogRepository, crashId: String): String? {
-        if (crashId.isBlank()) return null
-        return try {
-            val event = repository.getById(crashId) ?: return null
-            stackTraceFrom(event)
-        } catch (_: Exception) {
-            null
-        }
-    }
-
     fun stackTraceFrom(event: CrashEvent): String =
         event.stackTrace.ifBlank { formatFallback(event) }
 

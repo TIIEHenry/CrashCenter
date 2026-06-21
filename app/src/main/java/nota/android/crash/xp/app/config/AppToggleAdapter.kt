@@ -11,10 +11,6 @@ class AppToggleAdapter : BaseListAdapter<AppItem, AppToggleAdapter.VH>(
     SimpleDiffCallback { it.packageName }
 ) {
 
-    fun setData(list: List<AppItem>) {
-        submitList(list)
-    }
-
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
         val binding = ActivityMainAppitemBinding.inflate(
             LayoutInflater.from(parent.context), parent, false

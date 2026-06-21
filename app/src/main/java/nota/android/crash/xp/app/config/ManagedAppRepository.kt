@@ -96,7 +96,7 @@ class ManagedAppRepository(context: Context) {
         val newPackages = packages.filter { !PackageInfoLoader.isItself(it) && it !in current }
         if (newPackages.isEmpty()) return
         val merged = current + newPackages
-        ensureManagedModelActive(merged)
+        writeManagedPackages(merged)
     }
 
     fun removeManagedPackage(packageName: String) {
@@ -199,10 +199,6 @@ class ManagedAppRepository(context: Context) {
     }
 
     private fun writeManagedPackages(packages: Set<String>) {
-        prefs.edit { putStringSet(PREF_MANAGED_PACKAGES, packages.toSet()) }
-    }
-
-    private fun ensureManagedModelActive(packages: Set<String>) {
         prefs.edit { putStringSet(PREF_MANAGED_PACKAGES, packages.toSet()) }
     }
 

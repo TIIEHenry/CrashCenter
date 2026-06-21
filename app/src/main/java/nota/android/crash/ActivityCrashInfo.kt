@@ -5,7 +5,6 @@ import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import nota.android.crash.xp.app.SystemBars
 import nota.android.crash.xp.app.common.ui.ToolbarHeaderInsets
-import nota.android.crash.xp.app.data.CrashDetailLoader
 import nota.android.crash.xp.app.di.ServiceLocator
 import nota.android.crash.xp.app.databinding.ActivityCrashinfoBinding
 import nota.android.crash.xp.app.observe.CrashHistoryFragment
@@ -36,12 +35,10 @@ class ActivityCrashInfo : AppCompatActivity() {
     private fun resolveStackTrace(intent: Intent): String? {
         val crashId = intent.getStringExtra(CrashHistoryFragment.EXTRA_CRASH_ID)
         if (crashId != null && crashId.isNotEmpty()) {
-            val fromLog = CrashDetailLoader.loadStackTraceById(
-                ServiceLocator.crashLogRepository(this),
-                crashId,
-            )
-            if (fromLog != null) {
-                return fromLog
+            val repo = ServiceLocator.crashLogRepository(this)
+            val event = repo.getById(crashId)
+            if (event != null) {
+                return nota.android.crash.xp.app.data.CrashDetailLoader.stackTraceFrom(event)
             }
             return getString(nota.android.crash.xp.app.R.string.crash_detail_not_found, crashId)
         }

@@ -16,10 +16,6 @@ class ManagedAppAdapter : BaseListAdapter<ManagedApp, ManagedAppAdapter.VH>(
 
     var onSwitchChanged: ((ManagedApp, Boolean) -> Unit)? = null
 
-    fun setData(list: List<ManagedApp>) {
-        submitList(list)
-    }
-
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
         val binding = ViewManagedAppRowBinding.inflate(
             LayoutInflater.from(parent.context), parent, false
