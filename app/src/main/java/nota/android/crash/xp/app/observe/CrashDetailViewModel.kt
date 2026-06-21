@@ -9,7 +9,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import android.util.Log
+import nota.android.crash.xp.app.common.safeLog
 import nota.android.crash.xp.app.data.CrashDetailLoader
 import nota.android.crash.xp.app.data.CrashLogRepository
 
@@ -53,7 +53,7 @@ class CrashDetailViewModel(
                     ?: "Crash Info"
                 _uiState.value = CrashDetailUiState.Success(title, stackTrace)
             } catch (e: Exception) {
-                Log.w("CrashDetailViewModel", "loadCrashDetail failed", e)
+                safeLog("CrashDetailViewModel", "loadCrashDetail failed", e)
                 _uiState.value = CrashDetailUiState.Error(
                     message = e.message ?: "Unknown error"
                 )

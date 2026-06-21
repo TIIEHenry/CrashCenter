@@ -309,4 +309,52 @@ class AppInterventionEditViewModelTest {
         assertNull(viewModel.uiState.value.catchAllRule)
         assertEquals(AppInterventionProfile.EMPTY, viewModel.uiState.value.profile)
     }
+
+    @Test
+    fun `updateCrashLogEnabled clears value`() = runTest(testDispatcher) {
+        val catchAll = InterventionRule.defaultCatchAll(enabled = true).copy(crashLogEnabled = true)
+        whenever(repository.getProfile(packageName)).thenReturn(
+            AppInterventionProfile(rules = listOf(catchAll)),
+        )
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+        assertTrue(viewModel.uiState.value.catchAllRule?.crashLogEnabled == true)
+
+        viewModel.updateCrashLogEnabled(null)
+        advanceUntilIdle()
+
+        assertNull(viewModel.uiState.value.catchAllRule?.crashLogEnabled)
+        val saved = captureSavedProfile()
+        assertEquals(1, saved.rules.size)
+        assertNull(saved.rules[0].crashLogEnabled)
+    }
+
+    @Test
+    fun `init handles repository exception by setting errorMessage`() = runTest(testDispatcher) {
+        whenever(repository.getProfile(packageName)).thenThrow(RuntimeException("Load failed"))
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertEquals("Load failed", state.errorMessage)
+        assertEquals(AppInterventionProfile.EMPTY, state.profile)
+        assertNull(state.catchAllRule)
+        assertFalse(state.saved)
+    }
+
+    @Test
+    fun `clearError removes error message`() = runTest(testDispatcher) {
+        whenever(repository.getProfile(packageName)).thenThrow(RuntimeException("Load failed"))
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+        assertNotNull(viewModel.uiState.value.errorMessage)
+
+        viewModel.clearError()
+        advanceUntilIdle()
+
+        assertNull(viewModel.uiState.value.errorMessage)
+    }
 }
