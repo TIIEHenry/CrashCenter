@@ -15,6 +15,5 @@ object PrefManager {
     const val PREF_CRASH_LOG_BACKEND_PROVIDER = "crash_log_backend_provider"
     const val PREF_CRASH_LOG_BACKEND_DIRECT_FS = "crash_log_backend_direct_fs"
     const val PREF_CRASH_LOG_BACKEND_RELAY = "crash_log_backend_relay"
-    const val TAG = "ActivityMain"
     const val ITSELF = PACKAGE_NAME
 }

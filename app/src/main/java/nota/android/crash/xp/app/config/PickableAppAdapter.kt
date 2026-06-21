@@ -26,11 +26,6 @@ class PickableAppAdapter : BaseListAdapter<PickableApp, PickableAppAdapter.VH>(
 
     fun selectedPackages(): Set<String> = selectedPackages.toSet()
 
-    fun clearSelection() {
-        selectedPackages.clear()
-        notifyItemRangeChanged(0, itemCount)
-    }
-
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
         val binding = ItemPickableAppBinding.inflate(
             LayoutInflater.from(parent.context), parent, false

@@ -6,6 +6,7 @@ import android.content.pm.PackageManager
 import androidx.core.content.edit
 import nota.android.crash.xp.PrefManager.PREF_INTERVENTION_RULES
 import nota.android.crash.xp.PrefManager.PREF_MANAGED_PACKAGES
+import nota.android.crash.xp.PrefManager.PREF_SHOW_SYSTEM_UI
 import nota.android.crash.xp.app.PackageVisibilityHelper
 
 /**
@@ -70,7 +71,7 @@ class ManagedAppRepository(
 
     fun loadPickableApps(): List<PickableApp> {
         val managedPackages = readManagedPackageNames() ?: emptySet()
-        val showSystemUi = prefs.getBoolean("show_system_ui", false)
+        val showSystemUi = prefs.getBoolean(PREF_SHOW_SYSTEM_UI, false)
         val installedPackages = PackageVisibilityHelper.getInstalledPackagesCompat(packageManager)
 
         return buildList {

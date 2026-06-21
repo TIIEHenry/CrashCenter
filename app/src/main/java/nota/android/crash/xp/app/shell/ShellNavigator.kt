@@ -53,12 +53,6 @@ class ShellNavigator(
             }
     }
 
-    /** Retrieve the current visible fragment, if any. */
-    fun currentFragment(): Fragment? {
-        return fragmentManager.findFragmentByTag(ShellTab.CONFIG.tag())
-            ?: fragmentManager.findFragmentByTag(ShellTab.OBSERVE.tag())
-    }
-
     /** Retrieve a specific tab's fragment, if it has been created. */
     fun findFragment(tab: ShellTab): Fragment? {
         return fragmentManager.findFragmentByTag(tab.tag())

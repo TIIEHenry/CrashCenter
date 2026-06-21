@@ -114,33 +114,6 @@ class ShellNavigatorTest {
         assertEquals(firstConfig, secondConfig)
     }
 
-    // ─── currentFragment ───
-
-    @Test
-    fun `currentFragment returns null before any selection`() {
-        assertNull(navigator.currentFragment())
-    }
-
-    @Test
-    fun `currentFragment returns ConfigFragment after selecting CONFIG`() {
-        navigator.select(ShellTab.CONFIG)
-
-        val current = navigator.currentFragment()
-        assertNotNull(current)
-        assertTrue(current is TestConfigFragment)
-    }
-
-    @Test
-    fun `currentFragment returns ObserveHostFragment after selecting OBSERVE`() {
-        navigator.select(ShellTab.OBSERVE)
-
-        val current = navigator.currentFragment()
-        // currentFragment() returns the first fragment found by tag;
-        // since CONFIG is added first it is returned even when OBSERVE is shown.
-        assertNotNull(current)
-        assertTrue(current is TestConfigFragment)
-    }
-
     // ─── findFragment ───
 
     @Test

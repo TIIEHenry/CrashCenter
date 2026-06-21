@@ -1,6 +1,5 @@
 package nota.android.crash.xp.app.config
 
-import android.content.pm.PackageManager
 import android.os.Bundle
 import android.view.View
 
@@ -67,16 +66,18 @@ class AppInterventionEditActivity : AppCompatActivity() {
     }
 
     private fun loadAppHeader() {
-        try {
-            val packageManager = packageManager
-            val appInfo = packageManager.getApplicationInfo(packageName, 0)
-            binding.ivIcon.setImageDrawable(appInfo.loadIcon(packageManager))
-            binding.tvLabel.text = appInfo.loadLabel(packageManager)
-            binding.toolbar.title = appInfo.loadLabel(packageManager)
-        } catch (_: PackageManager.NameNotFoundException) {
-            binding.tvLabel.text = packageName
-            binding.toolbar.title = packageName
-        }
+        val packageManager = packageManager
+        val (_, appInfo) = PackageInfoLoader.loadAppInfo(packageManager, packageName)
+            ?: run {
+                binding.tvLabel.text = packageName
+                binding.toolbar.title = packageName
+                binding.tvPackageName.text = packageName
+                return
+            }
+        binding.ivIcon.setImageDrawable(appInfo.loadIcon(packageManager))
+        val label = PackageInfoLoader.loadLabel(packageManager, appInfo)
+        binding.tvLabel.text = label
+        binding.toolbar.title = label
         binding.tvPackageName.text = packageName
     }
 

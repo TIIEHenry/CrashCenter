@@ -48,7 +48,7 @@ class FileCrashLogRepository(context: Context) : CrashLogRepository {
             var taken = 0
 
             streamEvents { event ->
-                if (!matchesFilter(event, filter)) return@streamEvents true // continue
+                if (!AppFilterEngine.matchesCrashEvent(event, filter)) return@streamEvents true // continue
                 if (skipped < offset) {
                     skipped++
                     return@streamEvents true // continue
@@ -87,7 +87,7 @@ class FileCrashLogRepository(context: Context) : CrashLogRepository {
         return lock.read {
             var count = 0
             streamEvents { event ->
-                if (matchesFilter(event, filter)) {
+                if (AppFilterEngine.matchesCrashEvent(event, filter)) {
                     count++
                 }
                 true // always continue for count (no early termination possible unless we had a max)
@@ -181,9 +181,6 @@ class FileCrashLogRepository(context: Context) : CrashLogRepository {
             }
         }
     }
-
-    private fun matchesFilter(event: CrashEvent, filter: CrashFilter): Boolean =
-        AppFilterEngine.matchesCrashEvent(event, filter)
 
     override fun applyRetention() {
         lock.write {
