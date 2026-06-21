@@ -1,7 +1,5 @@
 package nota.android.crash.xp.app.observe
 
-import androidx.lifecycle.ViewModel
-import nota.android.crash.xp.app.common.safeLog
 import androidx.lifecycle.viewModelScope
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
@@ -11,25 +9,18 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import nota.android.crash.xp.app.data.CrashFilter
 import nota.android.crash.common.data.CrashEvent
+import nota.android.crash.xp.app.common.BaseFlowViewModel
+import nota.android.crash.xp.app.common.safeLog
+import nota.android.crash.xp.app.data.CrashFilter
 import nota.android.crash.xp.app.data.CrashLogRepository
 
 class CrashHistoryViewModel(
     private val repository: CrashLogRepository,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
-) : ViewModel() {
-
-    private val _uiState = MutableStateFlow(CrashHistoryUiState())
-    val uiState: StateFlow<CrashHistoryUiState> = _uiState
-
-    private fun emitState(transform: CrashHistoryUiState.() -> CrashHistoryUiState) {
-        _uiState.value = _uiState.value.transform()
-    }
+) : BaseFlowViewModel<CrashHistoryUiState>(CrashHistoryUiState()) {
 
     private var loadJob: Job? = null
 

@@ -1,10 +1,9 @@
 package nota.android.crash.xp.app.config
 
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import nota.android.crash.xp.app.PackageVisibilityHelper
+import nota.android.crash.xp.app.common.BaseFlowViewModel
 import nota.android.crash.xp.app.common.safeLog
 
 internal abstract class BaseConfigViewModel(
@@ -14,22 +13,15 @@ internal abstract class BaseConfigViewModel(
     handleSystem: Boolean,
     showSystemUi: Boolean,
     packageVisibility: PackageVisibilityHelper.Status,
-) : ConfigViewModelDelegate {
-
-    protected val _uiState = MutableStateFlow(
-        ConfigUiState(
-            isLegacyMode = isLegacyMode,
-            scopeMode = scopeMode,
-            handleSystem = handleSystem,
-            showSystemUi = showSystemUi,
-            packageVisibility = packageVisibility,
-        )
+) : BaseFlowViewModel<ConfigUiState>(
+    ConfigUiState(
+        isLegacyMode = isLegacyMode,
+        scopeMode = scopeMode,
+        handleSystem = handleSystem,
+        showSystemUi = showSystemUi,
+        packageVisibility = packageVisibility,
     )
-    override val uiState: StateFlow<ConfigUiState> = _uiState
-
-    protected fun emitState(block: ConfigUiState.() -> ConfigUiState) {
-        _uiState.value = _uiState.value.block()
-    }
+), ConfigViewModelDelegate {
 
     override fun setQuery(query: String) {
         emitState { copy(query = query) }

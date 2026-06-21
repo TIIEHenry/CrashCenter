@@ -1,14 +1,12 @@
 package nota.android.crash.xp.app.config
 
-import androidx.lifecycle.ViewModel
-import nota.android.crash.xp.app.common.safeLog
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import nota.android.crash.xp.app.common.BaseFlowViewModel
+import nota.android.crash.xp.app.common.safeLog
 
 data class AppInterventionEditUiState(
     val profile: AppInterventionProfile = AppInterventionProfile.EMPTY,
@@ -22,10 +20,7 @@ class AppInterventionEditViewModel(
     private val repository: ManagedAppRepository,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
     private val mainDispatcher: CoroutineDispatcher = Dispatchers.Main,
-) : ViewModel() {
-
-    private val _uiState = MutableStateFlow(AppInterventionEditUiState())
-    val uiState: StateFlow<AppInterventionEditUiState> = _uiState
+) : BaseFlowViewModel<AppInterventionEditUiState>(AppInterventionEditUiState()) {
 
     init {
         viewModelScope.launch {
@@ -73,7 +68,7 @@ class AppInterventionEditViewModel(
     }
 
     fun clearError() {
-        _uiState.value = _uiState.value.copy(errorMessage = null)
+        emitState { copy(errorMessage = null) }
     }
 
     fun removeManagedApp() {

@@ -1,11 +1,9 @@
 package nota.android.crash.xp.app.config
 
-import androidx.lifecycle.ViewModel
-import nota.android.crash.xp.app.common.safeLog
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import nota.android.crash.xp.app.common.BaseFlowViewModel
+import nota.android.crash.xp.app.common.safeLog
 
 sealed class AddManagedAppUiState {
     data object Loading : AddManagedAppUiState()
@@ -21,10 +19,7 @@ sealed class AddManagedAppUiState {
 
 class AddManagedAppViewModel(
     private val repository: ManagedAppRepository,
-) : ViewModel() {
-
-    private val _uiState = MutableStateFlow<AddManagedAppUiState>(AddManagedAppUiState.Loading)
-    val uiState: StateFlow<AddManagedAppUiState> = _uiState
+) : BaseFlowViewModel<AddManagedAppUiState>(AddManagedAppUiState.Loading) {
 
     private var allApps: List<PickableApp> = emptyList()
 
