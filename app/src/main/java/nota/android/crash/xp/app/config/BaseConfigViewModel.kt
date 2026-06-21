@@ -4,8 +4,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import android.util.Log
 import nota.android.crash.xp.app.PackageVisibilityHelper
+import nota.android.crash.xp.app.common.safeLog
 
 internal abstract class BaseConfigViewModel(
     protected val scope: CoroutineScope,
@@ -103,7 +103,7 @@ internal abstract class BaseConfigViewModel(
             try {
                 block()
             } catch (e: Exception) {
-                try { Log.w("BaseConfigViewModel", "load failed", e) } catch (_: Throwable) {}
+                safeLog("BaseConfigViewModel", "load failed", e)
                 emitState { copy(isLoading = false, errorMessage = e.message) }
             }
         }

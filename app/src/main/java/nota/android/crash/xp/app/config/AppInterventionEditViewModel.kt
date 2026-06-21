@@ -1,7 +1,7 @@
 package nota.android.crash.xp.app.config
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
+import nota.android.crash.xp.app.common.safeLog
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -39,7 +39,7 @@ class AppInterventionEditViewModel(
                     catchAllRule = catchAll,
                 )
             } catch (e: Exception) {
-                try { Log.w("AppInterventionEditViewModel", "loadProfile failed", e) } catch (_: Throwable) {}
+                safeLog("AppInterventionEditViewModel", "loadProfile failed", e)
                 _uiState.value = _uiState.value.copy(errorMessage = e.message)
             }
         }

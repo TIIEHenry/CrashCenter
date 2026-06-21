@@ -11,7 +11,7 @@ import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.longOrNull
-import android.util.Log
+import nota.android.crash.xp.app.common.safeLog
 import java.util.UUID
 
 enum class InterventionRuleType {
@@ -78,7 +78,7 @@ object InterventionRulesCodec {
                 }
             }
         } catch (e: Exception) {
-            try { Log.w("InterventionRulesCodec", "decode failed", e) } catch (_: Throwable) {}
+            safeLog("InterventionRulesCodec", "decode failed", e)
             emptyMap()
         }
     }
@@ -97,7 +97,7 @@ object InterventionRulesCodec {
                         }
                         add(finalRule)
                     } catch (e: Exception) {
-                        try { Log.w("InterventionRulesCodec", "Skipping invalid rule", e) } catch (_: Throwable) {}
+                        safeLog("InterventionRulesCodec", "Skipping invalid rule", e)
                     }
                 }
             }

@@ -1,7 +1,7 @@
 package nota.android.crash.xp.app.observe
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
+import nota.android.crash.xp.app.common.safeLog
 import androidx.lifecycle.viewModelScope
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
@@ -51,7 +51,7 @@ class CrashHistoryViewModel(
                     eventCount = count,
                 )
             } catch (e: Exception) {
-                try { Log.w("CrashHistoryViewModel", "loadEvents failed", e) } catch (_: Throwable) {}
+                safeLog("CrashHistoryViewModel", "loadEvents failed", e)
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
                     errorMessage = e.message,
