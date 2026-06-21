@@ -41,14 +41,19 @@ class FileCrashLogRepository(context: Context) : CrashLogRepository {
     private var lastFileModified: AtomicLong = AtomicLong(0L)
     private var lastFileLength: AtomicLong = AtomicLong(0L)
 
+    // Per-filter cache of matching events for a single request cycle (e.g., PagingSource load).
+    // Key: filter hash + file mtime + file length. Null means cache miss / no file.
+    // Avoids double-parse when getCount() and getAll() are called with the same filter.
+    private val cachedMatchingEvents = HashMap<Int, List<CrashEvent>>()
+    private val cachedFullyCollected = HashMap<Int, Boolean>()
+
     override fun getAll(filter: CrashFilter, limit: Int, offset: Int): List<CrashEvent> {
         return lock.read {
             val result = mutableListOf<CrashEvent>()
             var skipped = 0
             var taken = 0
 
-            streamEvents { event ->
-                if (!AppFilterEngine.matchesCrashEvent(event, filter)) return@streamEvents true // continue
+            streamEvents(filter = filter) { event ->
                 if (skipped < offset) {
                     skipped++
                     return@streamEvents true // continue
@@ -85,12 +90,16 @@ class FileCrashLogRepository(context: Context) : CrashLogRepository {
 
     override fun getCount(filter: CrashFilter): Int {
         return lock.read {
+            // Check if a prior getAll() / getCount() already collected all matching events
+            val key = cacheKeyFor(filter)
+            if (cachedFullyCollected[key] == true) {
+                cachedMatchingEvents[key]?.size?.let { return@read it }
+            }
+
             var count = 0
-            streamEvents { event ->
-                if (AppFilterEngine.matchesCrashEvent(event, filter)) {
-                    count++
-                }
-                true // always continue for count (no early termination possible unless we had a max)
+            streamEvents(filter = filter) { _ ->
+                count++
+                true // always continue for count
             }
             count
         }
@@ -146,8 +155,16 @@ class FileCrashLogRepository(context: Context) : CrashLogRepository {
      * Streams events from newest to oldest (file is sorted descending by timestamp).
      * The [action] returns true to continue, false to stop early.
      * Also populates the LRU cache as events are read.
+     *
+     * @param filter if non-null, collects all matching events into [cachedMatchingEvents]
+     *               for reuse by a subsequent [getCount] or [getAll] call with the same filter.
+     * @param collectAll when true, scans the entire file regardless of [action] early termination.
      */
-    private inline fun streamEvents(action: (CrashEvent) -> Boolean) {
+    private inline fun streamEvents(
+        filter: CrashFilter? = null,
+        collectAll: Boolean = false,
+        action: (CrashEvent) -> Boolean,
+    ) {
         if (!eventsFile.isFile) return
 
         // Check if file changed since last read
@@ -155,9 +172,26 @@ class FileCrashLogRepository(context: Context) : CrashLogRepository {
         val currentLength = eventsFile.length()
         if (currentModified != lastFileModified.get() || currentLength != lastFileLength.get()) {
             cache.clear()
+            cachedMatchingEvents.clear()
+            cachedFullyCollected.clear()
             lastFileModified.set(currentModified)
             lastFileLength.set(currentLength)
         }
+
+        // Check if cached matching events are still valid for this filter+file combination
+        if (filter != null) {
+            val key = cacheKeyFor(filter)
+            val cached = cachedMatchingEvents[key]
+            if (cached != null && cachedFullyCollected[key] == true) {
+                // Cache hit: replay matching events from cache
+                for (event in cached) {
+                    if (!action(event)) break
+                }
+                return
+            }
+        }
+
+        val matchingEvents = if (filter != null) mutableListOf<CrashEvent>() else null
 
         BufferedReader(FileReader(eventsFile)).use { reader ->
             reader.lineSequence().forEach { line ->
@@ -171,11 +205,29 @@ class FileCrashLogRepository(context: Context) : CrashLogRepository {
                     cache.put(event.id, event)
                 }
 
-                if (!action(event)) {
-                    return@use // early termination
+                val matches = filter == null || AppFilterEngine.matchesCrashEvent(event, filter)
+                if (matches) {
+                    matchingEvents?.add(event)
+                    if (!action(event) && !collectAll) {
+                        return@use // early termination
+                    }
                 }
             }
         }
+
+        // Store the matching events for reuse by getCount()/getAll() with the same filter
+        if (filter != null && matchingEvents != null) {
+            val key = cacheKeyFor(filter)
+            cachedMatchingEvents[key] = matchingEvents
+            cachedFullyCollected[key] = true
+        }
+    }
+
+    private fun cacheKeyFor(filter: CrashFilter): Int {
+        var result = filter.hashCode()
+        result = 31 * result + lastFileModified.get().hashCode()
+        result = 31 * result + lastFileLength.get().hashCode()
+        return result
     }
 
     override fun applyRetention() {
@@ -187,6 +239,8 @@ class FileCrashLogRepository(context: Context) : CrashLogRepository {
 
     private fun invalidateCache() {
         cache.clear()
+        cachedMatchingEvents.clear()
+        cachedFullyCollected.clear()
         lastFileModified.set(0L)
         lastFileLength.set(0L)
     }

@@ -442,4 +442,94 @@ class FileCrashLogRepositoryTest {
         assertEquals("1", all[0].id)
         assertEquals("2", all[1].id)
     }
+
+    // ─── Matching events cache (double-parse optimization) ───
+
+    @Test
+    fun getCountThenGetAllUsesCache() {
+        writeEvent(event(id = "1", packageName = "com.foo"))
+        writeEvent(event(id = "2", packageName = "com.bar"))
+        writeEvent(event(id = "3", packageName = "com.foo"))
+
+        val filter = CrashFilter(packageName = "com.foo")
+        // First call: getCount scans the file and caches matching events
+        assertEquals(2, repo.getCount(filter))
+        // Second call: getAll should reuse the cached matching events
+        val result = repo.getAll(filter, limit = 100, offset = 0)
+        assertEquals(2, result.size)
+        assertTrue(result.all { it.packageName == "com.foo" })
+    }
+
+    @Test
+    fun getAllThenGetCountUsesCache() {
+        writeEvent(event(id = "1", packageName = "com.foo"))
+        writeEvent(event(id = "2", packageName = "com.bar"))
+        writeEvent(event(id = "3", packageName = "com.foo"))
+
+        val filter = CrashFilter(packageName = "com.foo")
+        // First call: getAll scans the file and caches matching events
+        val result = repo.getAll(filter, limit = 100, offset = 0)
+        assertEquals(2, result.size)
+        // Second call: getCount should reuse the cached matching events
+        assertEquals(2, repo.getCount(filter))
+    }
+
+    @Test
+    fun matchingEventsCacheInvalidatedOnDelete() {
+        writeEvent(event(id = "1", packageName = "com.foo"))
+        writeEvent(event(id = "2", packageName = "com.foo"))
+
+        val filter = CrashFilter(packageName = "com.foo")
+        assertEquals(2, repo.getCount(filter))
+
+        // Delete invalidates cache
+        assertTrue(repo.deleteById("1"))
+        assertEquals(1, repo.getCount(filter))
+        assertEquals(1, repo.getAll(filter, limit = 100, offset = 0).size)
+    }
+
+    @Test
+    fun matchingEventsCacheInvalidatedOnClear() {
+        writeEvent(event(id = "1", packageName = "com.foo"))
+
+        val filter = CrashFilter(packageName = "com.foo")
+        assertEquals(1, repo.getCount(filter))
+
+        repo.clear()
+        assertEquals(0, repo.getCount(filter))
+        assertTrue(repo.getAll(filter, limit = 100, offset = 0).isEmpty())
+    }
+
+    @Test
+    fun matchingEventsCacheInvalidatedOnFileChange() {
+        // This test verifies that getAll() with a filter correctly picks up file changes
+        // (the mtime/length-based cache invalidation in streamEvents). Uses getAll() instead
+        // of getCount() because getAll populates the matching events cache when scanning.
+        writeEvent(event(id = "1", packageName = "com.foo"))
+
+        val filter = CrashFilter(packageName = "com.foo")
+        assertEquals(1, repo.getAll(filter, limit = 100, offset = 0).size)
+
+        // Simulate external writer appending an event (mtime/length change)
+        Thread.sleep(50)
+        writeEvent(event(id = "2", packageName = "com.foo"))
+
+        // Cache should be invalidated — file mtime/length changed
+        assertEquals(2, repo.getAll(filter, limit = 100, offset = 0).size)
+    }
+
+    @Test
+    fun differentFiltersUseSeparateCacheEntries() {
+        writeEvent(event(id = "1", packageName = "com.foo"))
+        writeEvent(event(id = "2", packageName = "com.bar"))
+        writeEvent(event(id = "3", packageName = "com.foo"))
+
+        val fooFilter = CrashFilter(packageName = "com.foo")
+        val barFilter = CrashFilter(packageName = "com.bar")
+
+        assertEquals(2, repo.getCount(fooFilter))
+        assertEquals(1, repo.getCount(barFilter))
+        assertEquals(2, repo.getAll(fooFilter, limit = 100, offset = 0).size)
+        assertEquals(1, repo.getAll(barFilter, limit = 100, offset = 0).size)
+    }
 }
