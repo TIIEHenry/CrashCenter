@@ -57,6 +57,10 @@ class AppInterventionEditActivity : AppCompatActivity() {
                     if (state.saved) {
                         Toast.makeText(this@AppInterventionEditActivity, R.string.rule_saved, Toast.LENGTH_SHORT).show()
                     }
+                    state.errorMessage?.let { message ->
+                        Toast.makeText(this@AppInterventionEditActivity, message, Toast.LENGTH_SHORT).show()
+                        viewModel.clearError()
+                    }
                 }
             }
         }

@@ -219,6 +219,10 @@ class ConfigFragment : Fragment() {
 
         emptyStateRenderer.render(state, listCount)
 
+        state.errorMessage?.let { message ->
+            Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
+        }
+
         if (!state.isLoading && !xposedDialogShown) {
             xposedDialogShown = dialogHelper.showXposedInactiveDialogIfNeeded(xposedDialogShown)
         }
