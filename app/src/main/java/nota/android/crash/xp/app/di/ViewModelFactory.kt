@@ -11,6 +11,7 @@ import nota.android.crash.xp.app.config.AppInterventionEditViewModel
 import nota.android.crash.xp.app.config.ConfigViewModel
 import nota.android.crash.xp.app.observe.CrashDetailViewModel
 import nota.android.crash.xp.app.observe.CrashHistoryViewModel
+import nota.android.crash.xp.app.observe.CrashStatsViewModel
 
 /**
  * Generic ViewModel factory that delegates creation to a lambda.
@@ -41,6 +42,11 @@ fun ServiceLocator.configViewModelFactory(context: Context): ViewModelProvider.F
 fun ServiceLocator.crashHistoryViewModelFactory(context: Context): ViewModelProvider.Factory =
     ViewModelFactory {
         CrashHistoryViewModel(crashLogRepository(context))
+    }
+
+fun ServiceLocator.crashStatsViewModelFactory(context: Context): ViewModelProvider.Factory =
+    ViewModelFactory {
+        CrashStatsViewModel(crashLogRepository(context))
     }
 
 fun ServiceLocator.addManagedAppViewModelFactory(context: Context): ViewModelProvider.Factory =

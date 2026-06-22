@@ -46,6 +46,16 @@
     <string name="permission_settings_failed">Could not open app settings</string>
     <string name="tab_config">Config</string>
     <string name="tab_observe">Observe</string>
+    <string name="tab_history">History</string>
+    <string name="tab_stats">Stats</string>
+    <string name="stats_empty">No crash data to display yet. Crash statistics will appear here once crash logging is enabled.</string>
+    <string name="stats_loading">Loading statistics…</string>
+    <string name="stats_label_total">Total</string>
+    <string name="stats_label_unique_apps">Unique apps</string>
+    <string name="stats_label_most_recent">Most recent</string>
+    <string name="stats_section_top_packages">Top crashing packages</string>
+    <string name="stats_section_top_exceptions">Top exception classes</string>
+    <string name="stats_none">—</string>
     <string name="crash_history_empty">No crash records yet. Intercepted crashes will appear here once crash logging is enabled.</string>
     <string name="crash_history_loading">Loading crash history…</string>
     <string name="crash_event_subtitle_format">%1$s · %2$s · %3$s</string>
