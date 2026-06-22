@@ -49,6 +49,7 @@ class CrashHistoryFragment : Fragment() {
     }
 
     private lateinit var adapter: CrashHistoryPagingAdapter
+    private var lastHistoryCleared = 0
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -130,6 +131,10 @@ class CrashHistoryFragment : Fragment() {
         if (state.eventCount > 0) {
             binding.eventCount.text = resources.getQuantityString(R.plurals.crash_history_count, state.eventCount, state.eventCount)
         }
+        if (state.historyCleared != lastHistoryCleared) {
+            lastHistoryCleared = state.historyCleared
+            adapter.refresh()
+        }
         requireContext().showErrorToast(state.errorMessage) { viewModel.clearError() }
     }
 
@@ -167,8 +172,24 @@ class CrashHistoryFragment : Fragment() {
                 showRetentionDialog()
                 true
             }
+            R.id.item_clear_history -> {
+                showClearHistoryDialog()
+                true
+            }
             else -> false
         }
+    }
+
+    private fun showClearHistoryDialog() {
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle(R.string.observe_clear_history_confirm_title)
+            .setMessage(R.string.observe_clear_history_confirm_message)
+            .setPositiveButton(android.R.string.ok) { _, _ ->
+                viewModel.clearHistory()
+                Toast.makeText(requireContext(), R.string.observe_clear_history_success, Toast.LENGTH_SHORT).show()
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
     }
 
     private fun showFilterDialog() {

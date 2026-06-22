@@ -158,7 +158,10 @@ class FileCrashLogRepository(
     }
 
     /**
-     * Streams events from newest to oldest (file is sorted descending by timestamp).
+     * Streams events sorted by [CrashEvent.timestampMs] descending (newest first).
+     * Duplicate IDs are deduplicated (first occurrence in file wins) to handle events
+     * written by multiple backends.
+     *
      * The [action] returns true to continue, false to stop early.
      * Also populates the LRU cache as events are read.
      *
@@ -197,7 +200,9 @@ class FileCrashLogRepository(
             }
         }
 
-        val matchingEvents = if (filter != null) mutableListOf<CrashEvent>() else null
+        // Collect all events from file (dedup by id), then sort descending by timestamp
+        val allEvents = mutableListOf<CrashEvent>()
+        val seenIds = mutableSetOf<String>()
 
         BufferedReader(FileReader(eventsFile)).use { reader ->
             reader.lineSequence().forEach { line ->
@@ -206,17 +211,30 @@ class FileCrashLogRepository(
 
                 val event = CrashEvent.fromJson(trimmed) ?: return@forEach
 
-                // Add to cache if not already present
+                // Add to LRU cache if not already present
                 if (!cache.containsKey(event.id)) {
                     cache.put(event.id, event)
                 }
 
-                val matches = filter == null || AppFilterEngine.matchesCrashEvent(event, filter)
-                if (matches) {
-                    matchingEvents?.add(event)
-                    if (!action(event) && !collectAll) {
-                        return@use // early termination
-                    }
+                // Deduplicate: skip events with IDs already seen
+                if (!seenIds.add(event.id)) return@forEach
+
+                allEvents.add(event)
+            }
+        }
+
+        // Sort newest-first by timestamp (descending)
+        val sorted = allEvents.sortedByDescending { it.timestampMs }
+
+        // Filter and invoke action on sorted events
+        val matchingEvents = if (filter != null) mutableListOf<CrashEvent>() else null
+
+        for (event in sorted) {
+            val matches = filter == null || AppFilterEngine.matchesCrashEvent(event, filter)
+            if (matches) {
+                matchingEvents?.add(event)
+                if (!action(event) && !collectAll) {
+                    break
                 }
             }
         }

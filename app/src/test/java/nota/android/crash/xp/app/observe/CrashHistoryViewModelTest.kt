@@ -385,4 +385,47 @@ class CrashHistoryViewModelTest {
         assertEquals(0, stats.totalCount)
         assertEquals(0, stats.uniquePackageCount)
     }
+
+    // ─── clearHistory ───
+
+    @Test
+    fun `clearHistory clears repository and resets eventCount`() = testScope.runTest {
+        repository.events = listOf(
+            CrashEvent(id = "e1", timestampMs = 1000L, packageName = "com.example.a", exceptionClass = "NullPointerException"),
+            CrashEvent(id = "e2", timestampMs = 2000L, packageName = "com.example.b", exceptionClass = "IllegalStateException"),
+        )
+        createViewModel()
+
+        viewModel.loadEvents()
+        advanceUntilIdle()
+        assertEquals(2, viewModel.uiState.value.eventCount)
+
+        viewModel.clearHistory()
+        advanceUntilIdle()
+
+        assertEquals(0, viewModel.uiState.value.eventCount)
+        assertEquals(1, viewModel.uiState.value.historyCleared)
+        assertTrue(repository.events.isEmpty())
+    }
+
+    @Test
+    fun `clearHistory increments historyCleared counter`() = testScope.runTest {
+        repository.events = listOf(
+            CrashEvent(id = "e1", timestampMs = 1000L, packageName = "com.example.a", exceptionClass = "NullPointerException"),
+        )
+        createViewModel()
+        assertEquals(0, viewModel.uiState.value.historyCleared)
+
+        viewModel.clearHistory()
+        advanceUntilIdle()
+        assertEquals(1, viewModel.uiState.value.historyCleared)
+
+        // Add new events and clear again
+        repository.events = listOf(
+            CrashEvent(id = "e2", timestampMs = 2000L, packageName = "com.example.a", exceptionClass = "NullPointerException"),
+        )
+        viewModel.clearHistory()
+        advanceUntilIdle()
+        assertEquals(2, viewModel.uiState.value.historyCleared)
+    }
 }

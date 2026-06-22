@@ -8,6 +8,7 @@ data class CrashHistoryUiState(
     override val isLoading: Boolean = false,
     val eventCount: Int = 0,
     val activeFilter: CrashFilter? = null,
+    val historyCleared: Int = 0,
     override val errorMessage: String? = null,
 ) : LoadableState, HasErrorMessage {
     override fun copyWithLoading(isLoading: Boolean): CrashHistoryUiState = copy(isLoading = isLoading)

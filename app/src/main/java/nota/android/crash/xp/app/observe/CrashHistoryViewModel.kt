@@ -53,6 +53,20 @@ class CrashHistoryViewModel(
     }
 
     /**
+     * Clears all crash history from the repository and signals the UI to reload.
+     * The [historyCleared] counter is incremented so the fragment can call adapter.refresh().
+     */
+    fun clearHistory() {
+        launchWithErrorHandling(
+            scope = viewModelScope,
+            onError = { e -> emitState { copy(errorMessage = e.message) } },
+        ) {
+            withContext(ioDispatcher) { repository.clear() }
+            emitState { copy(isLoading = false, eventCount = 0, historyCleared = historyCleared + 1) }
+        }
+    }
+
+    /**
      * Returns all crash events as a JSONL string (one JSON object per line).
      * Returns null if no events exist or on error.
      */

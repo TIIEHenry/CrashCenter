@@ -71,8 +71,9 @@ class FileCrashLogRepositoryTest {
 
         val all = repo.getAll(CrashFilter(), limit = 100, offset = 0)
         assertEquals(2, all.size)
-        assertEquals("1", all[0].id)
-        assertEquals("2", all[1].id)
+        // Sorted by timestamp descending (newest first)
+        assertEquals("2", all[0].id)
+        assertEquals("1", all[1].id)
     }
 
     @Test
@@ -107,9 +108,10 @@ class FileCrashLogRepositoryTest {
 
         val result = repo.getAll(CrashFilter(), limit = 3, offset = 0)
         assertEquals(3, result.size)
-        assertEquals("0", result[0].id)
-        assertEquals("1", result[1].id)
-        assertEquals("2", result[2].id)
+        // Sorted descending by timestamp: 9000, 8000, 7000
+        assertEquals("9", result[0].id)
+        assertEquals("8", result[1].id)
+        assertEquals("7", result[2].id)
     }
 
     @Test
@@ -211,11 +213,12 @@ class FileCrashLogRepositoryTest {
             writeEvent(event(id = "$i", timestampMs = (i * 1000).toLong()))
         }
 
+        // Sorted descending: [4, 3, 2, 1, 0]. Offset 2 skips first 2 -> [2, 1, 0]
         val result = repo.getAll(CrashFilter(), limit = 10, offset = 2)
         assertEquals(3, result.size)
         assertEquals("2", result[0].id)
-        assertEquals("3", result[1].id)
-        assertEquals("4", result[2].id)
+        assertEquals("1", result[1].id)
+        assertEquals("0", result[2].id)
     }
 
     @Test
@@ -439,8 +442,9 @@ class FileCrashLogRepositoryTest {
 
         val all = repo.getAll(CrashFilter(), limit = 100, offset = 0)
         assertEquals(2, all.size)
-        assertEquals("1", all[0].id)
-        assertEquals("2", all[1].id)
+        // Sorted descending by timestamp: 200 then 100
+        assertEquals("2", all[0].id)
+        assertEquals("1", all[1].id)
     }
 
     // ─── Matching events cache (double-parse optimization) ───
@@ -531,5 +535,95 @@ class FileCrashLogRepositoryTest {
         assertEquals(1, repo.getCount(barFilter))
         assertEquals(2, repo.getAll(fooFilter, limit = 100, offset = 0).size)
         assertEquals(1, repo.getAll(barFilter, limit = 100, offset = 0).size)
+    }
+
+    // ─── Dedupe tests ───
+
+    @Test
+    fun duplicateIdsAreDeduplicated() {
+        // Write the same event twice (e.g. from different backends)
+        val e1 = event(id = "dup", timestampMs = 1000, packageName = "com.a")
+        writeEvent(e1)
+        writeEvent(e1)
+
+        val all = repo.getAll(CrashFilter(), limit = 100, offset = 0)
+        assertEquals(1, all.size)
+        assertEquals("dup", all[0].id)
+    }
+
+    @Test
+    fun duplicateIdsCountIsDeduplicated() {
+        val e1 = event(id = "dup", timestampMs = 1000)
+        writeEvent(e1)
+        writeEvent(e1)
+
+        assertEquals(1, repo.getCount(CrashFilter()))
+    }
+
+    @Test
+    fun duplicateIdFirstOccurrenceIsKept() {
+        // When two events share the same ID, the first occurrence (earlier in file) is kept
+        val first = event(id = "same", timestampMs = 1000, message = "first")
+        val second = event(id = "same", timestampMs = 2000, message = "second")
+        writeEvent(first)
+        writeEvent(second)
+
+        val all = repo.getAll(CrashFilter(), limit = 100, offset = 0)
+        assertEquals(1, all.size)
+        assertEquals("first", all[0].message)
+    }
+
+    @Test
+    fun duplicatesWithOtherEventsMixed() {
+        writeEvent(event(id = "a", timestampMs = 1000))
+        writeEvent(event(id = "b", timestampMs = 2000))
+        writeEvent(event(id = "a", timestampMs = 1000)) // duplicate
+        writeEvent(event(id = "c", timestampMs = 3000))
+
+        val all = repo.getAll(CrashFilter(), limit = 100, offset = 0)
+        assertEquals(3, all.size)
+        val ids = all.map { it.id }
+        // Deduplicated: a, b, c — sorted descending by timestamp
+        assertEquals(listOf("c", "b", "a"), ids)
+    }
+
+    @Test
+    fun filterWithDuplicatesReturnsCorrectCount() {
+        writeEvent(event(id = "a", timestampMs = 1000, packageName = "com.foo"))
+        writeEvent(event(id = "a", timestampMs = 1000, packageName = "com.foo")) // dup
+        writeEvent(event(id = "b", timestampMs = 2000, packageName = "com.bar"))
+
+        val fooFilter = CrashFilter(packageName = "com.foo")
+        assertEquals(1, repo.getCount(fooFilter))
+        assertEquals(1, repo.getAll(fooFilter, limit = 100, offset = 0).size)
+    }
+
+    // ─── Sort tests ───
+
+    @Test
+    fun eventsAreSortedByTimestampDescending() {
+        writeEvent(event(id = "old", timestampMs = 1000))
+        writeEvent(event(id = "mid", timestampMs = 3000))
+        writeEvent(event(id = "new", timestampMs = 5000))
+
+        val all = repo.getAll(CrashFilter(), limit = 100, offset = 0)
+        assertEquals(3, all.size)
+        assertEquals("new", all[0].id) // 5000
+        assertEquals("mid", all[1].id) // 3000
+        assertEquals("old", all[2].id) // 1000
+    }
+
+    @Test
+    fun sortOrderIsCorrectRegardlessOfInsertionOrder() {
+        // Insert in non-chronological order
+        writeEvent(event(id = "mid", timestampMs = 3000))
+        writeEvent(event(id = "old", timestampMs = 1000))
+        writeEvent(event(id = "new", timestampMs = 5000))
+
+        val all = repo.getAll(CrashFilter(), limit = 100, offset = 0)
+        assertEquals(3, all.size)
+        assertEquals("new", all[0].id)
+        assertEquals("mid", all[1].id)
+        assertEquals("old", all[2].id)
     }
 }

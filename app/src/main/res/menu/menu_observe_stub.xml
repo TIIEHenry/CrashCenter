@@ -20,4 +20,10 @@
         android:id="@+id/item_observe_retention"
         android:title="@string/observe_menu_retention" />
 
+    <item
+        android:id="@+id/item_clear_history"
+        android:icon="@drawable/ic_delete"
+        android:title="@string/observe_menu_clear_history"
+        app:showAsAction="ifRoom" />
+
 </menu>
