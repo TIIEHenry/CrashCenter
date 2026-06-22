@@ -13,7 +13,7 @@ summary: "Shell/3Gβ/暗色 A–D/M2+M5 已编码；LSPosed 手动 smoke 与 3A 
 
 Material v1 已实现（见 [material-ui-redesign-2026-06-19.md](../../iterations/configuration-ui/material-ui-redesign-2026-06-19.md)），但未完成构建验证与真机 smoke。本 Phase 先建立验收基线，再分层优化信息架构与体验。
 
-详细拆解见 [ui-redesign-execution-plan.md](../../plans/ui-redesign-execution-plan.md)。
+详细拆解见 [ui-redesign-execution-plan.md](../../archive/ui-redesign-execution-plan.md)。
 
 ## 前置
 
@@ -103,7 +103,7 @@ python3 scripts/check-docs-health.py
 
 - [app-management-ui.md](../../../docs/architecture/app-management-ui.md)
 - [ADR-015: 受管应用与干预规则](../../../docs/decisions/015-managed-apps-intervention-rules.md)
-- [ui-redesign-execution-plan.md](../../plans/ui-redesign-execution-plan.md)
+- [ui-redesign-execution-plan.md](../../archive/ui-redesign-execution-plan.md)
 - [configuration-ui.md](../../../docs/architecture/configuration-ui.md)
 - [ADR-009: UI Shell 与 Design System 架构](../../../docs/decisions/009-ui-shell-design-system.md)
 - [material-ui-redesign-2026-06-19.md](../../iterations/configuration-ui/material-ui-redesign-2026-06-19.md)

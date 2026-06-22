@@ -1,6 +1,6 @@
 ---
 title: "配置界面信息密度优化"
-type: plan
+type: iteration
 status: implemented
 phase: 3
 updated: 2026-06-19

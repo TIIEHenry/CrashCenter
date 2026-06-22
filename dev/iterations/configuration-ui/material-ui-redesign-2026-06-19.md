@@ -1,6 +1,6 @@
 ---
 title: "配置界面 Material UI 重构"
-type: plan
+type: iteration
 status: implemented
 phase: N/A
 updated: 2026-06-19

@@ -1,9 +1,9 @@
 ---
 title: "UI 模式：信息流与工具密度"
 type: concept
-status: draft
+status: accepted
 phase: N/A
-updated: 2026-06-19
+updated: 2026-06-22
 summary: "生态两种 UI 范式——信息流大 UI（内容为主、悬浮 chrome）与工具密度 UI（按钮/窗口多）；同页可分区交叉组合。"
 ---
 

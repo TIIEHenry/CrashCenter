@@ -1,11 +1,13 @@
 ---
 title: "配置 UI 重设计执行计划"
 type: plan
-status: draft
+status: archived
 phase: 3
-updated: 2026-06-19
-summary: "Material v1 验收门禁 + 信息架构/体验/结构分层实施路径"
+updated: 2026-06-22
+summary: "Phase 3 早期执行计划；已由 phase3_ui_redesign roadmap + iterations 取代，仅作历史参考"
 ---
+
+> **已归档（2026-06-22）**：本计划为 Phase 3 启动前的分层路线图；当前权威任务清单见 [phase3_ui_redesign.md](../roadmap/active/phase3_ui_redesign.md) 与 [configuration-ui.md](../../docs/architecture/configuration-ui.md)。
 
 # 配置 UI 重设计执行计划
 

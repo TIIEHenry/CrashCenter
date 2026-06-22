@@ -202,4 +202,4 @@ Design System 来自 Phase 3 已落地的 Fluent/AppSnapShotor token，但应从
 - [design-system.md](design-system.md) — `CrashDetailBottomSheet` 观测域组件
 - [phase4_crash_observability.md](../../dev/roadmap/active/phase4_crash_observability.md)
 - [phase3_ui_redesign.md](../../dev/roadmap/active/phase3_ui_redesign.md)
-- AppSnapShotor 参考：`/home/clarence/Projects/Android/AppSnapShotor/docs/guides/getting-started/ui-shell.md`
+- AppSnapShotor 参考：[sibling-projects.md](../reference/sibling-projects.md#appsnapshotor)（`ui-shell.md`）

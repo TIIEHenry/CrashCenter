@@ -1,9 +1,9 @@
 ---
 title: "公共组件标准"
 type: concept
-status: draft
+status: accepted
 phase: N/A
-updated: 2026-06-19
+updated: 2026-06-22
 summary: "Clarence 生态可复用 UI 组件 catalog——分割线、列表、Sheet、Popup、悬浮 chrome、表单控件；含 Web demo。"
 ---
 

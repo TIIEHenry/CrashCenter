@@ -1,6 +1,6 @@
 ---
 title: "ADR-014 PrefMigrator 拆分与受管模型迁移实现"
-type: progress
+type: iteration
 status: completed
 phase: 3
 updated: 2026-06-20

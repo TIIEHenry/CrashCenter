@@ -1,6 +1,6 @@
 ---
 title: "受管应用与干预规则 UI 方案"
-type: plan
+type: iteration
 status: active
 phase: 3
 updated: 2026-06-19

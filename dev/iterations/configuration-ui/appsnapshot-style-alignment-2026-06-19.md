@@ -1,6 +1,6 @@
 ---
 title: "AppSnapShotor 视觉风格对齐"
-type: plan
+type: iteration
 status: implemented
 phase: 3
 updated: 2026-06-19
@@ -9,7 +9,7 @@ summary: "配置 UI 对齐 AppSnapShotor Fluent 设计语言：色板、扁平 T
 
 # AppSnapShotor 视觉风格对齐
 
-> 参考项目：`/home/clarence/Projects/Android/AppSnapShotor`
+> 参考项目：[AppSnapShotor](../../../docs/reference/sibling-projects.md#appsnapshotor)
 > 架构依据：[configuration-ui.md](../../../docs/architecture/configuration-ui.md)
 
 ## 背景

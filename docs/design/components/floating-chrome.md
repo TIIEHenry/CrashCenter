@@ -1,7 +1,7 @@
 ---
 title: "组件：悬浮 Toolbar（FloatingToolbar）"
 type: concept
-status: draft
+status: accepted
 phase: N/A
 updated: 2026-06-20
 summary: "FloatingToolbar 族 + 滚动联动边缘 Scrim（顶 blur 渐变 / 底渐隐）；自适应前景色。"

@@ -13,7 +13,7 @@ summary: "CrashLogBackend 抽象；hook root 优先并行写入；模块 root in
 
 [ADR-007](007-crash-log-cross-process-storage.md) 确立 JSONL canonical + ContentProvider fallback 的 **串行** 主备路径。后续分析明确：
 
-1. **Xposed 用户通常已 root**（Magisk / KernelSU + LSPosed），模块进程可借鉴 [AppSnapShotor](/home/clarence/Projects/Android/AppSnapShotor) 的 libsu + RootService 读私有目录
+1. **Xposed 用户通常已 root**（Magisk / KernelSU + LSPosed），模块进程可借鉴 [AppSnapShotor](../reference/sibling-projects.md#appsnapshotor) 的 libsu + RootService 读私有目录
 2. hook 运行在 **目标 UID**，设备有 root ≠ 目标进程能 `su`（DenyList）
 3. 单一路径在 SELinux / 包可见性 / DenyList 下无法保证覆盖率
 

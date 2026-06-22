@@ -1,9 +1,9 @@
 ---
 title: "公共组件 Web Demo"
 type: guide
-status: draft
+status: accepted
 phase: N/A
-updated: 2026-06-19
+updated: 2026-06-22
 summary: "Clarence 生态公共 UI 组件的静态网页 demo——与 components/ spec 一一对应。"
 ---
 

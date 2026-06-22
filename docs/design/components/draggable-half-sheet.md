@@ -1,9 +1,9 @@
 ---
 title: "组件：可拖曳半屏 Sheet"
 type: concept
-status: draft
+status: accepted
 phase: N/A
-updated: 2026-06-19
+updated: 2026-06-22
 summary: "TouchPrimary 半屏 BottomSheet——顶栏内嵌拖曳把手、Half/Full chrome 形态切换、28dp 顶缘、把手驱动展开/收起/关闭。"
 ---
 

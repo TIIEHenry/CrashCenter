@@ -3,7 +3,7 @@ title: "文档索引"
 type: concept
 status: accepted
 phase: N/A
-updated: 2026-06-20
+updated: 2026-06-22
 summary: "docs/ + dev/ 完整导航索引（自动生成）"
 ---
 
@@ -35,15 +35,16 @@ summary: "docs/ + dev/ 完整导航索引（自动生成）"
 | [app-management-ui.md](architecture/app-management-ui.md) | 配置域受管应用策展 + 行内 Switch 快捷干预 + 编辑页干预规则；Half Sheet 添加；无规则可添加 |
 | [architecture-optimization.md](architecture/architecture-optimization.md) | 现状债务清单、目标分层与包结构、Phase 4 落地映射；prescriptive 演进路线图 |
 | [code-editor-porting.md](architecture/code-editor-porting.md) | 参照 celestailruler CodeEditor 三模块，在 observe/detail 域替换 TextView 详情页并支撑 Phase 4 崩溃历史浏览 |
-| [configuration-ui.md](architecture/configuration-ui.md) | 配置域从 ActivityMain 单体演进为 MainShellActivity + ConfigFragment + ConfigUiState；复用 Fluent Design System 与 Phase 3 单屏 IA |
+| [configuration-ui.md](architecture/configuration-ui.md) | 配置域以 MainShellActivity 为壳层起点，ActivityMain 已废弃，页面职责由 ConfigFragment 承载；复用 Fluent Design System 与 Phase 3 单屏 IA |
 | [crash-capture-pipeline.md](architecture/crash-capture-pipeline.md) | hook 侧单入口 CrashCapturePipeline：构建 CrashEvent → 并行投递 CrashLogCoordinator 与 CrashFeedbackFacade；失败域隔离 |
-| [crash-data-layer.md](architecture/crash-data-layer.md) | CrashLogRepository 读口 as-built（Paging3 + LRU）；StatsAggregator 与 retention/clear 为 4D 目标 |
+| [crash-data-layer.md](architecture/crash-data-layer.md) | CrashLogRepository 读口 as-built（Paging3 + LRU + clear/deleteById/applyRetention）；4B-γ FileLock 统一见 crash-log-filesystem.md |
 | [crash-event-timeline-ui.md](architecture/crash-event-timeline-ui.md) | CrashHistoryFragment 的时间线呈现规范：按时间组织 CrashEvent、复用 Repository/详情路由，不新增独立页面或第三个 tab |
 | [crash-export-retention.md](architecture/crash-export-retention.md) | Phase 4E SAF 导出 JSONL/zip、通知 crash_id Intent、retention 配置 UI 与轮转策略 |
 | [crash-handler.md](architecture/crash-handler.md) | 通过 Looper 续命与 UncaughtExceptionHandler 替换拦截崩溃 |
 | [crash-history-ui.md](architecture/crash-history-ui.md) | Phase 4C-β CrashHistoryFragment：时间倒序列表、时间线呈现、筛选、空态、CrashLogRepository 读取契约 |
 | [crash-intelligent-analysis.md](architecture/crash-intelligent-analysis.md) | 在 JSONL 观测层之上做规则分类、签名聚类与诊断建议；默认端侧离线，不自动修复目标 app |
 | [crash-log-backends.md](architecture/crash-log-backends.md) | CrashLogBackend 抽象、4B-α Phase 2 并行写入已实现；root / ingest defer 4B-β；canonical JSONL 为 SSOT |
+| [crash-log-filesystem.md](architecture/crash-log-filesystem.md) | events.jsonl 跨进程读写、FileLock 统一、时间倒序读口、dedupe 与 IS 验收；衔接 ADR-017 / 4B-β |
 | [crash-logging.md](architecture/crash-logging.md) | hook 侧异步持久化全量拦截崩溃；4B-α 部分 MVP 已实现；多后端编排见 crash-log-backends.md |
 | [crash-log-ipc.md](architecture/crash-log-ipc.md) | hook 目标进程向模块进程写入 CrashEvent 的 IPC 机制对比；编排见 crash-log-backends.md（多后端并行、root 优先） |
 | [crash-notification.md](architecture/crash-notification.md) | 目标 app 崩溃后 Toast / 系统通知的触发条件、线程模型、PendingIntent 与 ActivityCrashInfo 详情页 |
@@ -79,6 +80,7 @@ summary: "docs/ + dev/ 完整导航索引（自动生成）"
 | [014-legacy-prefs-migration.md](decisions/014-legacy-prefs-migration.md) | PrefMigrator 首次启动从 tiiehenry.xp.grapcrash / grapcrash.xml 一次性导入配置到 crash.xml，标记 KEY_MIGRATED 后不再读旧路径 |  |
 | [015-managed-apps-intervention-rules.md](decisions/015-managed-apps-intervention-rules.md) | 配置域改为 managed_packages 策展列表 + intervention_rules JSON；无规则不 hook；Legacy 哨兵保留 ADR-002 行为 |  |
 | [017-root-ingest-and-dedupe.md](decisions/017-root-ingest-and-dedupe.md) | 落实 ADR-008 Phase 1 RootSu + 模块 ingest merge；canonical 按 crash_id 去重；读路径可选防御性 dedupe |  |
+| [021-canonical-jsonl-io-consistency.md](decisions/021-canonical-jsonl-io-consistency.md) | events.jsonl 变异统一 FileLock；Repository 读口 timestampMs 降序；删改经 CanonicalJsonlStore |  |
 
 ---
 
@@ -87,6 +89,7 @@ summary: "docs/ + dev/ 完整导航索引（自动生成）"
 | 文档 | 内容 |
 |------|------|
 | [root-service-patterns.md](reference/root-service-patterns.md) | 从 AppSnapShotor 提炼的 libsu RootService 模式；CrashCenter Phase 4 ingest 侧参考，非产品依赖 |
+| [sibling-projects.md](reference/sibling-projects.md) | CrashCenter 参考的外部 Clarence 生态仓库（GitHub URL；文档引用 SSOT，非 Gradle 构建依赖） |
 | [xposed-framework.md](reference/xposed-framework.md) | CrashCenter 使用的 Xposed API 与框架兼容性 |
 
 ---
@@ -98,6 +101,31 @@ summary: "docs/ + dev/ 完整导航索引（自动生成）"
 | [build-and-install.md](guides/build-and-install.md) | Gradle 9.2.1 构建、version catalog、签名与 APK 安装 |
 | [release.md](guides/release.md) | GitHub Release 发布流程、CHANGELOG 维护与 AI 辅助发布（移植自 AppSnapShotor） |
 | [usage.md](guides/usage.md) | 模块安装、界面说明、scope 与 LSPosed 作用域、包可见性、崩溃观测 FAQ |
+
+---
+
+## 设计规范（`docs/design/`）
+
+| 文档 | 内容 |
+|------|------|
+| [INDEX.md](design/INDEX.md) | Clarence 生态设计 SSOT 入口——UI 模式、视觉 token、交互范式、组件标准。 |
+| [interaction-language.md](design/interaction-language.md) | Clarence 生态交互 SSOT——InputModality、导航、Popup 策略；组件 spec 见 components/。 |
+| [ui-modes.md](design/ui-modes.md) | 生态两种 UI 范式——信息流大 UI（内容为主、悬浮 chrome）与工具密度 UI（按钮/窗口多）；同页可分区交叉组合。 |
+| [visual-language.md](design/visual-language.md) | Clarence 生态视觉 SSOT——token、轻量通透、按压范式；组件 spec 见 components/。 |
+
+### 组件（`docs/design/components/`）
+
+| 文档 | 内容 |
+|------|------|
+| [INDEX.md](design/components/INDEX.md) | Clarence 生态可复用 UI 组件 catalog——分割线、列表、Sheet、Popup、悬浮 chrome、表单控件；含 Web demo。 |
+| [draggable-half-sheet.md](design/components/draggable-half-sheet.md) | TouchPrimary 半屏 BottomSheet——顶栏内嵌拖曳把手、Half/Full chrome 形态切换、28dp 顶缘、把手驱动展开/收起/关闭。 |
+| [floating-chrome.md](design/components/floating-chrome.md) | FloatingToolbar 族 + 滚动联动边缘 Scrim（顶 blur 渐变 / 底渐隐）；自适应前景色。 |
+| [form-controls.md](design/components/form-controls.md) | FilterChip、Switch、搜索框、筛选图标的视觉与交互规范。 |
+| [popup-filter-menu.md](design/components/popup-filter-menu.md) | anchored Popup、筛选菜单、Master 行、popup_section_gap；按住滑动选单（Press-Drag-Release）。 |
+| [selection-bubble.md](design/components/selection-bubble.md) | 文本选择 / 长按文本时出现的水平 pill 悬浮条——快捷动作、可选 inline 输入；实色 layer、内容自适应宽。 |
+| [settings-card-detail-sheet.md](design/components/settings-card-detail-sheet.md) | 卡片式设置、相册式详情 BottomSheet——实色 layer、item 对齐 divider、内容 pill。 |
+| [shared-dividers.md](design/components/shared-dividers.md) | Card / Sheet / Popup 共用的 item 对齐 divider 与 popup_section_gap 规范。 |
+| [toolbar-list-chrome.md](design/components/toolbar-list-chrome.md) | 共面 Toolbar、扁平 List 行、Banner、筛选行的视觉与按压规范。 |
 
 ---
 
@@ -114,7 +142,6 @@ summary: "docs/ + dev/ 完整导航索引（自动生成）"
 
 | Phase | 文档 | 说明 | 状态 |
 |-------|------|------|------|
-| 2 | [phase2_documentation_tooling.md](../dev/roadmap/active/phase2_documentation_tooling.md) | 文档工具与验收体系 | 🔄 |
 | 3 | [phase3_ui_redesign.md](../dev/roadmap/active/phase3_ui_redesign.md) | 配置 UI 重设计 | 🔄 |
 | 4 | [phase4_crash_observability.md](../dev/roadmap/active/phase4_crash_observability.md) | 崩溃可观测性 |  |
 
@@ -123,19 +150,32 @@ summary: "docs/ + dev/ 完整导航索引（自动生成）"
 | Phase | 文档 | 说明 | 状态 |
 |-------|------|------|------|
 | 1 | [phase1_documentation_system.md](../dev/roadmap/archive/phase1_documentation_system.md) | 文档系统建设 | ✅ |
+| 2 | [phase2_documentation_tooling.md](../dev/roadmap/archive/phase2_documentation_tooling.md) | 文档工具与验收体系 | ✅ |
+
+### 实现日志（`dev/iterations/`）
+
+| 文档 | 内容 |
+|------|------|
+| [configuration-ui/appsnapshot-style-alignment-2026-06-19.md](../dev/iterations/configuration-ui/appsnapshot-style-alignment-2026-06-19.md) | 配置 UI 对齐 AppSnapShotor Fluent 设计语言：色板、扁平 Toolbar、Chip/搜索/列表样式 |
+| [configuration-ui/density-optimization-2026-06-19.md](../dev/iterations/configuration-ui/density-optimization-2026-06-19.md) | 单屏保留全局设置，压缩状态条/Chip/列表项，释放 RecyclerView 空间 |
+| [configuration-ui/managed-apps-intervention-2026-06-19.md](../dev/iterations/configuration-ui/managed-apps-intervention-2026-06-19.md) | Phase 3G 配置 IA 从全量列表改为受管策展 + Half Sheet 添加 + 行内 Switch + 编辑页规则 |
+| [configuration-ui/material-ui-redesign-2026-06-19.md](../dev/iterations/configuration-ui/material-ui-redesign-2026-06-19.md) | ActivityMain / ActivityCrashInfo Material 化：布局、主题、交互迁移与代码清理 |
+| [configuration-ui/permission-flow-2026-06-19.md](../dev/iterations/configuration-ui/permission-flow-2026-06-19.md) | Android 11+ QUERY_ALL_PACKAGES 运行时检测、授权条 UI、设置跳转与 onResume 重载 |
+| [configuration-ui/pref-migrator-split-2026-06-20.md](../dev/iterations/configuration-ui/pref-migrator-split-2026-06-20.md) | 将单体 PrefMigrator.kt 拆分为 LegacyPrefSnapshotReader + LegacyPrefImporter + ManagedModelMigrator，实现 legacy prefs 读取、导入、受管模型迁移三阶段分离 |
+| [configuration-ui/structure-cleanup-2026-06-19.md](../dev/iterations/configuration-ui/structure-cleanup-2026-06-19.md) | ViewBinding 迁移、去 ProgressDialog、删 pref_general、过滤空状态 |
+| [crash-observability/ipc-design-qa-2026-06-20.md](../dev/iterations/crash-observability/ipc-design-qa-2026-06-20.md) | 会话中 IPC 稳定性、XSP、公开 FS、framework 注入等问答同步至架构文档 |
 
 ### 实施计划（`dev/plans/`）
 
 | 文档 | 内容 |
 |------|------|
-| [architecture-decision-backlog.md](../dev/plans/architecture-decision-backlog.md) | 待决 ADR、实现与架构文档漂移、需新建/修订的架构文档清单与推荐顺序 |
-| [ui-redesign-execution-plan.md](../dev/plans/ui-redesign-execution-plan.md) | Material v1 验收门禁 + 信息架构/体验/结构分层实施路径 |
+| [architecture-decision-backlog.md](../dev/plans/architecture-decision-backlog.md) | 待决 ADR、实现与架构文档漂移；4B-γ crash-log-filesystem + ADR-021 proposed |
 
 ### 进度追踪（`dev/progress/`）
 
 | 文档 | 内容 |
 |------|------|
-| [status.md](../dev/progress/status.md) | Phase 3/4 UI + 4B-α/4C-β as-built 文档同步；ADR-017 proposed；IS 矩阵待验 |
+| [status.md](../dev/progress/status.md) | 文档系统修复；Phase 2 归档；design/ accepted；sibling 参考 SSOT |
 
 ### 设备验收（`dev/verification/`）
 
@@ -154,7 +194,8 @@ summary: "docs/ + dev/ 完整导航索引（自动生成）"
 1. [AGENTS.md](../AGENTS.md) — 项目全貌
 2. [dev/DEV_GUIDE.md](../dev/DEV_GUIDE.md) — 开发速查
 3. [architecture/overview.md](architecture/overview.md) — 系统总览
-4. [guides/usage.md](guides/usage.md) — 用户使用
+4. [design/INDEX.md](design/INDEX.md) — 视觉/交互设计 SSOT
+5. [guides/usage.md](guides/usage.md) — 用户使用
 
 ### 若关注 Xposed hook 机制
 1. [architecture/xposed-entry.md](architecture/xposed-entry.md)
@@ -168,4 +209,4 @@ summary: "docs/ + dev/ 完整导航索引（自动生成）"
 
 ---
 
-*索引生成日期：2026-06-20*
+*索引生成日期：2026-06-22*

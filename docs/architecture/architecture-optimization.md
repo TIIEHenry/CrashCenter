@@ -491,6 +491,7 @@ try { CrashLogCoordinator } catch { silent }
 | 编号 | 触发条件 | 状态 |
 |------|----------|------|
 | **ADR-017** | 4B-β root ingest + JSONL dedupe 语义（ADR-008 跟进） | proposed — [017-root-ingest-and-dedupe.md](../decisions/017-root-ingest-and-dedupe.md) |
+| **ADR-021** | canonical JSONL FileLock 统一 + 读序降序 | proposed — [021-canonical-jsonl-io-consistency.md](../decisions/021-canonical-jsonl-io-consistency.md) |
 | **ADR-019** | 4D retention pref + `Repository.clear()` API | 待 4D 立项 |
 | **ADR-020** | 引入 Hilt 替代 `ServiceLocator` | 待 D-05 拍板 |
 | **ADR-023** | 4G-V3 端侧 LLM 或云端 API 分析 — 隐私与数据出境边界 | 待 4G 立项 |

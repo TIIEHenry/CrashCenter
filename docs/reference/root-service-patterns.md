@@ -3,13 +3,13 @@ title: "Root 服务参考模式"
 type: reference
 status: accepted
 phase: 4
-updated: 2026-06-19
+updated: 2026-06-22
 summary: "从 AppSnapShotor 提炼的 libsu RootService 模式；CrashCenter Phase 4 ingest 侧参考，非产品依赖"
 ---
 
 # Root 服务参考模式
 
-> **参考项目**：[AppSnapShotor](/home/clarence/Projects/Android/AppSnapShotor) — [`docs/architecture/root-service.md`](../../../../AppSnapShotor/docs/architecture/root-service.md)
+> **参考项目**：[AppSnapShotor](sibling-projects.md#appsnapshotor)（GitHub: [TIIEHenry/AppSnapshoter](https://github.com/TIIEHenry/AppSnapshoter)）
 >
 > CrashCenter **不**复制 AppSnapShotor 的双 Root 服务与 AIDL 压缩管线；本文仅提炼与 Phase 4 [crash-log-backends.md](../architecture/crash-log-backends.md) 相关的 **root 特权 I/O** 模式。
 
@@ -42,7 +42,7 @@ Root 子进程（uid 0）
 
 启动序列（`SnapshotApp.onCreate`）：MMKV → `ProvidersImpl` → `Shell.getShell().isRoot` → 双 RootService bind。
 
-详见 AppSnapShotor [`root-service.md`](../../../../AppSnapShotor/docs/architecture/root-service.md) 与 [`security.md`](../../../../AppSnapShotor/docs/architecture/cross-cutting/security.md)。
+详见 [sibling-projects.md](sibling-projects.md) 登记的上游路径 `docs/architecture/root-service.md` 与 `cross-cutting/security.md`。
 
 ## CrashCenter 映射（Phase 4 设计）
 

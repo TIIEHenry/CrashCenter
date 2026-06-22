@@ -13,6 +13,14 @@ from urllib.parse import unquote
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 REQUIRED_FRONTMATTER = ("title", "type", "status", "phase", "updated", "summary")
+VALID_TYPES = frozenset({
+    "architecture", "concept", "decision", "reference", "guide",
+    "roadmap", "plan", "progress", "index", "verification", "iteration",
+})
+VALID_STATUSES = frozenset({
+    "draft", "review", "accepted", "implemented", "completed",
+    "archived", "active", "in_progress", "proposed",
+})
 REQUIRED_ENTRIES = (
     "AGENTS.md",
     "docs/README.md",
@@ -88,17 +96,23 @@ def check_required() -> list[Finding]:
     ]
 
 
-def parse_frontmatter(text: str) -> list[str]:
+def parse_frontmatter_fields(text: str) -> tuple[list[str], dict[str, str]]:
     lines = text.splitlines()
     if not lines or lines[0].strip() != "---":
-        return ["missing YAML frontmatter"]
+        return ["missing YAML frontmatter"], {}
     try:
         end = lines[1:].index("---") + 1
     except ValueError:
-        return ["frontmatter not closed"]
+        return ["frontmatter not closed"], {}
     body = "\n".join(lines[1:end])
     missing = [f for f in REQUIRED_FRONTMATTER if not re.search(rf"^{f}\s*:", body, re.M)]
-    return [f"missing fields: {', '.join(missing)}"] if missing else []
+    fields: dict[str, str] = {}
+    for field in ("type", "status"):
+        m = re.search(rf"^{field}\s*:\s*(.+)$", body, re.M)
+        if m:
+            fields[field] = m.group(1).strip().strip('"').strip("'")
+    issues = [f"missing fields: {', '.join(missing)}"] if missing else []
+    return issues, fields
 
 
 def frontmatter_findings(files: list[Path]) -> list[Finding]:
@@ -107,8 +121,15 @@ def frontmatter_findings(files: list[Path]) -> list[Finding]:
         if repo_rel(path) in FRONTMATTER_EXEMPT:
             continue
         text = path.read_text(encoding="utf-8", errors="replace")
-        for msg in parse_frontmatter(text):
+        issues, fields = parse_frontmatter_fields(text)
+        for msg in issues:
             out.append(Finding(repo_rel(path), msg))
+        doc_type = fields.get("type")
+        if doc_type and doc_type not in VALID_TYPES:
+            out.append(Finding(repo_rel(path), f"invalid type: {doc_type}"))
+        status = fields.get("status")
+        if status and status not in VALID_STATUSES:
+            out.append(Finding(repo_rel(path), f"invalid status: {status}"))
     return out
 
 

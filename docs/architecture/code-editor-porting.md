@@ -3,13 +3,13 @@ title: "CodeEditor 移植方案（日志浏览）"
 type: architecture
 status: accepted
 phase: 4
-updated: 2026-06-19
+updated: 2026-06-22
 summary: "参照 celestailruler CodeEditor 三模块，在 observe/detail 域替换 TextView 详情页并支撑 Phase 4 崩溃历史浏览"
 ---
 
 # CodeEditor 移植方案（日志浏览）
 
-> 参照项目：celestailruler（外部 sibling，路径 `/home/clarence/Projects/Android/celestailruler`）
+> 参照项目：[CelestailRuler](../reference/sibling-projects.md#celestailruler)（CI checkout 见 `.github/workflows/build.yml`）
 > 源码对照：`CrashInfoActivity.kt`、`BaseCodeEditorClient.kt`、`CodeEditor` / `CodeEditorClient` 模块
 > 关联：[crash-notification.md](crash-notification.md)、[crash-logging.md](crash-logging.md)、[navigation-ia.md](navigation-ia.md)
 
@@ -348,4 +348,4 @@ flowchart LR
 - [app-management-ui.md](app-management-ui.md) — `AddManagedAppBottomSheet` Half Sheet 参考实现
 - [ADR-009](../decisions/009-ui-shell-design-system.md) — observe/detail 域与 Design System 边界
 - [glossary.md](../glossary.md) — CrashEvent、events.jsonl
-- celestailruler `dev/DEV_GUIDE.md` — 上游模块地图
+- [sibling-projects.md](../reference/sibling-projects.md) — CelestailRuler 上游路径与 GitHub

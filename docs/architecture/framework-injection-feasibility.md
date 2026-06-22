@@ -3,13 +3,13 @@ title: "Framework 注入可行性评估"
 type: architecture
 status: accepted
 phase: 4
-updated: 2026-06-19
+updated: 2026-06-22
 summary: "参照 celestailruler 评估 System Framework 注入对 CrashCenter 的价值；结论：不采用为主架构，保留 ADR-007 app 级 + Provider，可选 parseQueries 补丁"
 ---
 
 # Framework 注入可行性评估
 
-> 参照项目：[celestailruler](/home/clarence/Projects/Android/celestailruler)（外部参考，非本仓库子模块）
+> 参照项目：[CelestailRuler](../reference/sibling-projects.md#celestailruler)（外部参考，非本仓库子模块）
 > 触发背景：Phase 4 跨进程崩溃日志 IPC 分析后，评估是否应像 celestailruler 一样 hook **System Framework**（`system_server` / `android` 包）
 > 关联：[crash-log-ipc.md](crash-log-ipc.md)、[ADR-007](../decisions/007-crash-log-cross-process-storage.md)、[xposed-entry.md](xposed-entry.md)
 

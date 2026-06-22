@@ -1,9 +1,9 @@
 ---
 title: "组件：设置 Card 与详情 Sheet"
 type: concept
-status: draft
+status: accepted
 phase: N/A
-updated: 2026-06-19
+updated: 2026-06-22
 summary: "卡片式设置、相册式详情 BottomSheet——实色 layer、item 对齐 divider、内容 pill。"
 ---
 

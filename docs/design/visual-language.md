@@ -1,9 +1,9 @@
 ---
 title: "生态视觉设计语言"
 type: concept
-status: draft
+status: accepted
 phase: N/A
-updated: 2026-06-19
+updated: 2026-06-22
 summary: "Clarence 生态视觉 SSOT——token、轻量通透、按压范式；组件 spec 见 components/。"
 ---
 

@@ -1,9 +1,9 @@
 ---
 title: "组件：表单与筛选控件"
 type: concept
-status: draft
+status: accepted
 phase: N/A
-updated: 2026-06-19
+updated: 2026-06-22
 summary: "FilterChip、Switch、搜索框、筛选图标的视觉与交互规范。"
 ---
 

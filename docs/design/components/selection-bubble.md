@@ -1,9 +1,9 @@
 ---
 title: "组件：选区悬浮气泡（SelectionBubble）"
 type: concept
-status: draft
+status: accepted
 phase: N/A
-updated: 2026-06-19
+updated: 2026-06-22
 summary: "文本选择 / 长按文本时出现的水平 pill 悬浮条——快捷动作、可选 inline 输入；实色 layer、内容自适应宽。"
 ---
 

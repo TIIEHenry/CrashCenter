@@ -1,7 +1,7 @@
 ---
 title: "组件：筛选 Popup 与上下文菜单"
 type: concept
-status: draft
+status: accepted
 phase: N/A
 updated: 2026-06-20
 summary: "anchored Popup、筛选菜单、Master 行、popup_section_gap；按住滑动选单（Press-Drag-Release）。"

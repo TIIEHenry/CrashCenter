@@ -1,9 +1,9 @@
 ---
 title: "组件：Item 对齐分割线"
 type: concept
-status: draft
+status: accepted
 phase: N/A
-updated: 2026-06-19
+updated: 2026-06-22
 summary: "Card / Sheet / Popup 共用的 item 对齐 divider 与 popup_section_gap 规范。"
 ---
 

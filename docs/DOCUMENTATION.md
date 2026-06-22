@@ -3,7 +3,7 @@ title: "Documentation System — LLM Maintenance Rules"
 type: concept
 status: accepted
 phase: N/A
-updated: 2026-06-19
+updated: 2026-06-22
 summary: "CrashCenter 文档维护规则：目录、frontmatter、提交门禁、ADR/迭代分流"
 ---
 
@@ -24,6 +24,7 @@ docs/                         # 知识库（稳定）
 ├── decisions/                # ADR
 ├── reference/                # 外部参考
 ├── guides/                   # 操作指南
+├── design/                   # Clarence 生态视觉/交互 SSOT（见 design/INDEX.md）
 └── templates/                # 文档模板
 
 dev/                          # 行动层（频繁更新）
@@ -54,8 +55,8 @@ dev/                          # 行动层（频繁更新）
 ```yaml
 ---
 title: "标题"
-type: architecture | concept | decision | reference | guide | roadmap | plan | progress | index | verification
-status: draft | review | accepted | implemented | completed | archived | active | in_progress
+type: architecture | concept | decision | reference | guide | iteration | roadmap | plan | progress | index | verification
+status: draft | review | proposed | accepted | implemented | completed | archived | active | in_progress
 phase: N/A | <数字>
 updated: YYYY-MM-DD
 summary: "一行描述"
@@ -148,6 +149,7 @@ ADR 模板：`docs/templates/decision-template.md`。`accepted` 后不改；推�
 | 子系统设计 | `docs/architecture/<subsystem>.md` |
 | 架构决策 | `docs/decisions/` |
 | 实现过程 | `dev/iterations/` |
+| 设计规范 | `docs/design/` |
 | 活跃 phase | `dev/roadmap/active/` |
 | 构建安装 | `docs/guides/getting-started/INDEX.md` · [build-and-install.md](guides/build-and-install.md) |
 | 发布 | [guides/release.md](guides/release.md) |

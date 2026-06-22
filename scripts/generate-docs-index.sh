@@ -131,6 +131,71 @@ generate_guides_section() {
     done
 }
 
+generate_design_section() {
+    if [ ! -d "$DOCS_DIR/design" ]; then
+        return
+    fi
+    echo ""
+    echo "---"
+    echo ""
+    echo "## 设计规范（\`docs/design/\`）"
+    echo ""
+    echo "| 文档 | 内容 |"
+    echo "|------|------|"
+    if [ -f "$DOCS_DIR/design/INDEX.md" ]; then
+        local title summary
+        title=$(get_title "$DOCS_DIR/design/INDEX.md")
+        summary=$(get_summary "$DOCS_DIR/design/INDEX.md")
+        echo "| [INDEX.md](design/INDEX.md) | ${summary:-$title} |"
+    fi
+    for f in "$DOCS_DIR/design"/*.md; do
+        [ -f "$f" ] || continue
+        local name=$(basename "$f")
+        [ "$name" = "INDEX.md" ] && continue
+        local title=$(get_title "$f")
+        local summary=$(get_summary "$f")
+        echo "| [$name](design/$name) | ${summary:-$title} |"
+    done
+    if [ -d "$DOCS_DIR/design/components" ]; then
+        echo ""
+        echo "### 组件（\`docs/design/components/\`）"
+        echo ""
+        echo "| 文档 | 内容 |"
+        echo "|------|------|"
+        if [ -f "$DOCS_DIR/design/components/INDEX.md" ]; then
+            local title summary
+            title=$(get_title "$DOCS_DIR/design/components/INDEX.md")
+            summary=$(get_summary "$DOCS_DIR/design/components/INDEX.md")
+            echo "| [INDEX.md](design/components/INDEX.md) | ${summary:-$title} |"
+        fi
+        for f in "$DOCS_DIR/design/components"/*.md; do
+            [ -f "$f" ] || continue
+            local name=$(basename "$f")
+            [ "$name" = "INDEX.md" ] && continue
+            local title=$(get_title "$f")
+            local summary=$(get_summary "$f")
+            echo "| [$name](design/components/$name) | ${summary:-$title} |"
+        done
+    fi
+}
+
+generate_iterations_section() {
+    if [ ! -d "$DEV_DIR/iterations" ]; then
+        return
+    fi
+    echo ""
+    echo "### 实现日志（\`dev/iterations/\`）"
+    echo ""
+    echo "| 文档 | 内容 |"
+    echo "|------|------|"
+    find "$DEV_DIR/iterations" -name '*.md' -type f | sort | while read -r f; do
+        local rel="${f#$DEV_DIR/iterations/}"
+        local title=$(get_title "$f")
+        local summary=$(get_summary "$f")
+        echo "| [$rel](../dev/iterations/$rel) | ${summary:-$title} |"
+    done
+}
+
 generate_roadmap_section() {
     echo ""
     echo "---"
@@ -246,7 +311,8 @@ generate_reading_paths() {
     echo "1. [AGENTS.md](../AGENTS.md) — 项目全貌"
     echo "2. [dev/DEV_GUIDE.md](../dev/DEV_GUIDE.md) — 开发速查"
     echo "3. [architecture/overview.md](architecture/overview.md) — 系统总览"
-    echo "4. [guides/usage.md](guides/usage.md) — 用户使用"
+    echo "4. [design/INDEX.md](design/INDEX.md) — 视觉/交互设计 SSOT"
+    echo "5. [guides/usage.md](guides/usage.md) — 用户使用"
     echo ""
     echo "### 若关注 Xposed hook 机制"
     echo "1. [architecture/xposed-entry.md](architecture/xposed-entry.md)"
@@ -299,7 +365,9 @@ trap "rm -f $TMPFILE" EXIT
     generate_decisions_section
     generate_reference_section
     generate_guides_section
+    generate_design_section
     generate_roadmap_section
+    generate_iterations_section
     generate_plans_section
     generate_progress_section
     generate_verification_section

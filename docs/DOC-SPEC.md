@@ -3,7 +3,7 @@ title: "文档系统规范"
 type: concept
 status: accepted
 phase: N/A
-updated: 2026-06-19
+updated: 2026-06-22
 summary: "文档分类、命名、索引与健康检查"
 ---
 
@@ -20,6 +20,7 @@ summary: "文档分类、命名、索引与健康检查"
 | `concept` | `docs/`、`docs/architecture/concepts/` |
 | `reference` | `docs/reference/` |
 | `guide` | `docs/guides/`、`docs/guides/getting-started/` |
+| `iteration` | `dev/iterations/<subsystem>/` |
 | `roadmap` | `dev/roadmap/active/`、`archive/` |
 | `plan` | `dev/plans/` |
 | `progress` | `dev/progress/` |
@@ -39,8 +40,9 @@ summary: "文档分类、命名、索引与健康检查"
 ## 索引与健康检查
 
 ```bash
-./scripts/generate-docs-index.sh       # 更新 docs/INDEX.md（禁止手改）
+./scripts/generate-docs-index.sh       # 更新 docs/INDEX.md（扫描 architecture/decisions/reference/guides/design + dev/）
 python3 scripts/check-docs-health.py   # frontmatter、链接、必备入口
+python3 scripts/check-docs-health.py --strict-links  # CI 门禁：断裂链接 fail
 ```
 
 结构变更后两者均须运行。模板见 `docs/templates/`（含 verification-template）。

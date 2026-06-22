@@ -1,9 +1,9 @@
 ---
 title: "组件：Toolbar 与扁平列表"
 type: concept
-status: draft
+status: accepted
 phase: N/A
-updated: 2026-06-19
+updated: 2026-06-22
 summary: "共面 Toolbar、扁平 List 行、Banner、筛选行的视觉与按压规范。"
 ---
 

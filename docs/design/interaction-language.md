@@ -1,9 +1,9 @@
 ---
 title: "跨项目交互设计语言"
 type: concept
-status: draft
+status: accepted
 phase: N/A
-updated: 2026-06-19
+updated: 2026-06-22
 summary: "Clarence 生态交互 SSOT——InputModality、导航、Popup 策略；组件 spec 见 components/。"
 ---
 

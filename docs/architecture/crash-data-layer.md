@@ -3,8 +3,8 @@ title: "崩溃数据层架构"
 type: architecture
 status: accepted
 phase: 4
-updated: 2026-06-20
-summary: "CrashLogRepository 读口 as-built（Paging3 + LRU + clear/deleteById/applyRetention + observeChanges stub）；StatsAggregator 为 4D 目标"
+updated: 2026-06-22
+summary: "CrashLogRepository 读口 as-built（Paging3 + LRU + clear/deleteById/applyRetention）；4B-γ FileLock 统一见 crash-log-filesystem.md"
 ---
 
 # 崩溃数据层架构
@@ -194,7 +194,7 @@ data class CrashStats(
 
 | 场景 | 策略 |
 |------|------|
-| hook 写 + UI 读 | `FileLock` 或 Provider 串行化（hook 侧已处理） |
+| hook 写 + UI 读 | `FileLock` 或 Provider 串行化（hook 侧已处理）；删改须同锁 — 见 [crash-log-filesystem.md](crash-log-filesystem.md)、[ADR-021](../decisions/021-canonical-jsonl-io-consistency.md) |
 | ingest merge + UI 读 | Repository 内部 `Mutex`；ingest 写完后通知 invalidate |
 | retention rewrite + 读 | `Mutex` + atomic temp-rename |
 
@@ -208,5 +208,6 @@ data class CrashStats(
 - [crash-capture-pipeline.md](crash-capture-pipeline.md) — 事件生产侧
 - [scope-and-prefs.md](scope-and-prefs.md) — `crash_log_enabled` / `crash_log_max_entries` 配置
 - [architecture-optimization.md](architecture-optimization.md) — §5.5 Repository 设计
+- [crash-log-filesystem.md](crash-log-filesystem.md) — canonical FileLock、读序、FS 验收
 - [dev/plans/architecture-decision-backlog.md](../../dev/plans/architecture-decision-backlog.md) — D-04 Repository 契约、D-10 Paging vs Flow
 - [phase4_crash_observability.md](../../dev/roadmap/active/phase4_crash_observability.md)

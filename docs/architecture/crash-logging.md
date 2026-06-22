@@ -248,6 +248,7 @@ createPackageContext(MODULE_PKG, CONTEXT_IGNORE_SECURITY)
 ## 相关文档
 
 - [crash-log-backends.md](crash-log-backends.md) — 多后端编排与 ingest
+- [crash-log-filesystem.md](crash-log-filesystem.md) — canonical FileLock、读序、FS 验收
 - [crash-log-ipc.md](crash-log-ipc.md) — 跨进程通信机制对比与 FAQ
 - [overview.md](overview.md) — 系统总览
 - [crash-event-timeline-ui.md](crash-event-timeline-ui.md) — CrashEvent 时间线呈现

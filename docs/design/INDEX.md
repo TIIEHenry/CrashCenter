@@ -1,9 +1,9 @@
 ---
 title: "设计文档索引"
 type: concept
-status: draft
+status: accepted
 phase: N/A
-updated: 2026-06-19
+updated: 2026-06-22
 summary: "Clarence 生态设计 SSOT 入口——UI 模式、视觉 token、交互范式、组件标准。"
 ---
 
