@@ -291,4 +291,98 @@ class CrashHistoryViewModelTest {
         assertEquals(2, snapshot.size)
         assertTrue(snapshot.all { it.packageName == "com.example.a" })
     }
+
+    // ─── exportEvents ───
+
+    @Test
+    fun `exportEvents returns null when no events exist`() = testScope.runTest {
+        createViewModel()
+        val result = viewModel.exportEvents()
+        assertNull(result)
+    }
+
+    @Test
+    fun `exportEvents returns valid JSONL string`() = testScope.runTest {
+        repository.events = listOf(
+            CrashEvent(id = "e1", timestampMs = 1000L, packageName = "com.example.a", exceptionClass = "NullPointerException"),
+            CrashEvent(id = "e2", timestampMs = 2000L, packageName = "com.example.b", exceptionClass = "IllegalStateException"),
+        )
+        createViewModel()
+
+        val result = viewModel.exportEvents()
+        assertTrue(result != null)
+        val lines = result!!.lines().filter { it.isNotBlank() }
+        assertEquals(2, lines.size)
+        // Each line should be parseable JSON containing the event id
+        assertTrue(lines[0].contains("\"id\""))
+        assertTrue(lines[1].contains("\"id\""))
+    }
+
+    @Test
+    fun `exportEvents returns null when repository throws`() = testScope.runTest {
+        repository.throwOnGetAll = true
+        createViewModel()
+
+        val result = viewModel.exportEvents()
+        assertNull(result)
+    }
+
+    // ─── getStatistics ───
+
+    @Test
+    fun `getStatistics returns zero counts when no events exist`() = testScope.runTest {
+        createViewModel()
+        val stats = viewModel.getStatistics()
+
+        assertEquals(0, stats.totalCount)
+        assertEquals(0, stats.uniquePackageCount)
+        assertEquals(0L, stats.mostRecentTimestampMs)
+        assertTrue(stats.topPackages.isEmpty())
+    }
+
+    @Test
+    fun `getStatistics computes correct counts and top packages`() = testScope.runTest {
+        repository.events = listOf(
+            CrashEvent(id = "e1", timestampMs = 1000L, packageName = "com.example.a", exceptionClass = "NullPointerException"),
+            CrashEvent(id = "e2", timestampMs = 2000L, packageName = "com.example.b", exceptionClass = "IllegalStateException"),
+            CrashEvent(id = "e3", timestampMs = 3000L, packageName = "com.example.a", exceptionClass = "NullPointerException"),
+            CrashEvent(id = "e4", timestampMs = 4000L, packageName = "com.example.a", exceptionClass = "NullPointerException"),
+            CrashEvent(id = "e5", timestampMs = 5000L, packageName = "com.example.c", exceptionClass = "RuntimeException"),
+        )
+        createViewModel()
+
+        val stats = viewModel.getStatistics()
+        assertEquals(5, stats.totalCount)
+        assertEquals(3, stats.uniquePackageCount)
+        assertEquals(5000L, stats.mostRecentTimestampMs)
+        assertEquals(3, stats.topPackages.size)
+        // com.example.a should be top with 3 crashes
+        assertEquals("com.example.a" to 3, stats.topPackages[0])
+    }
+
+    @Test
+    fun `getStatistics top packages limited to 3`() = testScope.runTest {
+        repository.events = listOf(
+            CrashEvent(id = "e1", timestampMs = 1000L, packageName = "com.a", exceptionClass = "NullPointerException"),
+            CrashEvent(id = "e2", timestampMs = 2000L, packageName = "com.b", exceptionClass = "NullPointerException"),
+            CrashEvent(id = "e3", timestampMs = 3000L, packageName = "com.c", exceptionClass = "NullPointerException"),
+            CrashEvent(id = "e4", timestampMs = 4000L, packageName = "com.d", exceptionClass = "NullPointerException"),
+            CrashEvent(id = "e5", timestampMs = 5000L, packageName = "com.a", exceptionClass = "NullPointerException"),
+        )
+        createViewModel()
+
+        val stats = viewModel.getStatistics()
+        assertEquals(3, stats.topPackages.size)
+        assertEquals("com.a" to 2, stats.topPackages[0])
+    }
+
+    @Test
+    fun `getStatistics returns empty stats when repository throws`() = testScope.runTest {
+        repository.throwOnGetAll = true
+        createViewModel()
+
+        val stats = viewModel.getStatistics()
+        assertEquals(0, stats.totalCount)
+        assertEquals(0, stats.uniquePackageCount)
+    }
 }

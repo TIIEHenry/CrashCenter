@@ -59,6 +59,14 @@
     <string name="observe_filter_package_hint">e.g. com.example.app</string>
     <string name="observe_menu_export">Export logs</string>
     <string name="observe_menu_stats">Statistics</string>
+    <string name="observe_export_no_events">No crash logs to export</string>
+    <string name="observe_export_error">Export failed</string>
+    <string name="observe_stats_title">Crash Statistics</string>
+    <string name="observe_stats_total">Total crashes: %1$d</string>
+    <string name="observe_stats_unique_packages">Unique packages: %1$d</string>
+    <string name="observe_stats_most_recent">Most recent: %1$s</string>
+    <string name="observe_stats_top_packages">Top crashing packages</string>
+    <string name="observe_stats_package_entry">%1$s: %2$d crashes</string>
     <string name="crash_detail_not_found">Crash record not found: %1$s</string>
     <string name="legacy_app_row_a11y">%1$s, %2$s</string>
 

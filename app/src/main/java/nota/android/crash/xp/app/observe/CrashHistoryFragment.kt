@@ -1,5 +1,6 @@
 package nota.android.crash.xp.app.observe
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.Menu
@@ -9,6 +10,7 @@ import android.view.ViewGroup
 import android.widget.EditText
 import android.widget.Toast
 
+import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
@@ -28,6 +30,10 @@ import nota.android.crash.xp.app.data.CrashFilter
 import nota.android.crash.xp.app.di.ServiceLocator
 import nota.android.crash.xp.app.di.crashHistoryViewModelFactory
 import nota.android.crash.xp.app.databinding.FragmentCrashHistoryBinding
+import java.io.File
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 class CrashHistoryFragment : Fragment() {
 
@@ -146,11 +152,11 @@ class CrashHistoryFragment : Fragment() {
                 true
             }
             R.id.item_observe_export -> {
-                Toast.makeText(requireContext(), "TODO: Export", Toast.LENGTH_SHORT).show()
+                exportLogs()
                 true
             }
             R.id.item_observe_stats -> {
-                Toast.makeText(requireContext(), "TODO: Stats", Toast.LENGTH_SHORT).show()
+                showStatistics()
                 true
             }
             else -> false
@@ -175,6 +181,65 @@ class CrashHistoryFragment : Fragment() {
             }
             .setNegativeButton(android.R.string.cancel, null)
             .show()
+    }
+
+    private fun exportLogs() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            val jsonl = viewModel.exportEvents()
+            if (jsonl == null) {
+                Toast.makeText(requireContext(), R.string.observe_export_no_events, Toast.LENGTH_SHORT).show()
+                return@launch
+            }
+            try {
+                val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
+                val file = File(requireContext().cacheDir, "crash_export_$timestamp.jsonl")
+                file.writeText(jsonl)
+
+                val uri = FileProvider.getUriForFile(
+                    requireContext(),
+                    "${requireContext().packageName}.fileprovider",
+                    file,
+                )
+
+                val intent = Intent(Intent.ACTION_SEND).apply {
+                    type = "application/json"
+                    putExtra(Intent.EXTRA_STREAM, uri)
+                    putExtra(Intent.EXTRA_SUBJECT, "CrashCenter export ($timestamp)")
+                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                }
+                startActivity(Intent.createChooser(intent, getString(R.string.observe_menu_export)))
+            } catch (e: Exception) {
+                Toast.makeText(requireContext(), R.string.observe_export_error, Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    private fun showStatistics() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            val stats = viewModel.getStatistics()
+            if (stats.totalCount == 0) {
+                Toast.makeText(requireContext(), R.string.observe_export_no_events, Toast.LENGTH_SHORT).show()
+                return@launch
+            }
+            val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+            val recentFormatted = dateFormat.format(Date(stats.mostRecentTimestampMs))
+
+            val sb = StringBuilder()
+            sb.appendLine(getString(R.string.observe_stats_total, stats.totalCount))
+            sb.appendLine(getString(R.string.observe_stats_unique_packages, stats.uniquePackageCount))
+            sb.appendLine(getString(R.string.observe_stats_most_recent, recentFormatted))
+            sb.appendLine()
+            sb.appendLine(getString(R.string.observe_stats_top_packages))
+            stats.topPackages.forEach { (pkg, count) ->
+                sb.appendLine(getString(R.string.observe_stats_package_entry, pkg, count))
+            }
+
+            MaterialAlertDialogBuilder(requireContext())
+                .setTitle(R.string.observe_stats_title)
+                .setMessage(sb.toString().trim())
+                .setPositiveButton(android.R.string.ok, null)
+                .show()
+        }
     }
 
     companion object {

@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.withContext
 import nota.android.crash.common.data.CrashEvent
 import nota.android.crash.xp.app.common.BaseFlowViewModel
+import nota.android.crash.xp.app.common.safeLog
 import nota.android.crash.xp.app.data.CrashFilter
 import nota.android.crash.xp.app.data.CrashLogRepository
 
@@ -51,8 +52,64 @@ class CrashHistoryViewModel(
         }
     }
 
+    /**
+     * Returns all crash events as a JSONL string (one JSON object per line).
+     * Returns null if no events exist or on error.
+     */
+    suspend fun exportEvents(): String? = withContext(ioDispatcher) {
+        try {
+            val events = repository.getAll(CrashFilter(), limit = Int.MAX_VALUE, offset = 0)
+            if (events.isEmpty()) return@withContext null
+            events.joinToString("\n") { it.toJsonLine() }
+        } catch (e: Exception) {
+            safeLog("CrashHistoryViewModel", "exportEvents failed", e)
+            null
+        }
+    }
+
+    /**
+     * Computes crash statistics from all stored events.
+     * Returns empty statistics on error.
+     */
+    suspend fun getStatistics(): CrashStatistics = withContext(ioDispatcher) {
+        try {
+            val events = repository.getAll(CrashFilter(), limit = Int.MAX_VALUE, offset = 0)
+            CrashStatistics.from(events)
+        } catch (e: Exception) {
+            safeLog("CrashHistoryViewModel", "getStatistics failed", e)
+            CrashStatistics(0, 0, 0L, emptyList())
+        }
+    }
+
     companion object {
         const val PAGE_SIZE = 50
         const val PREFETCH_DISTANCE = 50
+    }
+}
+
+data class CrashStatistics(
+    val totalCount: Int,
+    val uniquePackageCount: Int,
+    val mostRecentTimestampMs: Long,
+    val topPackages: List<Pair<String, Int>>,
+) {
+    companion object {
+        fun from(events: List<CrashEvent>): CrashStatistics {
+            if (events.isEmpty()) {
+                return CrashStatistics(0, 0, 0L, emptyList())
+            }
+            val byPackage = events.groupingBy { it.packageName }.eachCount()
+            val topPackages = byPackage.entries
+                .sortedByDescending { it.value }
+                .take(3)
+                .map { it.key to it.value }
+            val mostRecent = events.maxOf { it.timestampMs }
+            return CrashStatistics(
+                totalCount = events.size,
+                uniquePackageCount = byPackage.size,
+                mostRecentTimestampMs = mostRecent,
+                topPackages = topPackages,
+            )
+        }
     }
 }
