@@ -3,6 +3,7 @@ package nota.android.crash.xp
 import android.content.Context
 import android.content.SharedPreferences
 import androidx.core.content.edit
+import nota.android.crash.root.RootAccessClient
 import nota.android.crash.xp.migration.LegacyPrefImporter
 import nota.android.crash.xp.migration.LegacyPrefSnapshotReader
 import nota.android.crash.xp.migration.ManagedModelMigrator
@@ -24,13 +25,13 @@ object PrefMigrator {
      * @return whether [KEY_MIGRATED] was already set before this call (prior app session),
      *         and whether legacy grapcrash prefs supplied data on this call.
      */
-    fun migrateIfNeeded(context: Context, prefs: SharedPreferences): LegacyPrefState {
+    fun migrateIfNeeded(context: Context, prefs: SharedPreferences, rootAccessClient: RootAccessClient): LegacyPrefState {
         val hadPriorSession = prefs.getBoolean(KEY_MIGRATED, false)
         if (hadPriorSession) {
             return LegacyPrefState(hadPriorSession = true, importHadData = false)
         }
 
-        val snapshot = LegacyPrefSnapshotReader.read(context)
+        val snapshot = LegacyPrefSnapshotReader(rootAccessClient).read(context)
         val importHadData = snapshot != null && LegacyPrefImporter.import(prefs, snapshot)
 
         prefs.edit { putBoolean(KEY_MIGRATED, true) }

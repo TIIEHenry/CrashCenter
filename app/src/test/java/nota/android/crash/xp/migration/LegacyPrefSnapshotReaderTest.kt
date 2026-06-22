@@ -99,11 +99,7 @@ class LegacyPrefSnapshotReaderTest {
             apply()
         }
 
-        // Use reflection to call private snapshotFromPrefs
-        val method = LegacyPrefSnapshotReader::class.java
-            .getDeclaredMethod("snapshotFromPrefs", SharedPreferences::class.java)
-        method.isAccessible = true
-        val snapshot = method.invoke(LegacyPrefSnapshotReader, prefs) as LegacyPrefSnapshotReader.Snapshot
+        val snapshot = LegacyPrefSnapshotReader.snapshotFromPrefs(prefs)
 
         assertEquals(3, snapshot.booleans.size)
         assertTrue(snapshot.booleans[PrefManager.PREF_SCOPE_MODE]!!)
@@ -121,10 +117,7 @@ class LegacyPrefSnapshotReaderTest {
             apply()
         }
 
-        val method = LegacyPrefSnapshotReader::class.java
-            .getDeclaredMethod("snapshotFromPrefs", SharedPreferences::class.java)
-        method.isAccessible = true
-        val snapshot = method.invoke(LegacyPrefSnapshotReader, prefs) as LegacyPrefSnapshotReader.Snapshot
+        val snapshot = LegacyPrefSnapshotReader.snapshotFromPrefs(prefs)
 
         assertEquals(1, snapshot.stringSets.size)
         assertEquals(setOf("com.a", "com.b"), snapshot.stringSets[PrefManager.PREF_PACKAGE_LIST])
@@ -134,10 +127,7 @@ class LegacyPrefSnapshotReaderTest {
     fun `snapshotFromPrefs with empty prefs returns empty snapshot`() {
         val prefs = context.getSharedPreferences("test_empty", Context.MODE_PRIVATE)
 
-        val method = LegacyPrefSnapshotReader::class.java
-            .getDeclaredMethod("snapshotFromPrefs", SharedPreferences::class.java)
-        method.isAccessible = true
-        val snapshot = method.invoke(LegacyPrefSnapshotReader, prefs) as LegacyPrefSnapshotReader.Snapshot
+        val snapshot = LegacyPrefSnapshotReader.snapshotFromPrefs(prefs)
 
         assertFalse(snapshot.hasData())
         assertTrue(snapshot.booleans.isEmpty())
@@ -153,10 +143,7 @@ class LegacyPrefSnapshotReaderTest {
             apply()
         }
 
-        val method = LegacyPrefSnapshotReader::class.java
-            .getDeclaredMethod("snapshotFromPrefs", SharedPreferences::class.java)
-        method.isAccessible = true
-        val snapshot = method.invoke(LegacyPrefSnapshotReader, prefs) as LegacyPrefSnapshotReader.Snapshot
+        val snapshot = LegacyPrefSnapshotReader.snapshotFromPrefs(prefs)
 
         assertEquals(1, snapshot.booleans.size)
         assertTrue(snapshot.booleans.containsKey(PrefManager.PREF_SCOPE_MODE))
@@ -175,10 +162,7 @@ class LegacyPrefSnapshotReaderTest {
                 <boolean name="ignored" value="true" />
             </map>""".trimIndent()
 
-        val method = LegacyPrefSnapshotReader::class.java
-            .getDeclaredMethod("parsePrefsXml", String::class.java)
-        method.isAccessible = true
-        val snapshot = method.invoke(LegacyPrefSnapshotReader, xml) as LegacyPrefSnapshotReader.Snapshot
+        val snapshot = LegacyPrefSnapshotReader.parsePrefsXml(xml)!!
 
         assertEquals(3, snapshot.booleans.size)
         assertTrue(snapshot.booleans[PrefManager.PREF_SCOPE_MODE]!!)
@@ -196,10 +180,7 @@ class LegacyPrefSnapshotReaderTest {
                 </set>
             </map>""".trimIndent()
 
-        val method = LegacyPrefSnapshotReader::class.java
-            .getDeclaredMethod("parsePrefsXml", String::class.java)
-        method.isAccessible = true
-        val snapshot = method.invoke(LegacyPrefSnapshotReader, xml) as LegacyPrefSnapshotReader.Snapshot
+        val snapshot = LegacyPrefSnapshotReader.parsePrefsXml(xml)!!
 
         assertEquals(1, snapshot.stringSets.size)
         assertEquals(setOf("com.example.one", "com.example.two"), snapshot.stringSets[PrefManager.PREF_PACKAGE_LIST])
@@ -215,10 +196,7 @@ class LegacyPrefSnapshotReaderTest {
                 </set>
             </map>""".trimIndent()
 
-        val method = LegacyPrefSnapshotReader::class.java
-            .getDeclaredMethod("parsePrefsXml", String::class.java)
-        method.isAccessible = true
-        val snapshot = method.invoke(LegacyPrefSnapshotReader, xml) as LegacyPrefSnapshotReader.Snapshot
+        val snapshot = LegacyPrefSnapshotReader.parsePrefsXml(xml)!!
 
         assertTrue(snapshot.hasData())
         assertEquals(1, snapshot.booleans.size)
@@ -234,10 +212,7 @@ class LegacyPrefSnapshotReaderTest {
                 </set>
             </map>""".trimIndent()
 
-        val method = LegacyPrefSnapshotReader::class.java
-            .getDeclaredMethod("parsePrefsXml", String::class.java)
-        method.isAccessible = true
-        val snapshot = method.invoke(LegacyPrefSnapshotReader, xml) as LegacyPrefSnapshotReader.Snapshot
+        val snapshot = LegacyPrefSnapshotReader.parsePrefsXml(xml)!!
 
         assertFalse(snapshot.hasData())
     }
@@ -248,20 +223,14 @@ class LegacyPrefSnapshotReaderTest {
             <map>
             </map>""".trimIndent()
 
-        val method = LegacyPrefSnapshotReader::class.java
-            .getDeclaredMethod("parsePrefsXml", String::class.java)
-        method.isAccessible = true
-        val snapshot = method.invoke(LegacyPrefSnapshotReader, xml) as LegacyPrefSnapshotReader.Snapshot
+        val snapshot = LegacyPrefSnapshotReader.parsePrefsXml(xml)!!
 
         assertFalse(snapshot.hasData())
     }
 
     @Test
     fun `parsePrefsXml with invalid xml returns null`() {
-        val method = LegacyPrefSnapshotReader::class.java
-            .getDeclaredMethod("parsePrefsXml", String::class.java)
-        method.isAccessible = true
-        val result = method.invoke(LegacyPrefSnapshotReader, "not xml at all")
+        val result = LegacyPrefSnapshotReader.parsePrefsXml("not xml at all")
         assertNull(result)
     }
 
@@ -273,10 +242,7 @@ class LegacyPrefSnapshotReaderTest {
                 </set>
             </map>""".trimIndent()
 
-        val method = LegacyPrefSnapshotReader::class.java
-            .getDeclaredMethod("parsePrefsXml", String::class.java)
-        method.isAccessible = true
-        val snapshot = method.invoke(LegacyPrefSnapshotReader, xml) as LegacyPrefSnapshotReader.Snapshot
+        val snapshot = LegacyPrefSnapshotReader.parsePrefsXml(xml)!!
 
         assertTrue(snapshot.stringSets[PrefManager.PREF_PACKAGE_LIST]?.isEmpty() ?: false)
     }

@@ -5,12 +5,14 @@ import android.content.SharedPreferences
 import de.robv.android.xposed.XSharedPreferences
 import nota.android.crash.log.backend.DirectFsBackend
 import nota.android.crash.log.backend.ProviderBackend
+import nota.android.crash.log.backend.RootFsBackend
 import nota.android.crash.log.backend.TargetRelayBackend
 import nota.android.crash.xp.PrefManager
 
 /**
- * Hook-side backend registry (Phase 2 parallel backends for 4B-α).
- * RootSuBackend registration deferred to 4B-β.
+ * Backend registry for both hook-side (Phase 2) and module-side backends.
+ * Hook-side: Provider + DirectFs + TargetRelay (4B-α).
+ * Module-side: RootFsBackend (4B-β ingest path).
  */
 object CrashLogBackendRegistry {
 
@@ -18,6 +20,10 @@ object CrashLogBackendRegistry {
         ProviderBackend,
         DirectFsBackend,
         TargetRelayBackend,
+    )
+
+    private val moduleBackends: List<CrashLogBackend> = listOf(
+        RootFsBackend,
     )
 
     fun enabledHookPhase2Backends(prefs: SharedPreferences): List<CrashLogBackend> {
@@ -39,4 +45,25 @@ object CrashLogBackendRegistry {
         prefs.reload()
         return enabledHookPhase2Backends(prefs as SharedPreferences)
     }
+
+    /**
+     * Returns module-side backends whose pref toggle is enabled.
+     * Used by CrashLogIngestCoordinator (4B-beta) in the module process.
+     */
+    fun enabledModuleBackends(prefs: SharedPreferences): List<CrashLogBackend> {
+        return moduleBackends.filter { backend ->
+            when (backend.id) {
+                BackendId.ROOT_FS ->
+                    prefs.getBoolean(PrefManager.PREF_CRASH_LOG_BACKEND_ROOT_FS, true)
+                else -> false
+            }
+        }
+    }
+
+    fun enabledModuleBackends(context: Context): List<CrashLogBackend> {
+        return enabledModuleBackends(prefs(context))
+    }
+
+    private fun prefs(context: Context): SharedPreferences =
+        context.getSharedPreferences(PrefManager.PREF_NAME, Context.MODE_PRIVATE)
 }

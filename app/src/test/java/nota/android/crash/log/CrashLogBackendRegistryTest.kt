@@ -123,6 +123,46 @@ class CrashLogBackendRegistryTest {
         assertTrue(ids.none { it == BackendId.ROOT_SU })
     }
 
+    // ─── module-side backends ───
+
+    @Test
+    fun `enabledModuleBackends with empty prefs returns RootFsBackend by default`() {
+        val prefs = FakeSharedPreferences()
+        val backends = CrashLogBackendRegistry.enabledModuleBackends(prefs)
+        val ids = backends.map { it.id }
+        assertTrue(ids.contains(BackendId.ROOT_FS))
+        assertEquals(1, backends.size)
+    }
+
+    @Test
+    fun `enabledModuleBackends disables root_fs when pref is false`() {
+        val prefs = FakeSharedPreferences(
+            PrefManager.PREF_CRASH_LOG_BACKEND_ROOT_FS to false,
+        )
+        val backends = CrashLogBackendRegistry.enabledModuleBackends(prefs)
+        assertTrue(backends.isEmpty())
+    }
+
+    @Test
+    fun `enabledModuleBackends includes root_fs when pref is true`() {
+        val prefs = FakeSharedPreferences(
+            PrefManager.PREF_CRASH_LOG_BACKEND_ROOT_FS to true,
+        )
+        val backends = CrashLogBackendRegistry.enabledModuleBackends(prefs)
+        assertEquals(1, backends.size)
+        assertEquals(BackendId.ROOT_FS, backends[0].id)
+    }
+
+    @Test
+    fun `enabledModuleBackends never includes hook-side backends`() {
+        val prefs = FakeSharedPreferences()
+        val backends = CrashLogBackendRegistry.enabledModuleBackends(prefs)
+        val ids = backends.map { it.id }
+        assertTrue(ids.none { it == BackendId.PROVIDER_INSERT })
+        assertTrue(ids.none { it == BackendId.DIRECT_FS })
+        assertTrue(ids.none { it == BackendId.TARGET_RELAY })
+    }
+
     // ─── Fake SharedPreferences ───
 
     private class FakeSharedPreferences(

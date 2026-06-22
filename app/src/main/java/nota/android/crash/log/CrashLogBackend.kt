@@ -6,6 +6,7 @@ import nota.android.crash.common.data.CrashEvent
 
 enum class BackendId(val wireName: String) {
     ROOT_SU("root_su"),
+    ROOT_FS("root_fsm"),
     PROVIDER_INSERT("provider_insert"),
     DIRECT_FS("direct_fs"),
     TARGET_RELAY("target_relay"),

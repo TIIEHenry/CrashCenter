@@ -29,7 +29,9 @@ class MainShellActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         val prefs = ServiceLocator.prefs(applicationContext)
-        val legacyPrefState = PrefMigrator.migrateIfNeeded(applicationContext, prefs)
+        val legacyPrefState = PrefMigrator.migrateIfNeeded(
+            applicationContext, prefs, ServiceLocator.rootAccessClient(applicationContext)
+        )
         PrefMigrator.migrateManagedModelIfNeeded(applicationContext, prefs, legacyPrefState)
         super.onCreate(savedInstanceState)
         binding = ActivityMainShellBinding.inflate(layoutInflater)
