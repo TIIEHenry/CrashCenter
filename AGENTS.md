@@ -102,7 +102,7 @@ CrashLogger / 历史统计 (Phase 4 backlog)
 |---|---|
 | compileSdk | 37 |
 | targetSdk | 37 |
-| minSdk | 21 |
+| minSdk | 26 |
 | Kotlin | 2.3 |
 | Java | 17 |
 | Xposed API | 82 |
