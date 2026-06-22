@@ -11,14 +11,15 @@ class CrashLogBackendRegistryTest {
     // ─── default-on policy ───
 
     @Test
-    fun `enabledHookPhase2Backends with empty prefs returns all Phase 2 backends`() {
+    fun `enabledHookPhase2Backends with empty prefs returns all hook backends`() {
         val prefs = FakeSharedPreferences()
         val backends = CrashLogBackendRegistry.enabledHookPhase2Backends(prefs)
         val ids = backends.map { it.id }
+        assertTrue(ids.contains(BackendId.ROOT_SU))
         assertTrue(ids.contains(BackendId.PROVIDER_INSERT))
         assertTrue(ids.contains(BackendId.DIRECT_FS))
         assertTrue(ids.contains(BackendId.TARGET_RELAY))
-        assertEquals(3, backends.size)
+        assertEquals(4, backends.size)
     }
 
     // ─── individual preference disabling ───
@@ -30,7 +31,8 @@ class CrashLogBackendRegistryTest {
         )
         val backends = CrashLogBackendRegistry.enabledHookPhase2Backends(prefs)
         val ids = backends.map { it.id }
-        assertEquals(2, backends.size)
+        assertEquals(3, backends.size)
+        assertTrue(ids.contains(BackendId.ROOT_SU))
         assertTrue(ids.contains(BackendId.DIRECT_FS))
         assertTrue(ids.contains(BackendId.TARGET_RELAY))
     }
@@ -42,7 +44,8 @@ class CrashLogBackendRegistryTest {
         )
         val backends = CrashLogBackendRegistry.enabledHookPhase2Backends(prefs)
         val ids = backends.map { it.id }
-        assertEquals(2, backends.size)
+        assertEquals(3, backends.size)
+        assertTrue(ids.contains(BackendId.ROOT_SU))
         assertTrue(ids.contains(BackendId.PROVIDER_INSERT))
         assertTrue(ids.contains(BackendId.TARGET_RELAY))
     }
@@ -54,7 +57,8 @@ class CrashLogBackendRegistryTest {
         )
         val backends = CrashLogBackendRegistry.enabledHookPhase2Backends(prefs)
         val ids = backends.map { it.id }
-        assertEquals(2, backends.size)
+        assertEquals(3, backends.size)
+        assertTrue(ids.contains(BackendId.ROOT_SU))
         assertTrue(ids.contains(BackendId.PROVIDER_INSERT))
         assertTrue(ids.contains(BackendId.DIRECT_FS))
     }
@@ -64,6 +68,7 @@ class CrashLogBackendRegistryTest {
     @Test
     fun `enabledHookPhase2Backends with all prefs false returns empty list`() {
         val prefs = FakeSharedPreferences(
+            PrefManager.PREF_CRASH_LOG_BACKEND_ROOT_SU to false,
             PrefManager.PREF_CRASH_LOG_BACKEND_PROVIDER to false,
             PrefManager.PREF_CRASH_LOG_BACKEND_DIRECT_FS to false,
             PrefManager.PREF_CRASH_LOG_BACKEND_RELAY to false,
@@ -77,12 +82,13 @@ class CrashLogBackendRegistryTest {
     @Test
     fun `enabledHookPhase2Backends pref true does not change default behavior`() {
         val prefs = FakeSharedPreferences(
+            PrefManager.PREF_CRASH_LOG_BACKEND_ROOT_SU to true,
             PrefManager.PREF_CRASH_LOG_BACKEND_PROVIDER to true,
             PrefManager.PREF_CRASH_LOG_BACKEND_DIRECT_FS to true,
             PrefManager.PREF_CRASH_LOG_BACKEND_RELAY to true,
         )
         val backends = CrashLogBackendRegistry.enabledHookPhase2Backends(prefs)
-        assertEquals(3, backends.size)
+        assertEquals(4, backends.size)
     }
 
     // ─── mixed enable/disable ───
@@ -96,7 +102,8 @@ class CrashLogBackendRegistryTest {
         )
         val backends = CrashLogBackendRegistry.enabledHookPhase2Backends(prefs)
         val ids = backends.map { it.id }
-        assertEquals(2, backends.size)
+        assertEquals(3, backends.size)
+        assertTrue(ids.contains(BackendId.ROOT_SU))
         assertTrue(ids.contains(BackendId.PROVIDER_INSERT))
         assertTrue(ids.contains(BackendId.TARGET_RELAY))
     }
@@ -110,17 +117,20 @@ class CrashLogBackendRegistryTest {
             "some_other_flag" to true,
         )
         val backends = CrashLogBackendRegistry.enabledHookPhase2Backends(prefs)
-        assertEquals(3, backends.size)
+        assertEquals(4, backends.size)
     }
 
-    // ─── root_su is never in Phase 2 list ───
+    // ─── root_su preference control ───
 
     @Test
-    fun `enabledHookPhase2Backends never includes ROOT_SU backend`() {
-        val prefs = FakeSharedPreferences()
+    fun `enabledHookPhase2Backends disables ROOT_SU when pref is false`() {
+        val prefs = FakeSharedPreferences(
+            PrefManager.PREF_CRASH_LOG_BACKEND_ROOT_SU to false,
+        )
         val backends = CrashLogBackendRegistry.enabledHookPhase2Backends(prefs)
         val ids = backends.map { it.id }
         assertTrue(ids.none { it == BackendId.ROOT_SU })
+        assertEquals(3, backends.size)
     }
 
     // ─── module-side backends ───

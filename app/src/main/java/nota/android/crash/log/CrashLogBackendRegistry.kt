@@ -6,6 +6,7 @@ import de.robv.android.xposed.XSharedPreferences
 import nota.android.crash.log.backend.DirectFsBackend
 import nota.android.crash.log.backend.ProviderBackend
 import nota.android.crash.log.backend.RootFsBackend
+import nota.android.crash.log.backend.RootSuBackend
 import nota.android.crash.log.backend.TargetRelayBackend
 import nota.android.crash.xp.PrefManager
 
@@ -17,6 +18,7 @@ import nota.android.crash.xp.PrefManager
 object CrashLogBackendRegistry {
 
     private val hookPhase2Backends: List<CrashLogBackend> = listOf(
+        RootSuBackend,
         ProviderBackend,
         DirectFsBackend,
         TargetRelayBackend,
@@ -29,6 +31,8 @@ object CrashLogBackendRegistry {
     fun enabledHookPhase2Backends(prefs: SharedPreferences): List<CrashLogBackend> {
         return hookPhase2Backends.filter { backend ->
             when (backend.id) {
+                BackendId.ROOT_SU ->
+                    prefs.getBoolean(PrefManager.PREF_CRASH_LOG_BACKEND_ROOT_SU, true)
                 BackendId.PROVIDER_INSERT ->
                     prefs.getBoolean(PrefManager.PREF_CRASH_LOG_BACKEND_PROVIDER, true)
                 BackendId.DIRECT_FS ->
