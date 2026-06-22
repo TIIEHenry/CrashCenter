@@ -1,9 +1,13 @@
 package nota.android.crash.xp.app.observe
 
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
@@ -11,7 +15,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import kotlinx.coroutines.launch
 import nota.android.crash.xp.app.R
-import nota.android.crash.xp.app.common.ui.configureBottomSheetAppearance
+import nota.android.crash.xp.app.common.ui.configureCrashDetailBottomSheetAppearance
 import nota.android.crash.xp.app.data.CrashDetailLoader
 import nota.android.crash.xp.app.di.ServiceLocator
 import nota.android.crash.xp.app.di.crashDetailViewModelFactory
@@ -54,6 +58,7 @@ class CrashDetailBottomSheet : BottomSheetDialogFragment() {
     private val binding get() = checkNotNull(_binding) { "Binding accessed after onDestroyView" }
 
     private var viewer: CrashLogViewerClient? = null
+    private var currentStackTrace: String = ""
 
     private val viewModel: CrashDetailViewModel by viewModels {
         ServiceLocator.crashDetailViewModelFactory(this, requireContext())
@@ -71,13 +76,14 @@ class CrashDetailBottomSheet : BottomSheetDialogFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         binding.btnClose.setOnClickListener { dismiss() }
+        binding.btnCopy.setOnClickListener { copyStackTraceToClipboard() }
         viewer = CrashLogViewerClient.attach(requireContext(), binding.viewerContainer)
         observeViewModel()
     }
 
     override fun onStart() {
         super.onStart()
-        configureBottomSheetAppearance()
+        configureCrashDetailBottomSheetAppearance()
     }
 
     override fun onDestroyView() {
@@ -93,6 +99,7 @@ class CrashDetailBottomSheet : BottomSheetDialogFragment() {
                 binding.tvTitle.text = a.title
                     ?: CrashDetailLoader.titleFromStackTrace(a.stackTrace)
                     ?: getString(R.string.crash_info_title)
+                currentStackTrace = a.stackTrace
                 viewer?.showStackTrace(a.stackTrace)
             }
             is CrashDetailArgs.FromId -> {
@@ -112,11 +119,13 @@ class CrashDetailBottomSheet : BottomSheetDialogFragment() {
                                 is CrashDetailUiState.Success -> {
                                     if (_binding == null) return@collect
                                     binding.tvTitle.text = state.title
+                                    currentStackTrace = state.stackTrace
                                     viewer?.showStackTrace(state.stackTrace)
                                 }
                                 is CrashDetailUiState.Error -> {
                                     if (_binding == null) return@collect
                                     binding.tvTitle.text = getString(R.string.crash_info_title)
+                                    currentStackTrace = state.message
                                     viewer?.showStackTrace(state.message)
                                 }
                             }
@@ -125,6 +134,13 @@ class CrashDetailBottomSheet : BottomSheetDialogFragment() {
                 }
             }
         }
+    }
+
+    private fun copyStackTraceToClipboard() {
+        if (currentStackTrace.isBlank()) return
+        val clipboard = requireContext().getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+        clipboard.setPrimaryClip(ClipData.newPlainText("crash_stack_trace", currentStackTrace))
+        Toast.makeText(requireContext(), R.string.crash_detail_copied, Toast.LENGTH_SHORT).show()
     }
 
     companion object {

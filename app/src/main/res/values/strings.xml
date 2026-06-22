@@ -36,6 +36,8 @@
     <string name="system_app_badge">System</string>
     <string name="crash_info_title">Crash details</string>
     <string name="crash_detail_close">Close crash details</string>
+    <string name="crash_detail_copy">Copy all</string>
+    <string name="crash_detail_copied">Copied to clipboard</string>
 
     <string name="permission_banner_title">App list incomplete — grant package visibility</string>
     <string name="permission_banner_title_compact">Incomplete app list — tap to grant</string>

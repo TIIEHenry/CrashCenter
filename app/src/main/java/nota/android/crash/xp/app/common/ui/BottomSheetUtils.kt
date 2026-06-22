@@ -13,6 +13,7 @@ import com.google.android.material.shape.ShapeAppearanceModel
 import nota.android.crash.xp.app.R
 
 private const val SHEET_HEIGHT_HALF_RATIO = 0.5f
+private const val SHEET_DETAIL_HALF_EXPANDED_RATIO = 0.85f
 
 /**
  * Applies the standard CrashCenter bottom-sheet appearance:
@@ -51,6 +52,49 @@ fun BottomSheetDialogFragment.configureBottomSheetAppearance() {
     behavior.isFitToContents = false
     behavior.skipCollapsed = false
     behavior.state = BottomSheetBehavior.STATE_COLLAPSED
+
+    bottomSheet.layoutParams = bottomSheet.layoutParams.apply {
+        height = ViewGroup.LayoutParams.MATCH_PARENT
+    }
+}
+
+/**
+ * Variant for the crash detail sheet: starts at 85% screen height
+ * (half-expanded) and disables dragging so the CodeEditor can scroll
+ * freely without touch conflicts.
+ */
+fun BottomSheetDialogFragment.configureCrashDetailBottomSheetAppearance() {
+    val sheetDialog = dialog as? BottomSheetDialog ?: return
+    val bottomSheet = sheetDialog.findViewById<View>(
+        com.google.android.material.R.id.design_bottom_sheet,
+    ) ?: return
+
+    val radius = resources.getDimension(R.dimen.radius_mobile_sheet)
+    val shapeAppearance = ShapeAppearanceModel.builder()
+        .setTopLeftCorner(CornerFamily.ROUNDED, radius)
+        .setTopRightCorner(CornerFamily.ROUNDED, radius)
+        .build()
+    val sheetBackground = MaterialShapeDrawable(shapeAppearance).apply {
+        fillColor = ColorStateList.valueOf(
+            ContextCompat.getColor(requireContext(), R.color.surface),
+        )
+        setStroke(
+            1.0f,
+            ContextCompat.getColor(requireContext(), R.color.outlineVariant),
+        )
+    }
+    bottomSheet.background = sheetBackground
+    sheetBackground.setTintList(null)
+    bottomSheet.clipToOutline = true
+    bottomSheet.elevation = resources.getDimension(R.dimen.sheet_elevation)
+
+    val behavior = BottomSheetBehavior.from(bottomSheet)
+    behavior.isFitToContents = false
+    behavior.halfExpandedRatio = SHEET_DETAIL_HALF_EXPANDED_RATIO
+    behavior.state = BottomSheetBehavior.STATE_HALF_EXPANDED
+    // Disable dragging entirely so the CodeEditor can scroll without
+    // the BottomSheet intercepting the vertical drag.
+    behavior.isDraggable = false
 
     bottomSheet.layoutParams = bottomSheet.layoutParams.apply {
         height = ViewGroup.LayoutParams.MATCH_PARENT
