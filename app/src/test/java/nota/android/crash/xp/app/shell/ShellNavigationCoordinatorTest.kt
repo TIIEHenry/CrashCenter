@@ -4,6 +4,7 @@ import android.view.Menu
 import android.view.MenuItem
 import androidx.lifecycle.SavedStateHandle
 import nota.android.crash.xp.app.config.ConfigFragment
+import nota.android.crash.xp.app.observe.ObserveHostFragment
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -213,17 +214,26 @@ class ShellNavigationCoordinatorTest {
     }
 
     @Test
-    fun `prepareOptionsMenu on OBSERVE disables all items`() {
+    fun `prepareOptionsMenu on OBSERVE delegates to ObserveHostFragment`() {
         viewModel.setSelectedTab(ShellTab.OBSERVE)
+        val observeHost = mock<ObserveHostFragment>()
         val menu = mock<Menu>()
-        val item = mock<MenuItem>()
-        whenever(menu.size()).thenReturn(3)
-        whenever(menu.getItem(any())).thenReturn(item)
+        whenever(navigator.findFragment(ShellTab.OBSERVE)).thenReturn(observeHost)
 
         coordinator.prepareOptionsMenu(menu)
 
-        verify(menu).size()
-        verify(item, org.mockito.kotlin.times(3)).isEnabled = false
+        verify(observeHost).prepareOptionsMenu(menu)
+    }
+
+    @Test
+    fun `prepareOptionsMenu on OBSERVE with no fragment does nothing`() {
+        viewModel.setSelectedTab(ShellTab.OBSERVE)
+        val menu = mock<Menu>()
+        whenever(navigator.findFragment(ShellTab.OBSERVE)).thenReturn(null)
+
+        coordinator.prepareOptionsMenu(menu)
+
+        verify(menu, never()).size()
     }
 
     @Test
@@ -255,6 +265,44 @@ class ShellNavigationCoordinatorTest {
         val item = mock<MenuItem>()
         whenever(navigator.findFragment(ShellTab.CONFIG)).thenReturn(configFragment)
         whenever(configFragment.handleOptionsItem(item)).thenReturn(false)
+
+        val handled = coordinator.onOptionsItemSelected(item)
+
+        assertFalse(handled)
+    }
+
+    @Test
+    fun `onOptionsItemSelected on OBSERVE delegates to ObserveHostFragment`() {
+        viewModel.setSelectedTab(ShellTab.OBSERVE)
+        val observeHost = mock<ObserveHostFragment>()
+        val item = mock<MenuItem>()
+        whenever(navigator.findFragment(ShellTab.OBSERVE)).thenReturn(observeHost)
+        whenever(observeHost.handleOptionsItem(item)).thenReturn(true)
+
+        val handled = coordinator.onOptionsItemSelected(item)
+
+        assertTrue(handled)
+        verify(observeHost).handleOptionsItem(item)
+    }
+
+    @Test
+    fun `onOptionsItemSelected on OBSERVE returns false when no ObserveHostFragment`() {
+        viewModel.setSelectedTab(ShellTab.OBSERVE)
+        val item = mock<MenuItem>()
+        whenever(navigator.findFragment(ShellTab.OBSERVE)).thenReturn(null)
+
+        val handled = coordinator.onOptionsItemSelected(item)
+
+        assertFalse(handled)
+    }
+
+    @Test
+    fun `onOptionsItemSelected on OBSERVE returns false when ObserveHostFragment does not handle`() {
+        viewModel.setSelectedTab(ShellTab.OBSERVE)
+        val observeHost = mock<ObserveHostFragment>()
+        val item = mock<MenuItem>()
+        whenever(navigator.findFragment(ShellTab.OBSERVE)).thenReturn(observeHost)
+        whenever(observeHost.handleOptionsItem(item)).thenReturn(false)
 
         val handled = coordinator.onOptionsItemSelected(item)
 

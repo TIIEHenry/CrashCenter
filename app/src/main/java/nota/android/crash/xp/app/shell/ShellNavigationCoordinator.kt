@@ -1,8 +1,8 @@
 package nota.android.crash.xp.app.shell
 
-import androidx.fragment.app.Fragment
 import nota.android.crash.xp.app.R
 import nota.android.crash.xp.app.config.ConfigFragment
+import nota.android.crash.xp.app.observe.ObserveHostFragment
 
 /**
  * Testable coordinator that encapsulates the navigation decisions (tab selection,
@@ -81,9 +81,9 @@ class ShellNavigationCoordinator(
     /**
      * Prepare the options menu for the current tab.
      *
-     * For [ShellTab.CONFIG] the menu is forwarded to the existing
-     * [ConfigFragment] so it can show/hide items based on its own state.
-     * For [ShellTab.OBSERVE] all items are disabled.
+     * For [ShellTab.CONFIG] the menu is forwarded to [ConfigFragment].
+     * For [ShellTab.OBSERVE] the menu is forwarded to [ObserveHostFragment],
+     * which delegates to [CrashHistoryFragment].
      */
     fun prepareOptionsMenu(menu: android.view.Menu) {
         when (viewModel.uiState.value.selectedTab) {
@@ -92,20 +92,27 @@ class ShellNavigationCoordinator(
                     ?.prepareOptionsMenu(menu)
             }
             ShellTab.OBSERVE -> {
-                for (index in 0 until menu.size()) {
-                    menu.getItem(index).isEnabled = false
-                }
+                (navigator.findFragment(ShellTab.OBSERVE) as? ObserveHostFragment)
+                    ?.prepareOptionsMenu(menu)
             }
         }
     }
 
     /**
-     * Attempt to delegate an options-item selection to the [ConfigFragment].
+     * Attempt to delegate an options-item selection to the active tab's fragment.
      *
      * Returns `true` when the item was handled.
      */
     fun onOptionsItemSelected(item: android.view.MenuItem): Boolean {
-        val configFragment = navigator.findFragment(ShellTab.CONFIG) as? ConfigFragment
-        return configFragment?.handleOptionsItem(item) == true
+        return when (viewModel.uiState.value.selectedTab) {
+            ShellTab.CONFIG -> {
+                val fragment = navigator.findFragment(ShellTab.CONFIG) as? ConfigFragment
+                fragment?.handleOptionsItem(item) == true
+            }
+            ShellTab.OBSERVE -> {
+                val fragment = navigator.findFragment(ShellTab.OBSERVE) as? ObserveHostFragment
+                fragment?.handleOptionsItem(item) == true
+            }
+        }
     }
 }

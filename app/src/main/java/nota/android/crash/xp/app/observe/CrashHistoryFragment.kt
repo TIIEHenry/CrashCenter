@@ -2,8 +2,11 @@ package nota.android.crash.xp.app.observe
 
 import android.os.Bundle
 import android.view.LayoutInflater
+import android.view.Menu
+import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
@@ -117,6 +120,31 @@ class CrashHistoryFragment : Fragment() {
             binding.eventCount.text = resources.getQuantityString(R.plurals.crash_history_count, state.eventCount, state.eventCount)
         }
         requireContext().showErrorToast(state.errorMessage) { viewModel.clearError() }
+    }
+
+    // ─── Options Menu ───
+
+    fun prepareOptionsMenu(menu: Menu) {
+        // All observe menu items are enabled by default; they will be
+        // individually disabled based on state as their features are implemented.
+    }
+
+    fun handleOptionsItem(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            R.id.item_observe_filter -> {
+                Toast.makeText(requireContext(), "TODO: Filter", Toast.LENGTH_SHORT).show()
+                true
+            }
+            R.id.item_observe_export -> {
+                Toast.makeText(requireContext(), "TODO: Export", Toast.LENGTH_SHORT).show()
+                true
+            }
+            R.id.item_observe_stats -> {
+                Toast.makeText(requireContext(), "TODO: Stats", Toast.LENGTH_SHORT).show()
+                true
+            }
+            else -> false
+        }
     }
 
     companion object {

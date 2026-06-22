@@ -2,6 +2,8 @@ package nota.android.crash.xp.app.observe
 
 import android.os.Bundle
 import android.view.LayoutInflater
+import android.view.Menu
+import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
@@ -34,6 +36,20 @@ class ObserveHostFragment : Fragment() {
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
+    }
+
+    // ─── Options Menu forwarding ───
+
+    fun prepareOptionsMenu(menu: Menu) {
+        crashHistoryFragment()?.prepareOptionsMenu(menu)
+    }
+
+    fun handleOptionsItem(item: MenuItem): Boolean {
+        return crashHistoryFragment()?.handleOptionsItem(item) == true
+    }
+
+    private fun crashHistoryFragment(): CrashHistoryFragment? {
+        return childFragmentManager.findFragmentByTag(CrashHistoryFragment.TAG) as? CrashHistoryFragment
     }
 
     companion object {
