@@ -7,6 +7,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import kotlinx.coroutines.launch
 import nota.android.crash.xp.app.R
+import nota.android.crash.xp.app.common.ui.CallbackSuppressor
 import nota.android.crash.xp.app.databinding.ActivityMainShellBinding
 
 /**
@@ -25,6 +26,7 @@ class ShellTabController(
 ) {
 
     private val coordinator: ShellNavigationCoordinator
+    private val navSuppressor = CallbackSuppressor()
 
     init {
         coordinator = ShellNavigationCoordinator(
@@ -37,7 +39,9 @@ class ShellTabController(
                         ShellTab.OBSERVE -> R.id.nav_observe
                     }
                     if (binding.bottomNav.selectedItemId != menuItemId) {
-                        binding.bottomNav.selectedItemId = menuItemId
+                        navSuppressor.run {
+                            binding.bottomNav.selectedItemId = menuItemId
+                        }
                     }
                 }
 
@@ -90,6 +94,7 @@ class ShellTabController(
 
     private fun setupBottomNav() {
         binding.bottomNav.setOnItemSelectedListener { item ->
+            if (navSuppressor.suppressed) return@setOnItemSelectedListener true
             when (item.itemId) {
                 R.id.nav_config -> {
                     coordinator.selectTab(ShellTab.CONFIG, fromUser = true)
