@@ -97,6 +97,9 @@
 
         <item name="shapeAppearanceOverlay">@style/ShapeAppearance.App.Corner.Control</item>
 
+        <!-- Fluent: chips use overlay+clip press, not Material ripple -->
+        <item name="rippleColor">@android:color/transparent</item>
+
     </style>
 
 
@@ -118,6 +121,9 @@
         <item name="android:textSize">13sp</item>
 
         <item name="shapeAppearanceOverlay">@style/ShapeAppearance.App.Corner.Control</item>
+
+        <!-- Fluent: chips use overlay+clip press, not Material ripple -->
+        <item name="rippleColor">@android:color/transparent</item>
 
     </style>
 
@@ -157,9 +163,13 @@
 
     <style name="AppTheme.Switch" parent="Widget.Material3.CompoundButton.Switch">
 
-        <item name="thumbTint">@color/switch_thumb_color</item>
+        <!-- M3 uses thumbColor/trackColor (not thumbTint/trackTint) for CompoundButton drawable colors -->
+        <item name="thumbColor">@color/switch_thumb_color</item>
 
-        <item name="trackTint">@color/switch_track_color</item>
+        <item name="trackColor">@color/switch_track_color</item>
+
+        <!-- Suppress M3 default checkmark decoration overlay (Fluent uses plain track fill) -->
+        <item name="trackDecorationTint">@android:color/transparent</item>
 
     </style>
 

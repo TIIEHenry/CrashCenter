@@ -40,6 +40,8 @@ fun BottomSheetDialogFragment.configureBottomSheetAppearance() {
         )
     }
     bottomSheet.background = sheetBackground
+    // Prevent M3 from applying tonal surface tint on top of the solid Fluent layer fill
+    sheetBackground.setTintList(null)
     bottomSheet.clipToOutline = true
     bottomSheet.elevation = resources.getDimension(R.dimen.sheet_elevation)
 
