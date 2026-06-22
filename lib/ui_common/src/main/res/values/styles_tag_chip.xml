@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="ThemeOverlay.CelestialRuler.MaterialChip" parent="ThemeOverlay.MaterialComponents" />
+    <style name="ThemeOverlay.CelestialRuler.MaterialChip" parent="ThemeOverlay.Material3" />
 
-    <style name="Widget.CelestialRuler.TagChip.Filter" parent="Widget.MaterialComponents.Chip.Filter">
+    <style name="Widget.CelestialRuler.TagChip.Filter" parent="Widget.Material3.Chip.Filter">
         <item name="chipMinHeight">32dp</item>
         <item name="chipCornerRadius">14dp</item>
         <item name="chipStartPadding">12dp</item>
