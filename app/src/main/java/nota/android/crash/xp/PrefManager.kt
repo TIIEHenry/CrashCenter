@@ -17,5 +17,7 @@ object PrefManager {
     const val PREF_CRASH_LOG_BACKEND_RELAY = "crash_log_backend_relay"
     const val PREF_CRASH_LOG_BACKEND_ROOT_SU = "crash_log_backend_root_su"
     const val PREF_CRASH_LOG_BACKEND_ROOT_FS = "crash_log_backend_root_fs"
+    const val PREF_CRASH_LOG_MAX_ENTRIES = "crash_log_max_entries"
+    const val PREF_CRASH_LOG_MAX_BYTES = "crash_log_max_bytes"
     const val ITSELF = PACKAGE_NAME
 }

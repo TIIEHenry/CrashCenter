@@ -69,7 +69,7 @@ object ServiceLocator {
 
     fun crashLogRepository(context: Context): CrashLogRepository =
         getOrCreate(::crashLogRepository) {
-            FileCrashLogRepository(context.applicationContext)
+            FileCrashLogRepository(context.applicationContext, prefs(context))
         }
 
     fun rootAccessClient(context: Context): RootAccessClient =

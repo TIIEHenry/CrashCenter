@@ -10,8 +10,18 @@ import java.io.RandomAccessFile
  */
 object CanonicalJsonlWriter {
 
-    const val MAX_ENTRIES = 500
-    const val MAX_BYTES = 8L * 1024L * 1024L
+    const val DEFAULT_MAX_ENTRIES = 500
+    const val DEFAULT_MAX_BYTES = 8L * 1024L * 1024L
+
+    // Backwards-compatible aliases for tests and direct callers
+    const val MAX_ENTRIES = DEFAULT_MAX_ENTRIES
+    const val MAX_BYTES = DEFAULT_MAX_BYTES
+
+    @Volatile
+    var maxEntries: Int = DEFAULT_MAX_ENTRIES
+
+    @Volatile
+    var maxBytes: Long = DEFAULT_MAX_BYTES
 
     fun append(eventsFile: File, event: CrashEvent) {
         val parent = eventsFile.parentFile
@@ -28,7 +38,7 @@ object CanonicalJsonlWriter {
 
                 // Retention runs inside the same lock to prevent races where
                 // concurrent writers see partially-trimmed files and lose entries.
-                applyRetentionLocked(raf)
+                applyRetentionLocked(raf, maxEntries, maxBytes)
             } finally {
                 lock.release()
             }
@@ -40,7 +50,22 @@ object CanonicalJsonlWriter {
         RandomAccessFile(eventsFile, "rw").use { raf ->
             val lock = raf.channel.lock()
             try {
-                applyRetentionLocked(raf)
+                applyRetentionLocked(raf, maxEntries, maxBytes)
+            } finally {
+                lock.release()
+            }
+        }
+    }
+
+    /**
+     * Overload for callers that want to supply explicit limits (e.g. from SharedPreferences).
+     */
+    fun applyRetention(eventsFile: File, maxEntries: Int, maxBytes: Long) {
+        if (!eventsFile.isFile) return
+        RandomAccessFile(eventsFile, "rw").use { raf ->
+            val lock = raf.channel.lock()
+            try {
+                applyRetentionLocked(raf, maxEntries, maxBytes)
             } finally {
                 lock.release()
             }
@@ -51,18 +76,18 @@ object CanonicalJsonlWriter {
      * Trims the oldest lines when entry count or byte size limits are exceeded.
      * Caller must hold [RandomAccessFile.channel]'s lock for the duration.
      */
-    private fun applyRetentionLocked(raf: RandomAccessFile) {
+    private fun applyRetentionLocked(raf: RandomAccessFile, maxEntries: Int, maxBytes: Long) {
         val lines = readLinesUtf8(raf)
         if (lines.isEmpty()) return
 
         // Fast path: if well under both limits, skip all trimming work.
-        if (lines.size <= MAX_ENTRIES && byteSize(lines) <= MAX_BYTES) return
+        if (lines.size <= maxEntries && byteSize(lines) <= maxBytes) return
 
         var trimmed = lines
-        while (trimmed.size > MAX_ENTRIES) {
+        while (trimmed.size > maxEntries) {
             trimmed = trimmed.drop(1)
         }
-        while (byteSize(trimmed) > MAX_BYTES && trimmed.size > 1) {
+        while (byteSize(trimmed) > maxBytes && trimmed.size > 1) {
             trimmed = trimmed.drop(1)
         }
         if (trimmed == lines) return

@@ -4,6 +4,8 @@ import android.content.Context
 import nota.android.crash.common.data.CrashEvent
 import nota.android.crash.log.CanonicalJsonlWriter
 import nota.android.crash.xp.app.config.AppFilterEngine
+import android.content.SharedPreferences
+import nota.android.crash.xp.PrefManager
 import java.io.BufferedReader
 import java.io.File
 import java.io.FileReader
@@ -24,7 +26,10 @@ interface CrashLogRepository {
     fun applyRetention()
 }
 
-class FileCrashLogRepository(context: Context) : CrashLogRepository {
+class FileCrashLogRepository(
+    context: Context,
+    private val prefs: SharedPreferences? = null,
+) : CrashLogRepository {
 
     private val eventsFile = File(context.applicationContext.filesDir, "$LOG_DIR/$EVENTS_FILE")
     private val lock = ReentrantReadWriteLock()
@@ -233,7 +238,22 @@ class FileCrashLogRepository(context: Context) : CrashLogRepository {
 
     override fun applyRetention() {
         lock.write {
-            CanonicalJsonlWriter.applyRetention(eventsFile)
+            if (prefs != null) {
+                val maxEntries = prefs.getInt(
+                    PrefManager.PREF_CRASH_LOG_MAX_ENTRIES,
+                    CanonicalJsonlWriter.DEFAULT_MAX_ENTRIES,
+                )
+                val maxBytes = prefs.getLong(
+                    PrefManager.PREF_CRASH_LOG_MAX_BYTES,
+                    CanonicalJsonlWriter.DEFAULT_MAX_BYTES,
+                )
+                // Sync volatile fields so hook-side append() sees the updated limits
+                CanonicalJsonlWriter.maxEntries = maxEntries
+                CanonicalJsonlWriter.maxBytes = maxBytes
+                CanonicalJsonlWriter.applyRetention(eventsFile, maxEntries, maxBytes)
+            } else {
+                CanonicalJsonlWriter.applyRetention(eventsFile)
+            }
             invalidateCache()
         }
     }

@@ -8,6 +8,7 @@ import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
+import android.widget.LinearLayout
 import android.widget.Toast
 
 import androidx.core.content.FileProvider
@@ -19,15 +20,18 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.paging.LoadState
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.core.content.edit
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import nota.android.crash.log.CanonicalJsonlWriter
+import nota.android.crash.xp.PrefManager
 import nota.android.crash.xp.app.R
 import nota.android.crash.xp.app.common.ui.EmptyState
+import nota.android.crash.xp.app.di.ServiceLocator
 import nota.android.crash.xp.app.common.ui.showErrorToast
 import nota.android.crash.xp.app.common.ui.LoadingState
 import nota.android.crash.xp.app.data.CrashFilter
-import nota.android.crash.xp.app.di.ServiceLocator
 import nota.android.crash.xp.app.di.crashHistoryViewModelFactory
 import nota.android.crash.xp.app.databinding.FragmentCrashHistoryBinding
 import java.io.File
@@ -159,6 +163,10 @@ class CrashHistoryFragment : Fragment() {
                 showStatistics()
                 true
             }
+            R.id.item_observe_retention -> {
+                showRetentionDialog()
+                true
+            }
             else -> false
         }
     }
@@ -240,6 +248,66 @@ class CrashHistoryFragment : Fragment() {
                 .setPositiveButton(android.R.string.ok, null)
                 .show()
         }
+    }
+
+    private fun showRetentionDialog() {
+        val prefs = ServiceLocator.prefs(requireContext())
+        val currentMaxEntries = prefs.getInt(
+            PrefManager.PREF_CRASH_LOG_MAX_ENTRIES,
+            CanonicalJsonlWriter.DEFAULT_MAX_ENTRIES,
+        )
+        val currentMaxBytesMb = prefs.getLong(
+            PrefManager.PREF_CRASH_LOG_MAX_BYTES,
+            CanonicalJsonlWriter.DEFAULT_MAX_BYTES,
+        ) / (1024L * 1024L)
+
+        val dp16 = (16 * resources.displayMetrics.density).toInt()
+        val dp8 = (8 * resources.displayMetrics.density).toInt()
+
+        val entriesInput = EditText(requireContext()).apply {
+            hint = getString(R.string.retention_max_entries_label)
+            inputType = android.text.InputType.TYPE_CLASS_NUMBER
+            setText(currentMaxEntries.toString())
+            setPadding(dp16, dp8, dp16, dp8)
+        }
+
+        val bytesInput = EditText(requireContext()).apply {
+            hint = getString(R.string.retention_max_bytes_label)
+            inputType = android.text.InputType.TYPE_CLASS_NUMBER or android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL
+            setText(currentMaxBytesMb.toString())
+            setPadding(dp16, dp8, dp16, dp8)
+        }
+
+        val container = LinearLayout(requireContext()).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp16, dp16, dp16, dp8)
+            addView(entriesInput)
+            addView(bytesInput)
+        }
+
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle(R.string.retention_title)
+            .setView(container)
+            .setPositiveButton(android.R.string.ok) { _, _ ->
+                val maxEntries = entriesInput.text.toString().toIntOrNull()?.coerceIn(1, 100_000)
+                    ?: CanonicalJsonlWriter.DEFAULT_MAX_ENTRIES
+                val maxBytesMb = bytesInput.text.toString().toLongOrNull()?.coerceIn(1, 1024)
+                    ?: (CanonicalJsonlWriter.DEFAULT_MAX_BYTES / (1024L * 1024L))
+                val maxBytes = maxBytesMb * 1024L * 1024L
+
+                prefs.edit {
+                    putInt(PrefManager.PREF_CRASH_LOG_MAX_ENTRIES, maxEntries)
+                    putLong(PrefManager.PREF_CRASH_LOG_MAX_BYTES, maxBytes)
+                }
+
+                // Sync volatile fields for hook-side append()
+                CanonicalJsonlWriter.maxEntries = maxEntries
+                CanonicalJsonlWriter.maxBytes = maxBytes
+
+                Toast.makeText(requireContext(), R.string.retention_saved, Toast.LENGTH_SHORT).show()
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
     }
 
     companion object {
