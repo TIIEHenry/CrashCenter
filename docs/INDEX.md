@@ -49,9 +49,10 @@ summary: "docs/ + dev/ 完整导航索引（自动生成）"
 | [crash-log-ipc.md](architecture/crash-log-ipc.md) | hook 目标进程向模块进程写入 CrashEvent 的 IPC 机制对比；编排见 crash-log-backends.md（多后端并行、root 优先） |
 | [crash-notification.md](architecture/crash-notification.md) | 目标 app 崩溃后 Toast / 系统通知的触发条件、线程模型、PendingIntent 与 ActivityCrashInfo 详情页 |
 | [crash-stats-ui.md](architecture/crash-stats-ui.md) | observe/detail 域中的全局统计页与单应用崩溃列表/统计页 IA、路由、指标和数据聚合需求（Phase 4D） |
-| [dark-mode-theming.md](architecture/dark-mode-theming.md) | Phase A–D 已编码；Meizu 实机 QA PASS；AOSP 模拟器与 CodeEditor setDark 仍 defer |
-| [design-system.md](architecture/design-system.md) | 桥接 docs/design/ 视觉语言与 CrashCenter res/ 实现：Fluent token、共享 UI 组件、域复用规则 |
+| [dark-mode-theming.md](architecture/dark-mode-theming.md) | Phase A–D 已编码；Meizu 实机 QA PASS；M3 迁移见 ADR-022（静态 Fluent，无 dynamic color） |
+| [design-system.md](architecture/design-system.md) | 桥接 docs/design/ 视觉语言与 CrashCenter res/ 实现：Fluent token、共享 UI 组件、域复用规则；M3 静态主题见 material3-migration |
 | [framework-injection-feasibility.md](architecture/framework-injection-feasibility.md) | 参照 celestailruler 评估 System Framework 注入对 CrashCenter 的价值；结论：不采用为主架构，保留 ADR-007 app 级 + Provider，可选 parseQueries 补丁 |
+| [material3-migration.md](architecture/material3-migration.md) | minSdk 26 + Theme.Material3.DayNight 静态 Fluent 映射；拒绝 dynamic color；分 M0–M4 实施与验收 |
 | [navigation-ia.md](architecture/navigation-ia.md) | 分阶段导航：Phase 3/4B 无 tab；Phase 4C+ 双底栏（配置 | 观测），观测内 TabLayout（历史 | 统计）；路由表见 ui-routing.md |
 | [overview.md](architecture/overview.md) | Xposed 异常拦截模块的整体架构与数据流；4B-α 观测 + 4C-α UI Shell as-built；演进见 architecture-optimization.md |
 | [scope-and-prefs.md](architecture/scope-and-prefs.md) | SharedPreferences 键、scope 模式与跨进程同步；legacy tiiehenry.xp.grapcrash 迁移 |
@@ -69,7 +70,7 @@ summary: "docs/ + dev/ 完整导航索引（自动生成）"
 | [003-xsharedpreferences-cross-process.md](decisions/003-xsharedpreferences-cross-process.md) | hook 侧只读 UI 写入的 scope 配置；不适用崩溃事件体持久化 |  |
 | [004-build-toolchain-jdk17.md](decisions/004-build-toolchain-jdk17.md) | JDK 17 + Gradle 9.2.1 / AGP 9.0.0 / compileSdk 36；与 AppSnapShotor 对齐除 Java 版本 |  |
 | [005-settings-information-architecture.md](decisions/005-settings-information-architecture.md) | 配置 tab 单屏高密度：全局 Chip 与列表同屏；Phase 3G 受管列表（ADR-015）；Phase 4C+ 观测域 2-tab |  |
-| [006-material3-toolchain.md](decisions/006-material3-toolchain.md) | 正式决策：Phase 3/4 沿用 Material Components 2.x + Fluent token；Material 3 完整主题明确 defer，不作为 Shell/Design System 前置 |  |
+| [006-material3-toolchain.md](decisions/006-material3-toolchain.md) | 已取代：Phase 3/4 曾 defer M3；2026-06-22 由 ADR-022 启动 minSdk 26 + 静态 M3 Fluent 迁移 | _(已归档)_ |
 | [007-crash-log-cross-process-storage.md](decisions/007-crash-log-cross-process-storage.md) | JSONL canonical + Provider；编排扩展见 ADR-008 |  |
 | [008-multi-backend-crash-log-storage.md](decisions/008-multi-backend-crash-log-storage.md) | CrashLogBackend 抽象；hook root 优先并行写入；模块 root ingest 管理 relay；ADR-007 canonical 仍有效 |  |
 | [009-ui-shell-design-system.md](decisions/009-ui-shell-design-system.md) | 确立 MainShellActivity + Fluent Design System + domain pages + feature state 四层 UI 架构；ActivityMain 降级为 ConfigFragment，详情路由兼容旧 Exception extra |  |
@@ -81,6 +82,7 @@ summary: "docs/ + dev/ 完整导航索引（自动生成）"
 | [015-managed-apps-intervention-rules.md](decisions/015-managed-apps-intervention-rules.md) | 配置域改为 managed_packages 策展列表 + intervention_rules JSON；无规则不 hook；Legacy 哨兵保留 ADR-002 行为 |  |
 | [017-root-ingest-and-dedupe.md](decisions/017-root-ingest-and-dedupe.md) | 落实 ADR-008 Phase 1 RootSu + 模块 ingest merge；canonical 按 crash_id 去重；读路径可选防御性 dedupe |  |
 | [021-canonical-jsonl-io-consistency.md](decisions/021-canonical-jsonl-io-consistency.md) | events.jsonl 变异统一 FileLock；Repository 读口 timestampMs 降序；删改经 CanonicalJsonlStore |  |
+| [022-material3-static-theme-minsdk26.md](decisions/022-material3-static-theme-minsdk26.md) | minSdk 升至 26；UI 迁移 Theme.Material3.DayNight + Fluent 静态语义色；明确拒绝 dynamic color / 壁纸取色；取代 ADR-006 defer |  |
 
 ---
 

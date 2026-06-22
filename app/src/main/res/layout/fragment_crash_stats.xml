@@ -47,14 +47,14 @@
                             android:id="@+id/statTotalCount"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:textAppearance="?attr/textAppearanceHeadline6"
+                            android:textAppearance="?attr/textAppearanceHeadlineMedium"
                             tools:text="42" />
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="@string/stats_label_total"
-                            android:textAppearance="?attr/textAppearanceCaption"
+                            android:textAppearance="?attr/textAppearanceLabelSmall"
                             android:textColor="?android:attr/textColorSecondary" />
 
                     </LinearLayout>
@@ -81,14 +81,14 @@
                             android:id="@+id/statUniquePackages"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:textAppearance="?attr/textAppearanceHeadline6"
+                            android:textAppearance="?attr/textAppearanceHeadlineMedium"
                             tools:text="5" />
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="@string/stats_label_unique_apps"
-                            android:textAppearance="?attr/textAppearanceCaption"
+                            android:textAppearance="?attr/textAppearanceLabelSmall"
                             android:textColor="?android:attr/textColorSecondary" />
 
                     </LinearLayout>
@@ -115,14 +115,14 @@
                             android:id="@+id/statMostRecent"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:textAppearance="?attr/textAppearanceBody2"
+                            android:textAppearance="?attr/textAppearanceBodyMedium"
                             tools:text="2026-06-21" />
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="@string/stats_label_most_recent"
-                            android:textAppearance="?attr/textAppearanceCaption"
+                            android:textAppearance="?attr/textAppearanceLabelSmall"
                             android:textColor="?android:attr/textColorSecondary" />
 
                     </LinearLayout>
@@ -138,7 +138,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/spacing_xl"
                 android:text="@string/stats_section_top_packages"
-                android:textAppearance="?attr/textAppearanceSubtitle1" />
+                android:textAppearance="?attr/textAppearanceTitleMedium" />
 
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/topPackagesCard"
@@ -164,7 +164,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/spacing_lg"
                 android:text="@string/stats_section_top_exceptions"
-                android:textAppearance="?attr/textAppearanceSubtitle1" />
+                android:textAppearance="?attr/textAppearanceTitleMedium" />
 
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/topExceptionsCard"

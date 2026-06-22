@@ -3,8 +3,8 @@ title: "Phase 3: 配置 UI 重设计"
 type: roadmap
 status: in_progress
 phase: 3
-updated: 2026-06-19
-summary: "Shell/3Gβ/暗色 A–D/M2+M5 已编码；LSPosed 手动 smoke 与 3A 报告收尾"
+updated: 2026-06-22
+summary: "Shell/3Gβ/暗色 A–D/M2+M5 已编码；3E M3 方案已定（ADR-022）；LSPosed 手动 smoke 收尾"
 ---
 
 # Phase 3: 配置 UI 重设计
@@ -56,12 +56,17 @@ Material v1 已实现（见 [material-ui-redesign-2026-06-19.md](../../iteration
 - [x] （可选）暗色主题 `values-night/` — Phase A–D 已编码（[dark-mode-theming.md](../../../docs/architecture/dark-mode-theming.md)；Phase D **Meizu 实机 PASS**，AOSP 模拟器 defer）
 - [ ] 新文案 `values` + `values-zh`
 
-## 3E — Material 3（可选，默认不做）
+## 3E — Material 3 + minSdk 26 🔄
 
-- [ ] ADR-006 M3 主题定稿（工具链已在 ADR-004 升级）
+方案：[material3-migration.md](../../../docs/architecture/material3-migration.md) · [ADR-022](../../../docs/decisions/022-material3-static-theme-minsdk26.md)
+
+- [x] ADR-022：minSdk **26**、M3 静态 Fluent、**拒绝 dynamic color**（取代 ADR-006）
 - [x] compileSdk 36 / AGP 9.0.0 / Gradle 9.2.1 升级（ADR-004）
-- [ ] Material 3 主题迁移
-- [ ] 全量 hook smoke 回归
+- [ ] **M0** minSdk 26 全模块 + Material 1.14+ catalog 统一
+- [ ] **M1** `Theme.Material3.DayNight` + Fluent → M3 语义色 + Widget 父样式
+- [ ] **M2** Design System 组件回归（Chip/Switch/Sheet/Banner）
+- [ ] **M3** 页面扫尾 + `ui_common` tag chip
+- [ ] **M4** 浅/深 smoke + hook 回归 + verification 报告
 
 ## 3G — 受管应用与干预规则（方案）
 
@@ -106,4 +111,6 @@ python3 scripts/check-docs-health.py
 - [ui-redesign-execution-plan.md](../../archive/ui-redesign-execution-plan.md)
 - [configuration-ui.md](../../../docs/architecture/configuration-ui.md)
 - [ADR-009: UI Shell 与 Design System 架构](../../../docs/decisions/009-ui-shell-design-system.md)
+- [material3-migration.md](../../../docs/architecture/material3-migration.md)
+- [ADR-022: M3 静态 Fluent + minSdk 26](../../../docs/decisions/022-material3-static-theme-minsdk26.md)
 - [material-ui-redesign-2026-06-19.md](../../iterations/configuration-ui/material-ui-redesign-2026-06-19.md)

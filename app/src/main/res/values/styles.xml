@@ -1,47 +1,51 @@
 <resources>
 
-    <style name="AppTheme" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+    <style name="AppTheme" parent="Theme.Material3.DayNight.NoActionBar">
 
+        <!-- M3 semantic color slots (Fluent palette mapped) -->
         <item name="colorPrimary">@color/colorPrimary</item>
-
-        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
-
-        <item name="colorPrimaryVariant">@color/colorPrimaryVariant</item>
-
-        <item name="colorAccent">@color/colorAccent</item>
-
         <item name="colorOnPrimary">@color/colorOnPrimary</item>
+        <item name="colorPrimaryContainer">@color/primaryContainer</item>
+        <item name="colorOnPrimaryContainer">@color/fluent_accent</item>
 
         <item name="android:colorBackground">@color/background</item>
-
         <item name="android:windowBackground">@color/background</item>
+        <item name="colorSurface">@color/surface</item>
+        <item name="colorOnSurface">@color/textPrimary</item>
+        <item name="colorSurfaceVariant">@color/surfaceVariant</item>
+        <item name="colorOnSurfaceVariant">@color/textSecondary</item>
+        <item name="colorOutline">@color/outline</item>
+        <item name="colorOutlineVariant">@color/outlineVariant</item>
+        <item name="colorError">@color/status_warning</item>
 
         <item name="android:statusBarColor">@android:color/transparent</item>
-
         <item name="android:navigationBarColor">@android:color/transparent</item>
 
         <item name="android:textColorPrimary">@color/textPrimary</item>
-
         <item name="android:textColorSecondary">@color/textSecondary</item>
 
         <item name="colorControlNormal">?android:attr/textColorPrimary</item>
 
+        <!-- M3 widget style overrides -->
+        <item name="chipStyle">@style/AppTheme.Chip</item>
         <item name="switchStyle">@style/AppTheme.Switch</item>
-
         <item name="bottomNavigationStyle">@style/AppTheme.BottomNavigation</item>
+        <item name="toolbarStyle">@style/AppTheme.Toolbar</item>
+        <item name="textInputStyle">@style/AppTheme.SearchField</item>
+        <item name="materialButtonStyle">@style/AppTheme.Button</item>
 
+        <!-- Custom attrs (Fluent semantic) -->
         <item name="statusBannerActiveBackground">@color/statusActiveBg</item>
         <item name="statusBannerInactiveBackground">@color/statusInactiveBg</item>
         <item name="statusBannerActiveTextColor">@color/statusActiveText</item>
         <item name="statusBannerInactiveTextColor">@color/statusInactiveText</item>
-        <item name="colorSurface">@color/surface</item>
         <item name="dividerColor">@color/toolbarDivider</item>
 
     </style>
 
 
 
-    <style name="AppTheme.Toolbar" parent="Widget.MaterialComponents.Toolbar">
+    <style name="AppTheme.Toolbar" parent="Widget.Material3.Toolbar">
 
         <item name="android:background">@color/surface</item>
 
@@ -63,7 +67,7 @@
 
 
 
-    <style name="TextAppearance.App.ToolbarTitle" parent="TextAppearance.MaterialComponents.Subtitle1">
+    <style name="TextAppearance.App.ToolbarTitle" parent="TextAppearance.Material3.TitleMedium">
 
         <item name="android:textColor">@color/textPrimary</item>
 
@@ -75,7 +79,7 @@
 
 
 
-    <style name="AppTheme.Chip" parent="Widget.MaterialComponents.Chip.Choice">
+    <style name="AppTheme.Chip" parent="Widget.Material3.Chip.Filter">
 
         <item name="chipBackgroundColor">@color/chip_background_color</item>
 
@@ -97,7 +101,7 @@
 
 
 
-    <style name="AppTheme.Chip.Setting" parent="Widget.MaterialComponents.Chip.Filter">
+    <style name="AppTheme.Chip.Setting" parent="Widget.Material3.Chip.Filter">
 
         <item name="chipBackgroundColor">@color/chip_background_color</item>
 
@@ -119,7 +123,7 @@
 
 
 
-    <style name="AppTheme.SearchField" parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox.Dense">
+    <style name="AppTheme.SearchField" parent="Widget.Material3.TextInputLayout.OutlinedBox.Dense">
 
         <item name="boxStrokeColor">@color/outline</item>
 
@@ -141,7 +145,7 @@
 
 
 
-    <style name="AppTheme.SearchField.EditText" parent="Widget.MaterialComponents.TextInputEditText.OutlinedBox">
+    <style name="AppTheme.SearchField.EditText" parent="Widget.Material3.TextInputEditText.OutlinedBox">
 
         <item name="android:textColor">@color/textPrimary</item>
 
@@ -151,7 +155,7 @@
 
 
 
-    <style name="AppTheme.Switch" parent="Widget.MaterialComponents.CompoundButton.Switch">
+    <style name="AppTheme.Switch" parent="Widget.Material3.CompoundButton.Switch">
 
         <item name="thumbTint">@color/switch_thumb_color</item>
 
@@ -161,7 +165,7 @@
 
 
 
-    <style name="AppTheme.BottomNavigation" parent="Widget.MaterialComponents.BottomNavigationView">
+    <style name="AppTheme.BottomNavigation" parent="Widget.Material3.BottomNavigationView">
 
         <item name="itemIconTint">@color/bottom_nav_item_color</item>
 
@@ -169,7 +173,18 @@
 
         <item name="android:background">@color/surface</item>
 
+        <!-- M3: suppress active indicator pill for flat Fluent look -->
+        <item name="itemActiveIndicatorStyle">@style/AppTheme.BottomNavigation.ActiveIndicator</item>
+
     </style>
+
+    <style name="AppTheme.BottomNavigation.ActiveIndicator" parent="Widget.Material3.BottomNavigationView.ActiveIndicator">
+        <item name="android:color">@android:color/transparent</item>
+    </style>
+
+
+
+    <style name="AppTheme.Button" parent="Widget.Material3.Button.TextButton" />
 
 
 

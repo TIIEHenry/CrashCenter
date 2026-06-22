@@ -3,22 +3,22 @@ title: "夜间模式与主题适配"
 type: architecture
 status: accepted
 phase: 3
-updated: 2026-06-19
-summary: "Phase A–D 已编码；Meizu 实机 QA PASS；AOSP 模拟器与 CodeEditor setDark 仍 defer"
+updated: 2026-06-22
+summary: "Phase A–D 已编码；Meizu 实机 QA PASS；M3 迁移见 ADR-022（静态 Fluent，无 dynamic color）"
 ---
 
 # 夜间模式与主题适配
 
 > 适用模块：`:app` 配置 UI、Shell、详情页
 > 设计系统：[ADR-009](../decisions/009-ui-shell-design-system.md)、[design-system.md](design-system.md)
-> 主题决策：[ADR-006](../decisions/006-material3-toolchain.md)（M2 defer，**不阻塞** DayNight）
+> 主题决策：[ADR-022](../decisions/022-material3-static-theme-minsdk26.md)（M3 静态 Fluent；**拒绝** dynamic color）、[material3-migration.md](material3-migration.md)
 > 全局色板 SSOT：[visual-language.md](../design/visual-language.md)
 
 ## 概述
 
 CrashCenter 当前为 **仅浅色** 的 Material Components 2.x + Fluent token 实现。`SystemBars` 已根据 `uiMode` 切换 status bar 图标明暗，但 **无** `values-night/` 资源，窗口与控件仍强制浅色（`#FAFAFA` canvas、`#FFFFFF` surface）。系统开启深色模式时，状态栏图标变亮、内容区仍白底，产生 **割裂体验**。
 
-本方案在 **不迁移 Material 3 / dynamic color** 的前提下，引入 **语义 token + DayNight 资源覆盖**，使 [Design System](design-system.md) 全部共享组件与 Shell 随系统 `UI_MODE_NIGHT` 自动切换，并与 Clarence 生态 `visual-language.md` 暗色 token 对齐。
+本方案引入 **语义 token + DayNight 资源覆盖**（Phase A–D 已实施）。后续 M3 迁移（[material3-migration.md](material3-migration.md)）沿用同一 `values-night/` SSOT，**仍不** 引入 dynamic color / 壁纸取色。
 
 **范围**：模块 UI 进程（配置、观测、详情）；hook 侧无 UI，无跨进程主题同步需求。
 
@@ -363,7 +363,7 @@ title.setTextColor(context.themeColor(R.attr.statusBannerActiveTextColor))
 |------|------|------|------|
 | **强制浅色** `Light` + `android:forceDarkAllowed=false` | 零实现 | 与系统设置冲突；`SystemBars` 已读 night | **拒绝** |
 | **DayNight + 语义 token**（本方案） | 跟随系统；与 ADR-006/009 兼容；改动可分期 | 需审计 layout/programmatic | **采用** |
-| **Material 3 + dynamic color** | 自动 harmonize | ADR-006 defer；minSdk 21 约束 | **defer** |
+| **Material 3 + dynamic color** | 自动 harmonize | 与 Fluent SSOT 冲突；[ADR-022](../decisions/022-material3-static-theme-minsdk26.md) **拒绝** | **不做** |
 | **应用内三态 override** | 用户可控 | Settings、持久化、ADR-016 | **defer**（v1 不做） |
 | **drawable-night 副本** | 精确控制 | 维护双倍 shape | **仅** 无法用 tint 的 bitmap 时使用 |
 
@@ -457,7 +457,8 @@ title.setTextColor(context.themeColor(R.attr.statusBannerActiveTextColor))
 ## 相关文档
 
 - [ADR-009: UI Shell 与 Design System](../decisions/009-ui-shell-design-system.md)
-- [ADR-006: Material 3 Defer](../decisions/006-material3-toolchain.md)
+- [ADR-022: M3 静态 Fluent + minSdk 26](../decisions/022-material3-static-theme-minsdk26.md)
+- [material3-migration.md](material3-migration.md)
 - [configuration-ui.md](configuration-ui.md)
 - [design-system.md](design-system.md)
 - [code-editor-porting.md](code-editor-porting.md)
