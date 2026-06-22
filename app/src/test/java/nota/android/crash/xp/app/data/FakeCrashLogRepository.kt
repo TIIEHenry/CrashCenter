@@ -19,7 +19,7 @@ class FakeCrashLogRepository : CrashLogRepository {
 
     override fun getAll(filter: CrashFilter, limit: Int, offset: Int): List<CrashEvent> {
         if (throwOnGetAll) throw RuntimeException("Simulated error")
-        return events.drop(offset).take(limit)
+        return filteredEvents(filter).drop(offset).take(limit)
     }
 
     override fun getById(id: String): CrashEvent? {
@@ -29,7 +29,15 @@ class FakeCrashLogRepository : CrashLogRepository {
 
     override fun getCount(filter: CrashFilter): Int {
         if (throwOnGetCount) throw RuntimeException("Simulated getCount error")
-        return events.size
+        return filteredEvents(filter).size
+    }
+
+    private fun filteredEvents(filter: CrashFilter): List<CrashEvent> {
+        var result = events
+        filter.packageName?.takeIf { it.isNotEmpty() }?.let { pkg ->
+            result = result.filter { it.packageName == pkg }
+        }
+        return result
     }
 
     fun addEvent(event: CrashEvent) {

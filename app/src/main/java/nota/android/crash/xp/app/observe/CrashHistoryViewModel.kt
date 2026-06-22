@@ -8,6 +8,8 @@ import androidx.paging.cachedIn
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.withContext
 import nota.android.crash.common.data.CrashEvent
 import nota.android.crash.xp.app.common.BaseFlowViewModel
@@ -19,18 +21,32 @@ class CrashHistoryViewModel(
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) : BaseFlowViewModel<CrashHistoryUiState>(CrashHistoryUiState()) {
 
-    val pagingData: Flow<PagingData<CrashEvent>> = Pager(
-        config = PagingConfig(
-            pageSize = PAGE_SIZE,
-            prefetchDistance = PREFETCH_DISTANCE,
-            enablePlaceholders = false,
-        ),
-        pagingSourceFactory = { CrashEventPagingSource(repository, CrashFilter()) },
-    ).flow.cachedIn(viewModelScope)
+    private val currentFilter = MutableStateFlow(CrashFilter())
+
+    val pagingData: Flow<PagingData<CrashEvent>> = currentFilter
+        .flatMapLatest { filter ->
+            Pager(
+                config = PagingConfig(
+                    pageSize = PAGE_SIZE,
+                    prefetchDistance = PREFETCH_DISTANCE,
+                    enablePlaceholders = false,
+                ),
+                pagingSourceFactory = { CrashEventPagingSource(repository, filter) },
+            ).flow
+        }
+        .cachedIn(viewModelScope)
+
+    fun setFilter(filter: CrashFilter) {
+        currentFilter.value = filter
+        val active = filter.takeIf { it != CrashFilter() }
+        emitState { copy(activeFilter = active) }
+        loadEvents()
+    }
 
     fun loadEvents() {
+        val filter = currentFilter.value
         loadWithState(viewModelScope) {
-            val count = withContext(ioDispatcher) { repository.getCount(CrashFilter()) }
+            val count = withContext(ioDispatcher) { repository.getCount(filter) }
             emitState { copy(isLoading = false, eventCount = count) }
         }
     }

@@ -6,6 +6,7 @@ import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
+import android.widget.EditText
 import android.widget.Toast
 
 import androidx.fragment.app.Fragment
@@ -16,12 +17,14 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.paging.LoadState
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import nota.android.crash.xp.app.R
 import nota.android.crash.xp.app.common.ui.EmptyState
 import nota.android.crash.xp.app.common.ui.showErrorToast
 import nota.android.crash.xp.app.common.ui.LoadingState
+import nota.android.crash.xp.app.data.CrashFilter
 import nota.android.crash.xp.app.di.ServiceLocator
 import nota.android.crash.xp.app.di.crashHistoryViewModelFactory
 import nota.android.crash.xp.app.databinding.FragmentCrashHistoryBinding
@@ -114,8 +117,6 @@ class CrashHistoryFragment : Fragment() {
     }
 
     private fun renderState(state: CrashHistoryUiState) {
-        // Event count is now shown via adapter load state listener
-        // but we also update from repository count for accuracy
         if (state.eventCount > 0) {
             binding.eventCount.text = resources.getQuantityString(R.plurals.crash_history_count, state.eventCount, state.eventCount)
         }
@@ -125,14 +126,23 @@ class CrashHistoryFragment : Fragment() {
     // ─── Options Menu ───
 
     fun prepareOptionsMenu(menu: Menu) {
-        // All observe menu items are enabled by default; they will be
-        // individually disabled based on state as their features are implemented.
+        val filterItem = menu.findItem(R.id.item_observe_filter)
+        val hasFilter = viewModel.uiState.value.activeFilter != null
+        filterItem?.setTitle(
+            if (hasFilter) R.string.observe_menu_filter_clear
+            else R.string.observe_menu_filter
+        )
     }
 
     fun handleOptionsItem(item: MenuItem): Boolean {
         return when (item.itemId) {
             R.id.item_observe_filter -> {
-                Toast.makeText(requireContext(), "TODO: Filter", Toast.LENGTH_SHORT).show()
+                val activeFilter = viewModel.uiState.value.activeFilter
+                if (activeFilter != null) {
+                    viewModel.setFilter(CrashFilter())
+                } else {
+                    showFilterDialog()
+                }
                 true
             }
             R.id.item_observe_export -> {
@@ -145,6 +155,26 @@ class CrashHistoryFragment : Fragment() {
             }
             else -> false
         }
+    }
+
+    private fun showFilterDialog() {
+        val editText = EditText(requireContext()).apply {
+            hint = getString(R.string.observe_filter_package_hint)
+            setSingleLine()
+            setPadding(64, 32, 64, 16)
+        }
+
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle(R.string.observe_filter_title)
+            .setView(editText)
+            .setPositiveButton(android.R.string.ok) { _, _ ->
+                val input = editText.text.toString().trim()
+                if (input.isNotEmpty()) {
+                    viewModel.setFilter(CrashFilter(packageName = input))
+                }
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
     }
 
     companion object {

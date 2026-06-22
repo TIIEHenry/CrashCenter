@@ -12,10 +12,12 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import nota.android.crash.common.data.CrashEvent
+import nota.android.crash.xp.app.data.CrashFilter
 import nota.android.crash.xp.app.data.FakeCrashLogRepository
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -211,5 +213,82 @@ class CrashHistoryViewModelTest {
         viewModel.loadEvents()
         advanceUntilIdle()
         assertEquals(2, viewModel.uiState.value.eventCount)
+    }
+
+    // ─── Filter ───
+
+    @Test
+    fun `initial activeFilter is null`() = testScope.runTest {
+        createViewModel()
+        assertNull(viewModel.uiState.value.activeFilter)
+    }
+
+    @Test
+    fun `setFilter updates activeFilter in uiState`() = testScope.runTest {
+        createViewModel()
+        val filter = CrashFilter(packageName = "com.example.a")
+        viewModel.setFilter(filter)
+        advanceUntilIdle()
+        assertEquals(filter, viewModel.uiState.value.activeFilter)
+    }
+
+    @Test
+    fun `setFilter with empty CrashFilter clears activeFilter`() = testScope.runTest {
+        createViewModel()
+        viewModel.setFilter(CrashFilter(packageName = "com.example.a"))
+        advanceUntilIdle()
+        viewModel.setFilter(CrashFilter())
+        advanceUntilIdle()
+        assertNull(viewModel.uiState.value.activeFilter)
+    }
+
+    @Test
+    fun `setFilter updates eventCount to match filtered results`() = testScope.runTest {
+        repository.events = listOf(
+            CrashEvent(id = "e1", timestampMs = 1000L, packageName = "com.example.a", exceptionClass = "NullPointerException"),
+            CrashEvent(id = "e2", timestampMs = 2000L, packageName = "com.example.b", exceptionClass = "IllegalStateException"),
+            CrashEvent(id = "e3", timestampMs = 3000L, packageName = "com.example.a", exceptionClass = "NullPointerException"),
+        )
+        createViewModel()
+
+        viewModel.setFilter(CrashFilter(packageName = "com.example.a"))
+        advanceUntilIdle()
+
+        assertEquals(2, viewModel.uiState.value.eventCount)
+        assertEquals(CrashFilter(packageName = "com.example.a"), viewModel.uiState.value.activeFilter)
+    }
+
+    @Test
+    fun `setFilter with clear restores full eventCount`() = testScope.runTest {
+        repository.events = listOf(
+            CrashEvent(id = "e1", timestampMs = 1000L, packageName = "com.example.a", exceptionClass = "NullPointerException"),
+            CrashEvent(id = "e2", timestampMs = 2000L, packageName = "com.example.b", exceptionClass = "IllegalStateException"),
+        )
+        createViewModel()
+
+        viewModel.setFilter(CrashFilter(packageName = "com.example.a"))
+        advanceUntilIdle()
+        assertEquals(1, viewModel.uiState.value.eventCount)
+
+        viewModel.setFilter(CrashFilter())
+        advanceUntilIdle()
+        assertEquals(2, viewModel.uiState.value.eventCount)
+    }
+
+    @Test
+    fun `setFilter updates pagingData with filtered events`() = testScope.runTest {
+        repository.events = listOf(
+            CrashEvent(id = "e1", timestampMs = 1000L, packageName = "com.example.a", exceptionClass = "NullPointerException"),
+            CrashEvent(id = "e2", timestampMs = 2000L, packageName = "com.example.b", exceptionClass = "IllegalStateException"),
+            CrashEvent(id = "e3", timestampMs = 3000L, packageName = "com.example.a", exceptionClass = "NullPointerException"),
+        )
+        createViewModel()
+
+        viewModel.setFilter(CrashFilter(packageName = "com.example.a"))
+        advanceUntilIdle()
+
+        val snapshot: List<CrashEvent> = viewModel.pagingData.asSnapshot()
+        assertEquals(2, snapshot.size)
+        assertTrue(snapshot.all { it.packageName == "com.example.a" })
     }
 }

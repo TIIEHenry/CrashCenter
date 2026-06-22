@@ -54,6 +54,9 @@
     <string name="crash_source_ueh_a11y">Uncaught exception handler</string>
     <string name="crash_source_looper_a11y">Main thread loop</string>
     <string name="observe_menu_filter">Filter</string>
+    <string name="observe_menu_filter_clear">Clear filter</string>
+    <string name="observe_filter_title">Filter by package</string>
+    <string name="observe_filter_package_hint">e.g. com.example.app</string>
     <string name="observe_menu_export">Export logs</string>
     <string name="observe_menu_stats">Statistics</string>
     <string name="crash_detail_not_found">Crash record not found: %1$s</string>
