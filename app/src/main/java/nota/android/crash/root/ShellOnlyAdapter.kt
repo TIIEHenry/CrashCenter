@@ -66,7 +66,7 @@ class ShellOnlyAdapter : RootAccessClient {
             val remainingSec = ((deadlineMs - System.currentTimeMillis()) / 1000)
                 .coerceIn(1, 5)
             val result = Shell.cmd(
-                "timeout $remainingSec sh -c 'printf %s \"$encoded\" | base64 -d >> \"$path\"'"
+                "timeout $remainingSec su -c 'printf %s \"$encoded\" | base64 -d >> \"$path\"'"
             ).exec()
             result.isSuccess
         } catch (_: Exception) {

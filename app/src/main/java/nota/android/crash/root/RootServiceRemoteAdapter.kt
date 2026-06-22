@@ -9,6 +9,7 @@ import android.os.Parcel
 import com.topjohnwu.superuser.Shell
 import com.topjohnwu.superuser.ipc.RootService
 import com.topjohnwu.superuser.nio.FileSystemManager
+import kotlinx.coroutines.withTimeout
 import nota.android.crash.root.service.CrashCenterRootService
 import nota.android.crash.root.service.RootBroker
 import java.io.InputStream
@@ -25,6 +26,7 @@ class RootServiceRemoteAdapter(private val context: Context) : RootAccessClient 
     private var fsManager: FileSystemManager? = null
 
     private val bindLatch = CountDownLatch(1)
+    private val bindLock = Any()
 
     private val serviceConnection = object : ServiceConnection {
         override fun onServiceConnected(name: ComponentName, service: IBinder) {
@@ -54,23 +56,26 @@ class RootServiceRemoteAdapter(private val context: Context) : RootAccessClient 
     }
 
     private fun getFsManager(): FileSystemManager? {
-        if (fsManager != null) return fsManager
-        val b = ensureBound() ?: return null
-        return try {
-            val data = Parcel.obtain()
-            val reply = Parcel.obtain()
-            try {
-                data.writeInterfaceToken(RootBroker.DESCRIPTOR)
-                b.transact(RootBroker.TRANSACTION_GET_FILE_SYSTEM_MANAGER, data, reply, 0)
-                reply.readException()
-                val fsBinder = reply.readStrongBinder()
-                FileSystemManager.getRemote(fsBinder).also { fsManager = it }
-            } finally {
-                data.recycle()
-                reply.recycle()
+        fsManager?.let { return it }
+        synchronized(bindLock) {
+            fsManager?.let { return it }
+            val b = ensureBound() ?: return null
+            return try {
+                val data = Parcel.obtain()
+                val reply = Parcel.obtain()
+                try {
+                    data.writeInterfaceToken(RootBroker.DESCRIPTOR)
+                    b.transact(RootBroker.TRANSACTION_GET_FILE_SYSTEM_MANAGER, data, reply, 0)
+                    reply.readException()
+                    val fsBinder = reply.readStrongBinder()
+                    FileSystemManager.getRemote(fsBinder).also { fsManager = it }
+                } finally {
+                    data.recycle()
+                    reply.recycle()
+                }
+            } catch (_: Exception) {
+                null
             }
-        } catch (_: Exception) {
-            null
         }
     }
 
@@ -118,11 +123,13 @@ class RootServiceRemoteAdapter(private val context: Context) : RootAccessClient 
     override suspend fun appendBytes(path: String, data: ByteArray, deadlineMs: Long): Boolean {
         val fsm = getFsManager() ?: return false
         return try {
-            val channel = fsm.openChannel(
-                path,
-                FileSystemManager.MODE_READ_WRITE or FileSystemManager.MODE_APPEND
-            )
-            Channels.newOutputStream(channel).use { it.write(data) }
+            withTimeout(deadlineMs) {
+                val channel = fsm.openChannel(
+                    path,
+                    FileSystemManager.MODE_READ_WRITE or FileSystemManager.MODE_APPEND
+                )
+                Channels.newOutputStream(channel).use { it.write(data) }
+            }
             true
         } catch (_: Exception) {
             false

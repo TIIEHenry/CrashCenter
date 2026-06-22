@@ -1,6 +1,7 @@
 package nota.android.crash.log.backend
 
 import android.content.Context
+import androidx.annotation.VisibleForTesting
 import kotlinx.coroutines.runBlocking
 import nota.android.crash.common.data.CrashEvent
 import nota.android.crash.log.AppendResult
@@ -9,6 +10,7 @@ import nota.android.crash.log.BackendId
 import nota.android.crash.log.CrashLogBackend
 import nota.android.crash.log.ProcessSlot
 import nota.android.crash.log.appendWithSafeWrite
+import nota.android.crash.root.RootAccessClient
 import nota.android.crash.root.RootAvailability
 import nota.android.crash.root.ShellOnlyAdapter
 import nota.android.crash.xp.app.data.FileCrashLogRepository
@@ -32,7 +34,9 @@ object RootSuBackend : CrashLogBackend {
     override val tier = 0
     override val runsOn = ProcessSlot.HOOK
 
-    private val adapter = ShellOnlyAdapter()
+    @JvmStatic
+    @VisibleForTesting
+    internal var adapter: RootAccessClient = ShellOnlyAdapter()
 
     override fun probe(context: Context): BackendAvailability {
         return try {

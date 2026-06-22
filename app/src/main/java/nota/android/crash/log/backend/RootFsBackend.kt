@@ -1,6 +1,7 @@
 package nota.android.crash.log.backend
 
 import android.content.Context
+import androidx.annotation.VisibleForTesting
 import kotlinx.coroutines.runBlocking
 import nota.android.crash.common.data.CrashEvent
 import nota.android.crash.log.AppendResult
@@ -9,6 +10,7 @@ import nota.android.crash.log.BackendId
 import nota.android.crash.log.CrashLogBackend
 import nota.android.crash.log.ProcessSlot
 import nota.android.crash.log.appendWithSafeWrite
+import nota.android.crash.root.RootAccessClient
 import nota.android.crash.root.RootAvailability
 import nota.android.crash.xp.app.data.FileCrashLogRepository
 import nota.android.crash.xp.app.di.ServiceLocator
@@ -27,8 +29,13 @@ object RootFsBackend : CrashLogBackend {
     override val tier = 0
     override val runsOn = ProcessSlot.MODULE
 
+    /** Test-only: replace root access client; null uses real [ServiceLocator]. */
+    @JvmStatic
+    @VisibleForTesting
+    internal var testClient: RootAccessClient? = null
+
     override fun probe(context: Context): BackendAvailability {
-        val client = ServiceLocator.rootAccessClient(context)
+        val client = testClient ?: ServiceLocator.rootAccessClient(context)
         return when (client.probe()) {
             RootAvailability.AVAILABLE -> BackendAvailability.READY
             RootAvailability.DENIED -> BackendAvailability.MAYBE
@@ -40,7 +47,7 @@ object RootFsBackend : CrashLogBackend {
         return appendWithSafeWrite(event) { stamped ->
             val path = FileCrashLogRepository.eventsFile(context).absolutePath
             val line = stamped.toJsonLine() + "\n"
-            val client = ServiceLocator.rootAccessClient(context)
+            val client = testClient ?: ServiceLocator.rootAccessClient(context)
             val success = runBlocking {
                 client.appendBytes(path, line.toByteArray(Charsets.UTF_8), deadlineMs)
             }
