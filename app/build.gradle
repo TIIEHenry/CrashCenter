@@ -82,6 +82,10 @@ dependencies {
     implementation libs.serialization.json
     implementation libs.kotlinx.coroutines.core
 
+    implementation libs.libsu.core
+    implementation libs.libsu.service
+    implementation libs.libsu.nio
+
     implementation project(':CodeEditor')
     implementation project(':CodeEditorClient')
 
