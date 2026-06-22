@@ -57,6 +57,7 @@ summary: "docs/ + dev/ 完整导航索引（自动生成）"
 | [overview.md](architecture/overview.md) | Xposed 异常拦截模块的整体架构与数据流；4B-α 观测 + 4C-α UI Shell as-built；演进见 architecture-optimization.md |
 | [scope-and-prefs.md](architecture/scope-and-prefs.md) | SharedPreferences 键、scope 模式与跨进程同步；legacy tiiehenry.xp.grapcrash 迁移 |
 | [ui-routing.md](architecture/ui-routing.md) | MainShellActivity、ConfigFragment、ObserveHost 与详情 Activity 的路由表、Intent 兼容参数、返回栈与 Phase 4C+ Navigation 图 |
+| [unified-root-service.md](architecture/unified-root-service.md) | 单 CrashCenterRootService + RootBroker 多子 Binder；模块进程统一特权 I/O；hook 侧同契约 Shell 适配器 |
 | [xposed-entry.md](architecture/xposed-entry.md) | XposedEntry 薄入口：ScopePolicy 过滤、CrashHandler 安装、委托 CrashCapturePipeline |
 
 ---
@@ -90,7 +91,7 @@ summary: "docs/ + dev/ 完整导航索引（自动生成）"
 
 | 文档 | 内容 |
 |------|------|
-| [root-service-patterns.md](reference/root-service-patterns.md) | 从 AppSnapShotor 提炼的 libsu RootService 模式；CrashCenter Phase 4 ingest 侧参考，非产品依赖 |
+| [root-service-patterns.md](reference/root-service-patterns.md) | 从 AppSnapShotor 提炼的 libsu RootService 模式；CrashCenter 统一方案见 unified-root-service.md |
 | [sibling-projects.md](reference/sibling-projects.md) | CrashCenter 参考的外部 Clarence 生态仓库（GitHub URL；文档引用 SSOT，非 Gradle 构建依赖） |
 | [xposed-framework.md](reference/xposed-framework.md) | CrashCenter 使用的 Xposed API 与框架兼容性 |
 

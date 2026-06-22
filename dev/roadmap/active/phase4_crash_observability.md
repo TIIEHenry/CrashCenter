@@ -49,7 +49,9 @@ summary: "4B-α 多后端写入已编码；4B-γ canonical FS 方案；4C-β 半
 
 ### 4B-β — root 优先 + ingest
 
-- [ ] `RootSuBackend`（hook，`su` append canonical）
+> 统一 Root 方案：[unified-root-service.md](../../../docs/architecture/unified-root-service.md)（单 `CrashCenterRootService` + `RootBroker`）；实施前 ADR-023。
+
+- [ ] `RootSuBackend`（hook，`ShellOnlyAdapter` append canonical）
 - [ ] Coordinator Phase 1 root 短窗（≤1500ms）
 - [ ] 模块 `RootFsBackend` + `RelayMergeBackend`（libsu，参考 AppSnapShotor）
 - [ ] `CrashLogIngestCoordinator`：模块启动 / Provider 回调触发

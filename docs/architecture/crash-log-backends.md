@@ -3,7 +3,7 @@ title: "崩溃日志多后端存储"
 type: architecture
 status: accepted
 phase: 4
-updated: 2026-06-19
+updated: 2026-06-22
 summary: "CrashLogBackend 抽象、4B-α Phase 2 并行写入已实现；root / ingest defer 4B-β；canonical JSONL 为 SSOT"
 ---
 
@@ -12,7 +12,7 @@ summary: "CrashLogBackend 抽象、4B-α Phase 2 并行写入已实现；root / 
 > 适用模块：`:app`（4B-α：`CrashLogCoordinator`、`CrashLogBackendRegistry`、Phase 2 backends、`CrashLogProvider`）
 > 机制对比与 FAQ 见 [crash-log-ipc.md](crash-log-ipc.md)
 > 存储决策见 [ADR-007](../decisions/007-crash-log-cross-process-storage.md)、[ADR-008](../decisions/008-multi-backend-crash-log-storage.md)
-> Root 实现参考：[root-service-patterns.md](../reference/root-service-patterns.md)（提炼自 AppSnapShotor libsu + RootService）
+> Root 实现参考：[unified-root-service.md](unified-root-service.md)（单 RootService + Broker，`proposed`）；上游模式 [root-service-patterns.md](../reference/root-service-patterns.md)
 
 ## 概述
 
@@ -312,15 +312,15 @@ su -c 'base64 -d >> /data/data/nota.android.crash.xp.app/files/crash_logs/events
 | `CrashLogProvider.insert` 回调 | hook 走 Provider 时可顺带 schedule ingest |
 | 可选 `WorkManager` | 周期性 harvest（须 root 仍可用） |
 
-### RootFsBackend（参考 AppSnapShotor）
+### RootFsBackend（经统一 Root 层）
 
-模块进程内：
+模块进程内经 [unified-root-service.md](unified-root-service.md) 的 `RootAccessClient`：
 
 1. `AppShell.initMainShell` — libsu，`FLAG_MOUNT_MASTER`，`su`
-2. `Shell.getShell().isRoot` → `RootService.bind()`
-3. `FileSystemManager` — list / read / append / delete
+2. `Shell.getShell().isRoot` → 单次 `CrashCenterRootService` bind → `RootBroker` → `FileSystemModule`
+3. `list` / `openRead` / `delete` relay；**不**再独立 `FileSystemManagerRootService` 类
 
-**不复制** AppSnapShotor 的 PM / tar / SSAID 栈；仅保留 FS 相关最小子集。
+**不复制** AppSnapShotor 的 PM / tar / SSAID 栈；Broker 仅 FS + probe（prefs 读可走同一 FSM）。
 
 路径常量参考 AppSnapShotor `PathHelper`：
 
