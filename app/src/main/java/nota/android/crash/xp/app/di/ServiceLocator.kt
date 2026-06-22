@@ -2,6 +2,8 @@ package nota.android.crash.xp.app.di
 
 import android.content.Context
 import android.content.SharedPreferences
+import nota.android.crash.root.RootAccessClient
+import nota.android.crash.root.RootServiceRemoteAdapter
 import nota.android.crash.xp.PrefManager
 import nota.android.crash.xp.app.config.LegacyAppRepository
 import nota.android.crash.xp.app.config.ManagedAppRepository
@@ -30,6 +32,9 @@ object ServiceLocator {
 
     @Volatile
     private var crashLogRepository: CrashLogRepository? = null
+
+    @Volatile
+    private var rootAccessClient: RootAccessClient? = null
 
     /**
      * Double-checked locking helper. Returns the existing value in [slot],
@@ -67,6 +72,11 @@ object ServiceLocator {
             FileCrashLogRepository(context.applicationContext)
         }
 
+    fun rootAccessClient(context: Context): RootAccessClient =
+        getOrCreate(::rootAccessClient) {
+            RootServiceRemoteAdapter(context.applicationContext)
+        }
+
     /**
      * Clears all singletons. Useful for testing.
      */
@@ -77,6 +87,7 @@ object ServiceLocator {
             managedAppRepository = null
             packageVisibilityRepository = null
             crashLogRepository = null
+            rootAccessClient = null
         }
     }
 }
