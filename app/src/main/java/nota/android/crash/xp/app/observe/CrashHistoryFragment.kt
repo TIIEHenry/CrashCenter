@@ -2,6 +2,7 @@ package nota.android.crash.xp.app.observe
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuItem
@@ -370,6 +371,7 @@ class CrashHistoryFragment : Fragment() {
                 }
                 startActivity(Intent.createChooser(intent, getString(R.string.observe_menu_export)))
             } catch (e: Exception) {
+                Log.w("CrashHistoryFragment", "Failed to share crash logs", e)
                 Toast.makeText(requireContext(), R.string.observe_export_error, Toast.LENGTH_SHORT).show()
             }
         }
@@ -393,6 +395,7 @@ class CrashHistoryFragment : Fragment() {
                 }
                 Toast.makeText(requireContext(), R.string.observe_export_saved, Toast.LENGTH_SHORT).show()
             } catch (e: Exception) {
+                Log.w("CrashHistoryFragment", "Failed to write zip to URI", e)
                 Toast.makeText(requireContext(), R.string.observe_export_error, Toast.LENGTH_SHORT).show()
             }
         }

@@ -122,7 +122,8 @@ object RelayMergeBackend : CrashLogBackend {
                 val relayPath = "$userPath/$packageName/files/${TargetRelayBackend.RELAY_DIR}"
                 val files = try {
                     rootClient.listDir(relayPath)
-                } catch (_: Throwable) {
+                } catch (e: Throwable) {
+                    Log.d("RelayMergeBackend", "Failed to list relay dir: $relayPath", e)
                     continue
                 }
 

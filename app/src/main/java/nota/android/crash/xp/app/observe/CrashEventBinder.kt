@@ -8,6 +8,7 @@ import androidx.core.content.ContextCompat
 import nota.android.crash.xp.app.R
 import nota.android.crash.common.data.CrashEvent
 import nota.android.crash.xp.app.databinding.ViewCrashEventRowBinding
+import android.util.Log
 
 object CrashEventBinder {
 
@@ -52,7 +53,8 @@ object CrashEventBinder {
 
     private fun loadIcon(context: Context, packageName: String) = try {
         context.packageManager.getApplicationIcon(packageName)
-    } catch (_: PackageManager.NameNotFoundException) {
+    } catch (e: PackageManager.NameNotFoundException) {
+        Log.w("CrashEventBinder", "Icon not found for package: $packageName", e)
         ContextCompat.getDrawable(context, R.mipmap.ic_launcher)
     }
 

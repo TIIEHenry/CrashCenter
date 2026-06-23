@@ -5,6 +5,7 @@ import androidx.paging.PagingState
 import nota.android.crash.common.data.CrashEvent
 import nota.android.crash.xp.app.data.CrashFilter
 import nota.android.crash.xp.app.data.CrashLogRepository
+import android.util.Log
 
 class CrashEventPagingSource(
     private val repository: CrashLogRepository,
@@ -27,6 +28,7 @@ class CrashEventPagingSource(
                 nextKey = nextKey,
             )
         } catch (e: Exception) {
+            Log.w("CrashEventPagingSource", "Paging load failed", e)
             LoadResult.Error(e)
         }
     }
