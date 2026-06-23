@@ -14,13 +14,12 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import android.util.Log
-import com.google.android.material.bottomsheet.BottomSheetDialogFragment
+import androidx.fragment.app.DialogFragment
 import com.google.android.material.chip.Chip
 import kotlinx.coroutines.launch
 import nota.android.crash.analysis.RuleEngine
 import nota.android.crash.common.data.CrashAnalysis
 import nota.android.crash.xp.app.R
-import nota.android.crash.xp.app.common.ui.configureCrashDetailBottomSheetAppearance
 import nota.android.crash.xp.app.data.CrashDetailLoader
 import nota.android.crash.xp.app.di.ServiceLocator
 import nota.android.crash.xp.app.di.crashDetailViewModelFactory
@@ -57,7 +56,7 @@ sealed class CrashDetailArgs {
     }
 }
 
-class CrashDetailBottomSheet : BottomSheetDialogFragment() {
+class CrashDetailBottomSheet : DialogFragment() {
 
     private var _binding: BottomSheetCrashDetailBinding? = null
     private val binding get() = checkNotNull(_binding) { "Binding accessed after onDestroyView" }
@@ -85,15 +84,17 @@ class CrashDetailBottomSheet : BottomSheetDialogFragment() {
         binding.btnCopy.setOnClickListener { copyStackTraceToClipboard() }
         binding.analysisDevSuggestionHeader.setOnClickListener { toggleDevSuggestion() }
         viewer = CrashLogViewerClient.attach(requireContext(), binding.viewerContainer)
-        // Disable BottomSheet drag when touching CodeEditor
-        configureBottomSheetForCodeEditor()
         initRuleEngine()
         observeViewModel()
     }
 
     override fun onStart() {
         super.onStart()
-        configureCrashDetailBottomSheetAppearance()
+        // Full-screen dialog
+        dialog?.window?.setLayout(
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            ViewGroup.LayoutParams.MATCH_PARENT,
+        )
     }
 
     override fun onDestroyView() {
@@ -196,16 +197,6 @@ class CrashDetailBottomSheet : BottomSheetDialogFragment() {
         binding.analysisDevSuggestion.isVisible = false
         binding.analysisDevSuggestionHeader.text = getString(R.string.analysis_dev_suggestion_header)
         binding.analysisCard.isVisible = true
-    }
-
-    private fun configureBottomSheetForCodeEditor() {
-        // Let CodeEditor handle its own touch events (scroll, select)
-        // without triggering BottomSheet drag
-        val container = binding.viewerContainer
-        container.setOnTouchListener { v, event ->
-            v.parent.requestDisallowInterceptTouchEvent(true)
-            false
-        }
     }
 
     private fun toggleDevSuggestion() {
