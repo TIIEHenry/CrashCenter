@@ -1,6 +1,7 @@
 package nota.android.crash.log.backend
 
 import android.content.Context
+import android.util.Log
 import nota.android.crash.log.AppendResult
 import nota.android.crash.log.BackendAvailability
 import nota.android.crash.log.BackendId
@@ -31,7 +32,8 @@ object DirectFsBackend : CrashLogBackend {
             )
             if (logDir.exists() || logDir.mkdirs()) BackendAvailability.READY
             else BackendAvailability.UNAVAILABLE
-        } catch (_: Throwable) {
+        } catch (e: Throwable) {
+            Log.w("DirectFsBackend", "probe failed", e)
             BackendAvailability.UNAVAILABLE
         }
     }

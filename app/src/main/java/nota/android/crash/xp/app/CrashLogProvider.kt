@@ -6,6 +6,7 @@ import android.content.UriMatcher
 import android.database.Cursor
 import android.net.Uri
 import android.os.Binder
+import android.util.Log
 import nota.android.crash.log.BackendId
 import nota.android.crash.log.CanonicalJsonlWriter
 import nota.android.crash.log.CrashLogContract
@@ -50,7 +51,8 @@ class CrashLogProvider : ContentProvider() {
             )
             CanonicalJsonlWriter.append(eventsFile, stamped)
             Uri.withAppendedPath(uri, event.id)
-        } catch (_: Throwable) {
+        } catch (e: Throwable) {
+            Log.w("CrashLogProvider", "insert failed", e)
             null
         }
     }

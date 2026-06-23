@@ -6,6 +6,7 @@ import android.content.Intent
 import android.content.ServiceConnection
 import android.os.IBinder
 import android.os.Parcel
+import android.util.Log
 import com.topjohnwu.superuser.Shell
 import com.topjohnwu.superuser.ipc.RootService
 import com.topjohnwu.superuser.nio.FileSystemManager
@@ -47,8 +48,8 @@ class RootServiceRemoteAdapter(private val context: Context) : RootAccessClient 
                     serviceConnection
                 )
                 bindLatch.await(15, TimeUnit.SECONDS)
-            } catch (_: Exception) {
-                // Root not available or binding failed
+            } catch (e: Exception) {
+                Log.w(TAG, "ensureBound failed", e)
             }
         }
         return broker
@@ -72,7 +73,8 @@ class RootServiceRemoteAdapter(private val context: Context) : RootAccessClient 
                     data.recycle()
                     reply.recycle()
                 }
-            } catch (_: Exception) {
+            } catch (e: Exception) {
+                Log.w(TAG, "getFsManager failed", e)
                 null
             }
         }
@@ -85,7 +87,8 @@ class RootServiceRemoteAdapter(private val context: Context) : RootAccessClient 
                 shell.isRoot -> RootAvailability.AVAILABLE
                 else -> RootAvailability.DENIED
             }
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            Log.w(TAG, "probe failed", e)
             RootAvailability.UNAVAILABLE
         }
     }
@@ -95,7 +98,8 @@ class RootServiceRemoteAdapter(private val context: Context) : RootAccessClient 
         return try {
             val channel = fsm.openChannel(path, FileSystemManager.MODE_READ_ONLY)
             Channels.newInputStream(channel).bufferedReader().use { it.readText() }
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            Log.w(TAG, "readText failed", e)
             null
         }
     }
@@ -104,7 +108,8 @@ class RootServiceRemoteAdapter(private val context: Context) : RootAccessClient 
         val fsm = getFsManager() ?: return emptyList()
         return try {
             fsm.getFile(path).list()?.toList() ?: emptyList()
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            Log.w(TAG, "listDir failed", e)
             emptyList()
         }
     }
@@ -120,7 +125,8 @@ class RootServiceRemoteAdapter(private val context: Context) : RootAccessClient 
                 Channels.newOutputStream(channel).use { it.write(data) }
             }
             true
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            Log.w(TAG, "appendBytes failed", e)
             false
         }
     }
@@ -129,8 +135,13 @@ class RootServiceRemoteAdapter(private val context: Context) : RootAccessClient 
         val fsm = getFsManager() ?: return false
         return try {
             fsm.getFile(path).delete()
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            Log.w(TAG, "delete failed", e)
             false
         }
+    }
+
+    companion object {
+        private const val TAG = "RootServiceRemoteAdapter"
     }
 }
