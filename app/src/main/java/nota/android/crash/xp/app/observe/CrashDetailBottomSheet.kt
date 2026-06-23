@@ -25,6 +25,7 @@ import nota.android.crash.xp.app.data.CrashDetailLoader
 import nota.android.crash.xp.app.di.ServiceLocator
 import nota.android.crash.xp.app.di.crashDetailViewModelFactory
 import nota.android.crash.xp.app.databinding.BottomSheetCrashDetailBinding
+import nota.android.crash.xp.app.view.CrashLogViewerClient
 
 sealed class CrashDetailArgs {
     abstract fun toBundle(): Bundle
@@ -63,6 +64,7 @@ class CrashDetailBottomSheet : BottomSheetDialogFragment() {
 
     private var currentStackTrace: String = ""
     private var ruleEngine: RuleEngine? = null
+    private var viewer: CrashLogViewerClient? = null
 
     private val viewModel: CrashDetailViewModel by viewModels {
         ServiceLocator.crashDetailViewModelFactory(this, requireContext())
@@ -82,6 +84,7 @@ class CrashDetailBottomSheet : BottomSheetDialogFragment() {
         binding.btnClose.setOnClickListener { dismiss() }
         binding.btnCopy.setOnClickListener { copyStackTraceToClipboard() }
         binding.analysisDevSuggestionHeader.setOnClickListener { toggleDevSuggestion() }
+        viewer = CrashLogViewerClient.attach(requireContext(), binding.viewerContainer)
         initRuleEngine()
         observeViewModel()
     }
@@ -104,12 +107,12 @@ class CrashDetailBottomSheet : BottomSheetDialogFragment() {
                     ?: CrashDetailLoader.titleFromStackTrace(a.stackTrace)
                     ?: getString(R.string.crash_info_title)
                 currentStackTrace = a.stackTrace
-                binding.textStackTrace.text = a.stackTrace
+                viewer?.showStackTrace(a.stackTrace)
                 runAnalysis(a.stackTrace)
             }
             is CrashDetailArgs.FromId -> {
                 if (a.crashId.isBlank()) {
-                    binding.textStackTrace.text = ""
+                    viewer?.showStackTrace("")
                     binding.tvTitle.text = getString(R.string.crash_info_title)
                     return
                 }
@@ -125,14 +128,14 @@ class CrashDetailBottomSheet : BottomSheetDialogFragment() {
                                     if (_binding == null) return@collect
                                     binding.tvTitle.text = state.title
                                     currentStackTrace = state.stackTrace
-                                    binding.textStackTrace.text = state.stackTrace
+                                    viewer?.showStackTrace(state.stackTrace)
                                     runAnalysis(state.stackTrace)
                                 }
                                 is CrashDetailUiState.Error -> {
                                     if (_binding == null) return@collect
                                     binding.tvTitle.text = getString(R.string.crash_info_title)
                                     currentStackTrace = state.message
-                                    binding.textStackTrace.text = state.message
+                                    viewer?.showStackTrace(state.message)
                                 }
                             }
                         }
