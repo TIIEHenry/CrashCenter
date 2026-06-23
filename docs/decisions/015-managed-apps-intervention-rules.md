@@ -4,14 +4,16 @@ type: decision
 status: accepted
 phase: 3
 updated: 2026-06-19
-summary: "配置域改为 managed_packages 策展列表 + intervention_rules JSON；无规则不 hook；Legacy 哨兵保留 ADR-002 行为"
+summary: "配置域改为 managed_packages 策展列表 + intervention_rules JSON；hook 门控已由 ADR-023 修订"
 ---
 
 # ADR-015: 受管应用与干预规则
 
+> **部分 superseded**：[ADR-023](023-injection-observe-intercept-split.md) 修订 §2–§4 hook 门控：`managed_packages` 改为策展配置集；无 enabled 规则时 **仍注入观测**（`shouldIntercept=false`）。
+
 ## 状态
 
-**Accepted** — 方案见 [app-management-ui.md](../architecture/app-management-ui.md)。
+**Accepted**（hook 门控条款由 ADR-023 取代）— 方案见 [app-management-ui.md](../architecture/app-management-ui.md)。
 
 ## 背景
 

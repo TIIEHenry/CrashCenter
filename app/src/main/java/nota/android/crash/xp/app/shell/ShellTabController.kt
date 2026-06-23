@@ -92,6 +92,10 @@ class ShellTabController(
         return coordinator.onOptionsItemSelected(item)
     }
 
+    fun selectShellTab(tab: ShellTab) {
+        coordinator.selectTab(tab, fromUser = true)
+    }
+
     private fun setupBottomNav() {
         binding.bottomNav.setOnItemSelectedListener { item ->
             if (navSuppressor.suppressed) return@setOnItemSelectedListener true

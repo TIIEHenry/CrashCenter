@@ -3,22 +3,22 @@ title: "Sibling 项目参考"
 type: reference
 status: accepted
 phase: N/A
-updated: 2026-06-22
+updated: 2026-06-23
 summary: "CrashCenter 参考的外部 Clarence 生态仓库（GitHub URL；文档引用 SSOT，非 Gradle 构建依赖）"
 ---
 
 # Sibling 项目参考
 
-CrashCenter 文档中引用的 **外部参考仓库**。本仓库 CI 仅 checkout [CelestailRuler](https://github.com/TIIEHenry/CelestailRuler) 用于 CodeEditor 构建；其余为设计/模式参考，**禁止**在文档中使用本机绝对路径链接。
+CrashCenter 文档中引用的 **外部参考仓库**。`CodeEditor` 等模块已 vendored 至本仓库 `lib/`；其余为设计/模式参考，**禁止**在文档中使用本机绝对路径链接。
 
 ## CelestailRuler
 
 | 项 | 值 |
 |----|-----|
 | GitHub | https://github.com/TIIEHenry/CelestailRuler |
-| 用途 | `CodeEditor` / `CodeEditorClient` 模块；`CrashInfoActivity` 详情页参考 |
-| CI checkout | `.github/workflows/build.yml` → `../CelestailRuler` |
-| 本地开发 | `settings.gradle` 可 `projectDir = file('../CelestailRuler/CodeEditor')` |
+| 用途 | `CodeEditor` / `CodeEditorClient` 上游参考；`CrashInfoActivity` 详情页参考 |
+| 本仓库 | `lib/CodeEditor*`（vendored，见 `settings.gradle`） |
+| 本地开发 | 可改 `settings.gradle` 指向上游 sibling 以同步上游修复 |
 
 关键路径（仓库内相对路径）：
 

@@ -10,6 +10,7 @@ object PrefManager {
     const val PREF_MANAGED_PACKAGES = "managed_packages"
     const val PREF_INTERVENTION_RULES = "intervention_rules"
     const val PREF_MANAGED_MODEL_MIGRATED = "managed_model_migrated"
+    const val PREF_OBSERVE_INTERCEPT_SPLIT_MIGRATED = "observe_intercept_split_migrated"
     const val PREF_XPOSED_DIALOG_DISMISSED = "xposed_dialog_dismissed"
     const val PREF_CRASH_LOG_ENABLED = "crash_log_enabled"
     const val PREF_CRASH_LOG_BACKEND_PROVIDER = "crash_log_backend_provider"

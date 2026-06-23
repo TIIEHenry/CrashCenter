@@ -9,7 +9,7 @@ summary: "参照 celestailruler CodeEditor 三模块，在 observe/detail 域替
 
 # CodeEditor 移植方案（日志浏览）
 
-> 参照项目：[CelestailRuler](../reference/sibling-projects.md#celestailruler)（CI checkout 见 `.github/workflows/build.yml`）
+> 参照项目：[CelestailRuler](../reference/sibling-projects.md#celestailruler)（`CodeEditor` 已 vendored 至 `lib/`，见 `settings.gradle`）
 > 源码对照：`CrashInfoActivity.kt`、`BaseCodeEditorClient.kt`、`CodeEditor` / `CodeEditorClient` 模块
 > 关联：[crash-notification.md](crash-notification.md)、[crash-logging.md](crash-logging.md)、[navigation-ia.md](navigation-ia.md)
 

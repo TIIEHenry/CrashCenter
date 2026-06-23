@@ -6,17 +6,45 @@ import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.commit
+import androidx.fragment.app.viewModels
 import com.google.android.material.tabs.TabLayout
 import nota.android.crash.xp.app.R
 import nota.android.crash.xp.app.databinding.FragmentObserveHostBinding
+import nota.android.crash.xp.app.di.ServiceLocator
+import nota.android.crash.xp.app.di.crashHistoryViewModelFactory
+import nota.android.crash.xp.app.shell.MainShellActivity
+import nota.android.crash.xp.app.shell.ShellTab
 
 class ObserveHostFragment : Fragment() {
 
     private var _binding: FragmentObserveHostBinding? = null
 
     private var currentTab: Int = TAB_HISTORY
+
+    private val historyViewModel: CrashHistoryViewModel by viewModels {
+        ServiceLocator.crashHistoryViewModelFactory(requireContext())
+    }
+
+    private lateinit var saveZipLauncher: ActivityResultLauncher<String>
+    private lateinit var menuActions: CrashHistoryMenuActions
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        saveZipLauncher = registerForActivityResult(ActivityResultContracts.CreateDocument("application/zip")) { uri ->
+            if (uri != null && ::menuActions.isInitialized) {
+                menuActions.writeZipToUri(uri)
+            }
+        }
+        menuActions = CrashHistoryMenuActions(
+            fragment = this,
+            viewModel = historyViewModel,
+            launchSaveZip = { name -> saveZipLauncher.launch(name) },
+        )
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -32,7 +60,6 @@ class ObserveHostFragment : Fragment() {
 
         val binding = checkNotNull(_binding)
 
-        // Add tabs
         binding.tabLayout.addTab(binding.tabLayout.newTab().setText(R.string.tab_history))
         binding.tabLayout.addTab(binding.tabLayout.newTab().setText(R.string.tab_stats))
         binding.tabLayout.addTab(binding.tabLayout.newTab().setText(R.string.tab_logcat))
@@ -57,6 +84,14 @@ class ObserveHostFragment : Fragment() {
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
+    }
+
+    fun selectSubTab(tab: Int) {
+        _binding?.tabLayout?.getTabAt(tab)?.select()
+    }
+
+    fun openConfigTab() {
+        (requireActivity() as? MainShellActivity)?.requestShellTab(ShellTab.CONFIG)
     }
 
     private fun switchToTab(position: Int) {
@@ -84,6 +119,7 @@ class ObserveHostFragment : Fragment() {
                 )
             }
         }
+        activity?.invalidateOptionsMenu()
     }
 
     private fun tagForTab(position: Int): String = when (position) {
@@ -93,40 +129,42 @@ class ObserveHostFragment : Fragment() {
         else -> CrashHistoryFragment.TAG
     }
 
-    // ─── Options Menu forwarding ───
-
     fun prepareOptionsMenu(menu: Menu) {
-        val historyItems = intArrayOf(
+        val historyOnlyIds = intArrayOf(
             R.id.item_observe_filter,
             R.id.item_observe_package_filter,
             R.id.item_observe_sort,
+        )
+        val sharedIds = intArrayOf(
             R.id.item_observe_export,
-            R.id.item_observe_stats,
             R.id.item_observe_retention,
             R.id.item_clear_history,
         )
 
-        if (currentTab == TAB_LOGCAT) {
-            // Hide all history-specific items; show only import logcat
-            for (id in historyItems) menu.findItem(id)?.isVisible = false
-            menu.findItem(R.id.item_observe_import_logcat)?.isVisible = true
-        } else {
-            // Show history items; hide import logcat from non-logcat tabs
-            for (id in historyItems) menu.findItem(id)?.isVisible = true
-            menu.findItem(R.id.item_observe_import_logcat)?.isVisible = false
-            crashHistoryFragment()?.prepareOptionsMenu(menu)
+        when (currentTab) {
+            TAB_LOGCAT -> {
+                for (id in historyOnlyIds + sharedIds) menu.findItem(id)?.isVisible = false
+                menu.findItem(R.id.item_observe_import_logcat)?.isVisible = true
+            }
+            TAB_HISTORY -> {
+                for (id in historyOnlyIds + sharedIds) menu.findItem(id)?.isVisible = true
+                menu.findItem(R.id.item_observe_import_logcat)?.isVisible = false
+                menuActions.prepareMenu(menu)
+            }
+            TAB_STATS -> {
+                for (id in historyOnlyIds) menu.findItem(id)?.isVisible = false
+                for (id in sharedIds) menu.findItem(id)?.isVisible = true
+                menu.findItem(R.id.item_observe_import_logcat)?.isVisible = false
+            }
         }
     }
 
     fun handleOptionsItem(item: MenuItem): Boolean {
-        if (currentTab == TAB_LOGCAT) {
-            return logcatFragment()?.handleOptionsItem(item) == true
+        return when (currentTab) {
+            TAB_LOGCAT -> logcatFragment()?.handleOptionsItem(item) == true
+            TAB_HISTORY, TAB_STATS -> menuActions.handleItem(item)
+            else -> false
         }
-        return crashHistoryFragment()?.handleOptionsItem(item) == true
-    }
-
-    private fun crashHistoryFragment(): CrashHistoryFragment? {
-        return childFragmentManager.findFragmentByTag(CrashHistoryFragment.TAG) as? CrashHistoryFragment
     }
 
     private fun logcatFragment(): LogcatFragment? {

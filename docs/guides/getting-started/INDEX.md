@@ -3,7 +3,7 @@ title: "用户指南索引"
 type: index
 status: active
 phase: N/A
-updated: 2026-06-19
+updated: 2026-06-23
 summary: "CrashCenter 用户与开发者指南导航（结构对齐 AppSnapShotor getting-started）"
 ---
 
@@ -14,6 +14,7 @@ summary: "CrashCenter 用户与开发者指南导航（结构对齐 AppSnapShoto
 | [用户使用指南](../usage.md) | 安装、LSPosed 作用域、界面说明、包可见性 |
 | [构建与安装](../build-and-install.md) | JDK 17、Gradle 9.2.1、本地编译与 adb 安装 |
 | [发布指南](../release.md) | GitHub Release、CHANGELOG、CI workflow、AI 辅助发布 |
+| [LSPosed 模块仓库](../xposed-module-repo.md) | 上架 modules.lsposed.org、模块仓 Release 约定 |
 | [设备验收](../../../dev/verification/README.md) | adb smoke 脚本与手动验收清单 |
 
 ## 开发者速查

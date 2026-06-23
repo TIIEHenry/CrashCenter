@@ -39,9 +39,9 @@ MainShellActivity → 观测 tab → ObserveHostFragment
 | 筛选/排序 | Toolbar：异常类筛选、按包名筛选、排序（时间/包名/异常类）；`CrashFilter` + `CrashSortMode` |
 | 行绑定 | `CrashEventBinder.bind(ViewCrashEventRowBinding, CrashEvent)` — 相对时间、图标、`source` badge |
 | 详情 | 行点击 → `CrashDetailBottomSheet`（`crash_id`）；**4G** lazy `RuleEngine` 分析卡片 |
-| Toolbar 菜单 | 导出 zip、retention、清空历史、快捷统计摘要（历史 tab） |
-| DI | `ViewModelFactory` + `ServiceLocator.crashLogRepository()` |
-| 空/加载 | Paging `LoadState` + `EmptyState` / `LoadingState` |
+| Toolbar 菜单 | 按子 tab 显隐：`ObserveHostFragment.prepareOptionsMenu`；历史 tab 筛选/排序/导出/retention/清空；统计 tab 导出/retention/清空；logcat tab 仅「导入 logcat」（无重复「统计」菜单项） |
+| DI | `ViewModelFactory` + `ServiceLocator.crashLogRepository()`；`CrashHistoryViewModel` 由 `ObserveHostFragment` 持有，子 Fragment `ownerProducer` 共享 |
+| 空/加载 | Paging `LoadState` + `EmptyState` / `LoadingState`；空态 CTA「去配置」→ `MainShellActivity.requestShellTab(CONFIG)` |
 
 ## 列表 IA
 
@@ -121,13 +121,15 @@ MainShellActivity → 观测 tab → ObserveHostFragment
 
 ## Toolbar 操作（观测 tab 级）
 
-由 Shell Toolbar 呈现、事件转发到 `ObserveHostFragment`：
+由 Shell Toolbar 呈现、事件转发到 `ObserveHostFragment` → `CrashHistoryMenuActions`（历史/统计共享导出、retention、清空）：
 
-| 操作 | Phase | 说明 |
-|------|-------|------|
-| 清空历史 | 4D | 确认对话框 → `Repository.clear()` |
-| 导出 | 4E | SAF JSONL / zip |
-| 记录设置 | 4D | `crash_log_enabled`、retention |
+| 操作 | 子 tab | Phase | 说明 |
+|------|--------|-------|------|
+| 筛选 / 排序 | 历史 | 4C | 异常类、包名、排序子菜单 |
+| 清空历史 | 历史、统计 | 4D | 确认对话框 → `Repository.clear()` |
+| 导出 | 历史、统计 | 4E | SAF zip |
+| 记录设置 | 历史、统计 | 4D | `crash_log_enabled`、retention |
+| 导入 logcat | logcat | 4F | SAF；logcat 空态按钮同功能，不重复为「切 tab」菜单 |
 
 ## 性能考虑
 

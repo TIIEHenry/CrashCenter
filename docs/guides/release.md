@@ -3,13 +3,15 @@ title: "发布指南"
 type: guide
 status: active
 phase: N/A
-updated: 2026-06-19
+updated: 2026-06-23
 summary: "GitHub Release 发布流程、CHANGELOG 维护与 AI 辅助发布（移植自 AppSnapShotor）"
 ---
 
 # 发布指南
 
 本文说明如何为 CrashCenter 创建 GitHub Release、维护更新日志，以及如何用 AI 辅助完成发布。
+
+上架 LSPosed 官方模块仓库（`modules.lsposed.org`）见 **[xposed-module-repo.md](xposed-module-repo.md)**，与本文流程独立。
 
 Release 页：https://github.com/TIIEHenry/CrashCenter/releases
 
@@ -117,7 +119,7 @@ git push origin v0.2.0
 
 ## 签名说明
 
-Release 构建当前使用 **debug 签名**（`signingConfig signingConfigs.debug`），与本地开发一致，便于 CI 无 keystore 即可出包。若需生产签名，在 `app/build.gradle` 配置 `signingConfigs.release` 并通过 GitHub Actions secrets 注入 keystore（后续迭代）。
+Release 构建使用 **debug 签名**（`signingConfig signingConfigs.debug`），与 AppSnapShotor 及本地开发一致，便于 CI 无 keystore 即可出包。若需生产签名，在 `app/build.gradle` 配置 `signingConfigs.release` 并通过 GitHub Actions secrets 注入 keystore（后续迭代）。
 
 ## 故障排除
 
@@ -142,5 +144,6 @@ Release 构建当前使用 **debug 签名**（`signingConfig signingConfigs.debu
 ## 相关文档
 
 - [getting-started/INDEX.md](getting-started/INDEX.md) — 指南导航
+- [xposed-module-repo.md](xposed-module-repo.md) — LSPosed 模块仓库上架
 - [build-and-install.md](build-and-install.md) — 本地构建与 adb 安装
 - [dev/DEV_GUIDE.md](../../dev/DEV_GUIDE.md) — 开发速查

@@ -22,7 +22,7 @@ object ScopePolicy {
         lpparam: XC_LoadPackage.LoadPackageParam,
     ): ScopeDecision {
         if (lpparam.appInfo == null) {
-            return ScopeDecision(shouldHook = false, showNotify = false)
+            return noInstall()
         }
         val isSystemApp = PackageInfoLoader.isSystemApp(lpparam.appInfo)
         return evaluate(
@@ -47,76 +47,83 @@ object ScopePolicy {
         interventionRulesJson: String,
     ): ScopeDecision {
         if (packageName in IGNORED_PACKAGES) {
-            return ScopeDecision(shouldHook = false, showNotify = false)
+            return noInstall()
+        }
+
+        if (!passesSystemFilter(scopeMode, isSystemApp, handleSystem)) {
+            return noInstall()
         }
 
         if (managedPackages == null) {
-            return evaluateLegacy(
-                packageName = packageName,
-                isSystemApp = isSystemApp,
-                scopeMode = scopeMode,
-                handleSystem = handleSystem,
-                disabled = packageListDisabled,
-            )
+            return evaluateLegacy(packageListDisabled)
         }
 
         return evaluateManaged(
             packageName = packageName,
-            isSystemApp = isSystemApp,
-            scopeMode = scopeMode,
-            handleSystem = handleSystem,
             managedPackages = managedPackages,
             interventionRulesJson = interventionRulesJson,
         )
     }
 
-    private fun evaluateLegacy(
-        packageName: String,
-        isSystemApp: Boolean,
-        scopeMode: Boolean,
-        handleSystem: Boolean,
-        disabled: Boolean,
-    ): ScopeDecision {
-        if (scopeMode) {
-            val shouldHook = (!isSystemApp || handleSystem) && !disabled
-            return ScopeDecision(shouldHook = shouldHook, showNotify = true)
+    private fun evaluateLegacy(packageListDisabled: Boolean): ScopeDecision {
+        if (packageListDisabled) {
+            return observeOnly()
         }
-        return ScopeDecision(shouldHook = true, showNotify = !disabled)
+        return intercept(showNotify = true, crashLogEnabled = true)
     }
 
     private fun evaluateManaged(
         packageName: String,
-        isSystemApp: Boolean,
-        scopeMode: Boolean,
-        handleSystem: Boolean,
         managedPackages: Set<String>,
         interventionRulesJson: String,
     ): ScopeDecision {
-        if (packageName !in managedPackages) {
-            return ScopeDecision(shouldHook = false, showNotify = false)
+        val profile = if (packageName in managedPackages) {
+            InterventionRulesCodec.decode(interventionRulesJson)[packageName]
+                ?: AppInterventionProfile.EMPTY
+        } else {
+            AppInterventionProfile.EMPTY
         }
 
-        val profile = InterventionRulesCodec.decode(interventionRulesJson)[packageName]
-            ?: AppInterventionProfile.EMPTY
         val enabledRules = profile.rules.filter { it.enabled }
         if (enabledRules.isEmpty()) {
-            return ScopeDecision(shouldHook = false, showNotify = false)
+            return observeOnly(crashLogEnabled = true)
         }
 
-        if (scopeMode && isSystemApp && !handleSystem) {
-            return ScopeDecision(shouldHook = false, showNotify = false)
-        }
+        return intercept(
+            showNotify = resolveShowNotify(enabledRules, globalDefaultShowNotify = true),
+            crashLogEnabled = resolveCrashLogEnabled(enabledRules, defaultEnabled = true),
+        )
+    }
 
-        // Managed hooked packages inherit showNotify=true when rules leave it null
-        // (same as legacy scope_mode on/off for non-disabled packages).
-        val showNotify = resolveShowNotify(enabledRules, globalDefaultShowNotify = true)
-        val crashLogEnabled = resolveCrashLogEnabled(enabledRules, defaultEnabled = true)
-        return ScopeDecision(
-            shouldHook = true,
+    private fun passesSystemFilter(
+        scopeMode: Boolean,
+        isSystemApp: Boolean,
+        handleSystem: Boolean,
+    ): Boolean = !(scopeMode && isSystemApp && !handleSystem)
+
+    private fun noInstall(): ScopeDecision =
+        ScopeDecision(
+            shouldInstall = false,
+            shouldIntercept = false,
+            showNotify = false,
+            crashLogEnabled = false,
+        )
+
+    private fun observeOnly(crashLogEnabled: Boolean = true): ScopeDecision =
+        ScopeDecision(
+            shouldInstall = true,
+            shouldIntercept = false,
+            showNotify = false,
+            crashLogEnabled = crashLogEnabled,
+        )
+
+    private fun intercept(showNotify: Boolean, crashLogEnabled: Boolean): ScopeDecision =
+        ScopeDecision(
+            shouldInstall = true,
+            shouldIntercept = true,
             showNotify = showNotify,
             crashLogEnabled = crashLogEnabled,
         )
-    }
 
     private fun resolveShowNotify(enabledRules: List<InterventionRule>, globalDefaultShowNotify: Boolean): Boolean {
         if (enabledRules.isEmpty()) return false

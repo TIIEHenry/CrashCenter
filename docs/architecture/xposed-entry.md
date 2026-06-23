@@ -3,8 +3,8 @@ title: "Xposed 入口设计方案"
 type: architecture
 status: accepted
 phase: N/A
-updated: 2026-06-19
-summary: "XposedEntry 薄入口：ScopePolicy 过滤、CrashHandler 安装、委托 CrashCapturePipeline"
+updated: 2026-06-23
+summary: "XposedEntry 薄入口：ScopePolicy install/intercept、CrashHandler 双模式、委托 CrashCapturePipeline"
 ---
 
 # Xposed 入口设计方案
@@ -28,17 +28,21 @@ AndroidManifest 声明 `xposedmodule`、`xposedminversion=54` 等元数据。
 
 ## 包过滤逻辑
 
-`evaluatePackage()` → `ScopePolicy.evaluate()` 决策树（返回实例级 `ScopeDecision`，非 static 字段）：
+`evaluatePackage()` → `ScopePolicy.evaluate()` 决策树（[ADR-023](../decisions/023-injection-observe-intercept-split.md)）：
 
 ```
-selfCheck (模块自身) → ScopeDecision(shouldHook=true, showNotify=true)
+selfCheck (模块自身) → shouldInstall=true, shouldIntercept=true
   ↓
 reload XSharedPreferences
   ↓
-ScopePolicy.evaluate(xsp, lpparam) → { shouldHook, showNotify, crashLogEnabled }
+ScopePolicy.evaluate(xsp, lpparam) → { shouldInstall, shouldIntercept, showNotify, crashLogEnabled }
+  ↓
+shouldInstall=false → return（忽略包 / scope_mode 系统过滤）
+  ↓
+Application.onCreate → CrashHandler.install(INTERCEPT | OBSERVE)
 ```
 
-**永远排除的包**：
+**永远排除的包**（`shouldInstall=false`）：
 - `android`
 - `de.robv.android.xposed.installer`
 - `org.meowcat.edxposed.manager`
@@ -46,7 +50,7 @@ ScopePolicy.evaluate(xsp, lpparam) → { shouldHook, showNotify, crashLogEnabled
 
 ## Hook 安装
 
-在 `Application.onCreate` 的 `afterHookedMethod` 中调用 `CrashHandler.insert()`，异常回调委托 `CrashCapturePipeline.onException()`。**完整链路**见 [crash-capture-pipeline.md](crash-capture-pipeline.md)、[crash-notification.md](crash-notification.md)。
+在 `Application.onCreate` 的 `afterHookedMethod` 中按 `shouldIntercept` 调用 `CrashHandler.install(INTERCEPT|OBSERVE)`，异常回调委托 `CrashCapturePipeline.onException()`。
 
 ## Self Hook
 
@@ -63,7 +67,8 @@ Toast、系统通知、`ActivityCrashInfo` 详情页的触发条件、线程/进
 
 ## 相关文档
 
-- [crash-capture-pipeline.md](crash-capture-pipeline.md)
+- [injection-observe-intercept-split.md](injection-observe-intercept-split.md)
+- [ADR-023](../decisions/023-injection-observe-intercept-split.md)
 - [crash-notification.md](crash-notification.md)
 - [ADR-010](../decisions/010-scope-policy-show-notify.md)
 - [ADR-011](../decisions/011-feedback-failure-isolation.md)

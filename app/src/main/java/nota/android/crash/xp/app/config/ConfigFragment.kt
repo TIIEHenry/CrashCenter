@@ -108,7 +108,13 @@ class ConfigFragment : Fragment() {
     }
 
     fun prepareOptionsMenu(menu: Menu) {
-        optionsMenuHelper.prepareOptionsMenu(menu, viewModel.uiState.value.isLegacyMode)
+        val state = viewModel.uiState.value
+        val listCount = if (state.isLegacyMode) {
+            state.visibleApps.size
+        } else {
+            state.managedApps.size
+        }
+        optionsMenuHelper.prepareOptionsMenu(menu, state.isLegacyMode, listCount)
     }
 
     fun handleOptionsItem(item: MenuItem): Boolean {

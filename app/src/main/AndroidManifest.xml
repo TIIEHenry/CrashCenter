@@ -75,7 +75,8 @@
         <service
             android:name="nota.android.crash.root.service.CrashCenterRootService"
             android:exported="false"
-            android:enabled="true" />
+            android:enabled="true"
+            tools:ignore="Instantiatable" />
 
     </application>
 

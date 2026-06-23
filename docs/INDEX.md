@@ -32,33 +32,35 @@ summary: "docs/ + dev/ 完整导航索引（自动生成）"
 |------|------|
 | [adb-logcat-analysis.md](architecture/adb-logcat-analysis.md) | 通过 PC adb 或本机 root 读取 logcat 辅助验收与崩溃分析；与 JSONL 观测层互补，非 SSOT 替代 |
 | [app-di-and-module-boundaries.md](architecture/app-di-and-module-boundaries.md) | ServiceLocator 手动 DI、ViewModelFactory、hook 包禁止依赖 xp.app 的门禁与测试替身 |
-| [app-management-ui.md](architecture/app-management-ui.md) | 配置域受管应用策展 + 行内 Switch 快捷干预 + 编辑页干预规则；Half Sheet 添加；无规则可添加 |
+| [app-management-ui.md](architecture/app-management-ui.md) | 受管应用策展 + Switch 控拦截；ADR-023 全量观测 as-built |
 | [architecture-optimization.md](architecture/architecture-optimization.md) | 现状债务清单、目标分层与包结构、Phase 4 落地映射；4D/4E/4F/4G-MVP 部分 as-built |
 | [code-editor-porting.md](architecture/code-editor-porting.md) | 参照 celestailruler CodeEditor 三模块，在 observe/detail 域替换 TextView 详情页并支撑 Phase 4 崩溃历史浏览 |
 | [configuration-ui.md](architecture/configuration-ui.md) | 配置域以 MainShellActivity 为壳层起点，ActivityMain 已废弃，页面职责由 ConfigFragment 承载；复用 Fluent Design System 与 Phase 3 单屏 IA |
-| [crash-capture-pipeline.md](architecture/crash-capture-pipeline.md) | hook 侧单入口 CrashCapturePipeline：构建 CrashEvent → 并行投递 CrashLogCoordinator 与 CrashFeedbackFacade；失败域隔离 |
+| [crash-capture-pipeline.md](architecture/crash-capture-pipeline.md) | CrashCapturePipeline：观测 logSync / 拦截 logAsync；ScopeDecision install+intercept |
 | [crash-data-layer.md](architecture/crash-data-layer.md) | CrashLogRepository 读口 as-built（Paging3 + LRU + clear/deleteById/applyRetention）；4B-γ FileLock 统一见 crash-log-filesystem.md |
 | [crash-event-timeline-ui.md](architecture/crash-event-timeline-ui.md) | CrashHistoryFragment 的时间线呈现规范：按时间组织 CrashEvent、复用 Repository/详情路由，不新增独立页面或第三个 tab |
 | [crash-export-retention.md](architecture/crash-export-retention.md) | Phase 4E SAF 导出 JSONL/zip、通知 crash_id Intent、retention 配置 UI 与轮转策略 |
-| [crash-handler.md](architecture/crash-handler.md) | 通过 Looper 续命与 UncaughtExceptionHandler 替换拦截崩溃 |
+| [crash-handler.md](architecture/crash-handler.md) | INTERCEPT 续命 + OBSERVE 转发；由 ScopeDecision.shouldIntercept 选择模式 |
 | [crash-history-ui.md](architecture/crash-history-ui.md) | Phase 4C-β CrashHistoryFragment：Paging、筛选/排序、三子 tab 宿主；详情含 4G 分析卡片 |
 | [crash-intelligent-analysis.md](architecture/crash-intelligent-analysis.md) | 4G-MVP + 4G-V2 部分 as-built：RuleEngine、详情 lazy 分析、CrashSignature 统计聚类；JSONL analysis 持久化 defer |
 | [crash-log-backends.md](architecture/crash-log-backends.md) | CrashLogBackend 抽象、4B-α Phase 2 并行 + 4B-β RelayMerge ingest as-built；canonical JSONL 为 SSOT |
 | [crash-log-filesystem.md](architecture/crash-log-filesystem.md) | events.jsonl 跨进程读写、FileLock 统一、时间倒序读口、dedupe 与 IS 验收；衔接 ADR-017 / 4B-β |
-| [crash-logging.md](architecture/crash-logging.md) | hook 侧异步持久化全量拦截崩溃；4B-α 部分 MVP 已实现；多后端编排见 crash-log-backends.md |
+| [crash-logging.md](architecture/crash-logging.md) | CrashEvent JSONL 模型、retention、ingestedFrom；观测/拦截双路径（ADR-023） |
 | [crash-log-ipc.md](architecture/crash-log-ipc.md) | hook 目标进程向模块进程写入 CrashEvent 的 IPC 机制对比；编排见 crash-log-backends.md（多后端并行、root 优先） |
 | [crash-notification.md](architecture/crash-notification.md) | 目标 app 崩溃后 Toast / 系统通知的触发条件、线程模型、PendingIntent 与 ActivityCrashInfo 详情页 |
 | [crash-stats-ui.md](architecture/crash-stats-ui.md) | observe/detail 域全局统计页与单应用观测页 as-built（4D+ 部分） |
 | [dark-mode-theming.md](architecture/dark-mode-theming.md) | Phase A–D 已编码；Meizu 实机 QA PASS；M3 迁移见 ADR-022（静态 Fluent，无 dynamic color） |
 | [design-system.md](architecture/design-system.md) | 桥接 docs/design/ 视觉语言与 CrashCenter res/ 实现：Fluent token、共享 UI 组件、域复用规则；M3 静态主题见 material3-migration |
 | [framework-injection-feasibility.md](architecture/framework-injection-feasibility.md) | 参照 celestailruler 评估 System Framework 注入对 CrashCenter 的价值；结论：不采用为主架构，保留 ADR-007 app 级 + Provider，可选 parseQueries 补丁 |
+| [injection-observe-intercept-split.md](architecture/injection-observe-intercept-split.md) | 默认对所有 LSPosed 作用域内 app 注入观测；行内 Switch 仅控制是否拦截续命；观测与拦截共用 CrashCapturePipeline |
+| [logcat-multi-source.md](architecture/logcat-multi-source.md) | Root 实时读取 + 文件导入的双模式 logcat 架构；覆盖 main/system/crash/events/radio 多缓冲区；复用现有 LogcatParser 与 LogcatViewModel |
 | [material3-migration.md](architecture/material3-migration.md) | minSdk 26 + Theme.Material3.DayNight 静态 Fluent 映射；拒绝 dynamic color；分 M0–M4 实施与验收 |
 | [navigation-ia.md](architecture/navigation-ia.md) | 分阶段导航：Phase 4C+ 双底栏（配置 | 观测），观测内 TabLayout（历史 | 统计 | logcat）；路由表见 ui-routing.md |
 | [overview.md](architecture/overview.md) | Xposed 异常拦截模块的整体架构与数据流；4B-α 观测 + 4C-α UI Shell as-built；演进见 architecture-optimization.md |
-| [scope-and-prefs.md](architecture/scope-and-prefs.md) | SharedPreferences 键、scope 模式与跨进程同步；legacy tiiehenry.xp.grapcrash 迁移 |
+| [scope-and-prefs.md](architecture/scope-and-prefs.md) | SharedPreferences 键、ScopePolicy install/intercept；ADR-023 全量观测 |
 | [ui-routing.md](architecture/ui-routing.md) | MainShellActivity、ConfigFragment、ObserveHost 与详情 Activity 的路由表、Intent 兼容参数、返回栈与 Phase 4C+ Navigation 图 |
 | [unified-root-service.md](architecture/unified-root-service.md) | 单 CrashCenterRootService + RootBroker 多子 Binder；模块进程统一特权 I/O；hook 侧同契约 Shell 适配器 |
-| [xposed-entry.md](architecture/xposed-entry.md) | XposedEntry 薄入口：ScopePolicy 过滤、CrashHandler 安装、委托 CrashCapturePipeline |
+| [xposed-entry.md](architecture/xposed-entry.md) | XposedEntry 薄入口：ScopePolicy install/intercept、CrashHandler 双模式、委托 CrashCapturePipeline |
 
 ---
 
@@ -80,10 +82,11 @@ summary: "docs/ + dev/ 完整导航索引（自动生成）"
 | [012-package-visibility-manual-grant.md](decisions/012-package-visibility-manual-grant.md) | Android 11+ QUERY_ALL_PACKAGES 通过手动 App 信息引导授权，不使用 requestPermissions；PackageVisibilityHelper 检测与降级 |  |
 | [013-notification-crash-id-intent.md](decisions/013-notification-crash-id-intent.md) | Phase 4E 起 Notification PendingIntent 传 crash_id UUID 替代整段 stack extra，详情页从 Repository 加载；保留 Exception extra 兼容过渡 |  |
 | [014-legacy-prefs-migration.md](decisions/014-legacy-prefs-migration.md) | PrefMigrator 首次启动从 tiiehenry.xp.grapcrash / grapcrash.xml 一次性导入配置到 crash.xml，标记 KEY_MIGRATED 后不再读旧路径 |  |
-| [015-managed-apps-intervention-rules.md](decisions/015-managed-apps-intervention-rules.md) | 配置域改为 managed_packages 策展列表 + intervention_rules JSON；无规则不 hook；Legacy 哨兵保留 ADR-002 行为 |  |
+| [015-managed-apps-intervention-rules.md](decisions/015-managed-apps-intervention-rules.md) | 配置域改为 managed_packages 策展列表 + intervention_rules JSON；hook 门控已由 ADR-023 修订 |  |
 | [017-root-ingest-and-dedupe.md](decisions/017-root-ingest-and-dedupe.md) | 落实 ADR-008 Phase 1 RootSu + 模块 ingest merge；canonical 按 crash_id 去重；读路径可选防御性 dedupe |  |
 | [021-canonical-jsonl-io-consistency.md](decisions/021-canonical-jsonl-io-consistency.md) | events.jsonl 变异统一 FileLock；Repository 读口 timestampMs 降序；删改经 CanonicalJsonlStore |  |
 | [022-material3-static-theme-minsdk26.md](decisions/022-material3-static-theme-minsdk26.md) | minSdk 升至 26；UI 迁移 Theme.Material3.DayNight + Fluent 静态语义色；明确拒绝 dynamic color / 壁纸取色；取代 ADR-006 defer |  |
+| [023-injection-observe-intercept-split.md](decisions/023-injection-observe-intercept-split.md) | 默认对 LSPosed 作用域内 app 安装观测捕获；Switch/CATCH_ALL 仅控 shouldIntercept；修订 ADR-015 hook 门控 |  |
 
 ---
 
@@ -104,6 +107,7 @@ summary: "docs/ + dev/ 完整导航索引（自动生成）"
 | [build-and-install.md](guides/build-and-install.md) | Gradle 9.2.1 构建、version catalog、签名与 APK 安装 |
 | [release.md](guides/release.md) | GitHub Release 发布流程、CHANGELOG 维护与 AI 辅助发布（移植自 AppSnapShotor） |
 | [usage.md](guides/usage.md) | 模块安装、界面说明、scope 与 LSPosed 作用域、观测 tab、崩溃分析 FAQ |
+| [xposed-module-repo.md](guides/xposed-module-repo.md) | 向 Xposed-Modules-Repo 上架 CrashCenter：仓库元数据、README/SUMMARY、Release 标签约定与主仓库 GitHub Release 的差异 |
 
 ---
 
@@ -147,6 +151,7 @@ summary: "docs/ + dev/ 完整导航索引（自动生成）"
 |-------|------|------|------|
 | 3 | [phase3_ui_redesign.md](../dev/roadmap/active/phase3_ui_redesign.md) | 配置 UI 重设计 | 🔄 |
 | 4 | [phase4_crash_observability.md](../dev/roadmap/active/phase4_crash_observability.md) | 崩溃可观测性 | 🔄 |
+| 5 | [phase5_observe_intercept_split.md](../dev/roadmap/active/phase5_observe_intercept_split.md) | 全量观测与拦截分离 | 🔄 |
 
 #### Archive
 
@@ -172,20 +177,23 @@ summary: "docs/ + dev/ 完整导航索引（自动生成）"
 
 | 文档 | 内容 |
 |------|------|
-| [architecture-decision-backlog.md](../dev/plans/architecture-decision-backlog.md) | 待决 ADR、实现与架构文档漂移；4B-γ crash-log-filesystem + ADR-021 proposed |
+| [architecture-decision-backlog.md](../dev/plans/architecture-decision-backlog.md) | 待决 ADR、实现与架构文档漂移；4B-β RelayMerge dedupe 已编码；IS 矩阵待验 |
 
 ### 进度追踪（`dev/progress/`）
 
 | 文档 | 内容 |
 |------|------|
-| [status.md](../dev/progress/status.md) | 4B-β RelayMerge、4D+ PerAppCrash、4G-V2 统计聚类 as-built；IS 矩阵待验 |
+| [status.md](../dev/progress/status.md) | Phase 5 观测/拦截分离 as-built（ADR-023）；4B-β IS 矩阵待验 |
 
 ### 设备验收（`dev/verification/`）
 
 | 文档 | 内容 |
 |------|------|
 | [README.md](../dev/verification/README.md) | CrashCenter 真机 adb 验收入口、脚本与报告规范 |
+| [crash_log_smoke.md](../dev/verification/crash_log_smoke.md) | 崩溃日志全链路冒烟：安装 → 触发 → 检查 → 统计 → 导出 |
 | [dark_mode_qa_20260619.md](../dev/verification/dark_mode_qa_20260619.md) | 461QYGDD2226C 上 light/dark × Config/Observe/Add sheet 矩阵通过；受管行与对话框已覆盖；崩溃行与 AOSP 模拟器未测 |
+| [fs_consistency_template.md](../dev/verification/fs_consistency_template.md) | FS-5 ~ FS-7 真机验收：mkdirs 失败、并发读写、删改与 hook 写交错 |
+| [is_matrix_template.md](../dev/verification/is_matrix_template.md) | IS-1~IS-6 + IS-R1~IS-R5 真机验收模板 |
 | [phase_d_dark_qa_461QYGDD2226C.md](../dev/verification/phase_d_dark_qa_461QYGDD2226C.md) | 461QYGDD2226C 上 Config/Observe/Add sheet 明暗对比通过；行级与 permission banner 未覆盖 |
 | [smoke_20260619.md](../dev/verification/smoke_20260619.md) | assembleDebug 与 adb 自动化 smoke 通过；LSPosed 手动项待补 |
 

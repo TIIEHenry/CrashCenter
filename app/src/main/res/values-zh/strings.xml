@@ -49,7 +49,8 @@
     <string name="tab_observe">观测</string>
     <string name="tab_history">历史</string>
     <string name="tab_stats">统计</string>
-    <string name="stats_empty">暂无崩溃数据。启用崩溃日志后，崩溃统计将显示在此处。</string>
+    <string name="stats_empty">暂无崩溃数据。记录崩溃后统计将显示在此处。</string>
+    <string name="stats_empty_action">查看历史</string>
     <string name="stats_loading">正在加载统计…</string>
     <string name="stats_label_total">合计</string>
     <string name="stats_label_unique_apps">涉及应用</string>
@@ -57,7 +58,8 @@
     <string name="stats_section_top_packages">崩溃最多应用</string>
     <string name="stats_section_top_exceptions">最常见异常类</string>
     <string name="stats_none">—</string>
-    <string name="crash_history_empty">暂无崩溃记录。启用崩溃日志后，被拦截的崩溃将显示在此处。</string>
+    <string name="crash_history_empty">暂无崩溃记录。观测到的崩溃将显示在此处。</string>
+    <string name="history_empty_action">前往配置</string>
     <string name="crash_history_loading">正在加载崩溃历史…</string>
     <string name="crash_event_subtitle_format">%1$s · %2$s · %3$s</string>
     <string name="crash_source_ueh">未捕获</string>
@@ -116,11 +118,11 @@
     <string name="test_crash_recorded">测试崩溃已记录到 events.jsonl</string>
 
     <!-- Managed apps (Phase 3G) -->
-    <string name="managed_filter_enabled">已启用</string>
-    <string name="managed_filter_pending">待配置</string>
-    <string name="managed_status_enabled">已启用</string>
-    <string name="managed_status_pending">待配置</string>
-    <string name="managed_empty_message">暂无受管应用。添加应用后即可配置崩溃拦截。</string>
+    <string name="managed_filter_enabled">已拦截</string>
+    <string name="managed_filter_pending">仅观测</string>
+    <string name="managed_status_enabled">已拦截</string>
+    <string name="managed_status_pending">仅观测</string>
+    <string name="managed_empty_message">暂无受管应用。已纳入 LSPosed 作用域的应用仍会记录崩溃；在此添加应用可配置是否拦截。</string>
     <string name="managed_filter_empty">没有符合当前筛选条件的应用</string>
     <string name="add_managed_app">添加应用</string>
     <string name="add_managed_done">完成</string>
@@ -134,14 +136,14 @@
     <string name="notify_tri_state_on">开启</string>
     <string name="notify_tri_state_off">关闭</string>
     <string name="rules_empty_title">尚未添加规则</string>
-    <string name="rules_empty_message">添加规则后才会拦截该应用的崩溃。</string>
+    <string name="rules_empty_message">开启拦截开关或添加规则后，该应用崩溃时不会退出。</string>
     <string name="add_rule">添加规则</string>
     <string name="delete_rule">删除规则</string>
     <string name="remove_managed_app">移除应用</string>
     <string name="remove_managed_app_confirm_title">移除受管应用？</string>
-    <string name="remove_managed_app_confirm_message">将停止对该应用的崩溃拦截，已配置规则一并删除。</string>
+    <string name="remove_managed_app_confirm_message">将停止对该应用的拦截配置；若仍在 LSPosed 作用域内，崩溃仍会被观测记录。</string>
     <string name="remove_managed_app_success">已从受管列表移除</string>
-    <string name="intervention_status_pending">待配置</string>
+    <string name="intervention_status_pending">仅观测</string>
     <string name="rule_saved">规则已保存</string>
 
     <!-- Logcat analysis (4F) -->

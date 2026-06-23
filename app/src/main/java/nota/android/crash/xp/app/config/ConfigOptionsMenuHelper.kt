@@ -11,10 +11,10 @@ internal class ConfigOptionsMenuHelper(
     private val showTestCrashDialog: () -> Unit,
 ) {
 
-    fun prepareOptionsMenu(menu: Menu, isLegacyMode: Boolean?) {
+    fun prepareOptionsMenu(menu: Menu, isLegacyMode: Boolean?, managedListCount: Int) {
         menu.findItem(R.id.item_select_all)?.isVisible = isLegacyMode == true
         menu.findItem(R.id.item_cancel_all)?.isVisible = isLegacyMode == true
-        menu.findItem(R.id.item_add_managed_app)?.isVisible = isLegacyMode == false
+        menu.findItem(R.id.item_add_managed_app)?.isVisible = isLegacyMode == false && managedListCount > 0
     }
 
     fun handleOptionsItem(item: MenuItem): Boolean {

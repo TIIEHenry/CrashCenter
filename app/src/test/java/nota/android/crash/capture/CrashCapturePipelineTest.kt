@@ -49,7 +49,7 @@ class CrashCapturePipelineTest {
 
         appInfo = ApplicationInfo().apply { packageName = app.packageName }
 
-        decision = ScopeDecision(shouldHook = true, showNotify = true)
+        decision = ScopeDecision(shouldInstall = true, shouldIntercept = true, showNotify = true)
 
         CrashCapturePipeline.testCoordinator = mockCoordinator
         CrashCapturePipeline.testFeedback = mockFeedback
@@ -178,7 +178,12 @@ class CrashCapturePipelineTest {
 
     @Test
     fun `crashLogEnabled false skips coordinator but still calls feedback`() {
-        val disabledDecision = ScopeDecision(shouldHook = true, showNotify = true, crashLogEnabled = false)
+        val disabledDecision = ScopeDecision(
+            shouldInstall = true,
+            shouldIntercept = true,
+            showNotify = true,
+            crashLogEnabled = false,
+        )
         val throwable = RuntimeException("boom")
 
         CrashCapturePipeline.onException(
@@ -191,6 +196,7 @@ class CrashCapturePipelineTest {
         )
 
         verify(mockCoordinator, never()).logAsync(any<Application>(), any<CrashEvent>())
+        verify(mockCoordinator, never()).logSync(any<Application>(), any<CrashEvent>())
         verify(mockFeedback).show(
             eq<Application>(app),
             eq<String>("com.example.app"),
@@ -232,5 +238,28 @@ class CrashCapturePipelineTest {
         assertTrue(event.timestampMs > 0)
         assertTrue(event.processName!!.isNotEmpty())
         assertTrue(event.stackTrace.isNotEmpty())
+    }
+
+    @Test
+    fun `observe mode calls logSync not logAsync`() {
+        val observeDecision = ScopeDecision(
+            shouldInstall = true,
+            shouldIntercept = false,
+            showNotify = false,
+            crashLogEnabled = true,
+        )
+        val throwable = RuntimeException("observe")
+
+        CrashCapturePipeline.onException(
+            application = app,
+            packageName = "com.example.app",
+            appInfo = appInfo,
+            throwable = throwable,
+            source = "uncaught",
+            decision = observeDecision,
+        )
+
+        verify(mockCoordinator).logSync(eq<Application>(app), any<CrashEvent>())
+        verify(mockCoordinator, never()).logAsync(any<Application>(), any<CrashEvent>())
     }
 }

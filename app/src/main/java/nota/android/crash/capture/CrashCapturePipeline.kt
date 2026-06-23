@@ -56,7 +56,12 @@ object CrashCapturePipeline {
             // Per-app crashLogEnabled from ScopeDecision gates log writes.
             if (decision.crashLogEnabled) {
                 try {
-                    (testCoordinator ?: CrashLogCoordinator).logAsync(application, event)
+                    val coordinator = testCoordinator ?: CrashLogCoordinator
+                    if (decision.shouldIntercept) {
+                        coordinator.logAsync(application, event)
+                    } else {
+                        coordinator.logSync(application, event)
+                    }
                 } catch (t: Throwable) {
                     XposedBridge.log(t)
                 }

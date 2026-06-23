@@ -61,6 +61,7 @@ class PrefMigratorTest {
         assertEquals("managed_packages", PrefManager.PREF_MANAGED_PACKAGES)
         assertEquals("intervention_rules", PrefManager.PREF_INTERVENTION_RULES)
         assertEquals("managed_model_migrated", PrefManager.PREF_MANAGED_MODEL_MIGRATED)
+        assertEquals("observe_intercept_split_migrated", PrefManager.PREF_OBSERVE_INTERCEPT_SPLIT_MIGRATED)
     }
 
     @Test

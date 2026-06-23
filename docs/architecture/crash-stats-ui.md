@@ -150,7 +150,7 @@ flowchart TB
 
 | 状态 | UI |
 |------|-----|
-| 无记录 | 插图 +「尚无拦截记录」+ 链到配置 tab / Test 菜单说明 |
+| 无记录 | 插图 + 文案 + **「查看历史」** CTA → `ObserveHostFragment.selectSubTab(0)` |
 | `crash_log_enabled == false` | 横幅：「记录已关闭，仅显示旧数据」 |
 |  ingest 进行中 | 摘要区副文案「正在合并 relay…」或静默刷新 |
 | JSONL 损坏行 | 跳过该行；统计页脚可选「已跳过 N 条无效记录」 |
@@ -279,7 +279,7 @@ events.jsonl (SSOT)
 | 崩溃列表行 `CrashEventRow` | — | ✅ | ✅ |
 | 时间范围 Chip 组 | ✅ | ✅ | 可选 |
 | `CrashLogViewerClient` 详情 | — | ✅ | ✅ |
-| Toolbar 清空 | ✅ | ❌（仅全局） | ❌ |
+| Toolbar 清空 | ✅（与历史共享菜单） | ❌（仅全局） | ❌ |
 
 视觉：延续 [configuration-ui.md](configuration-ui.md) Fluent token（白 Toolbar、4dp 圆角、扁平列表行）。
 

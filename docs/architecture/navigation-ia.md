@@ -72,7 +72,7 @@ Shell 拥有所有跨 tab chrome：
 - `MainShellActivity`：Launcher 入口；`FragmentContainerView` / NavHost；BottomNavigation 仅配置、观测两项
 - `ShellViewModel`：Xposed 激活状态、底栏选中 tab、全局菜单事件、状态条提示
 - `ToolbarHeaderInsets`：统一透明状态栏与 header inset
-- Toolbar 菜单按当前 tab 注入：配置 tab 显示排序/全选/About/Test；观测 tab 显示清空、导出、记录设置
+- Toolbar 菜单按当前 tab 注入：配置 tab 显示排序/About/Test（受管列表空时隐藏「添加应用」，由空态 CTA 承担）；观测 tab 按内层子 tab 显隐（历史：筛选/排序/导出/retention/清空；统计：导出/retention/清空；logcat：导入）
 
 ### Tab 1 — 配置
 
@@ -87,7 +87,7 @@ Shell 拥有所有跨 tab chrome：
 
 - 包可见性 banner（条件显示）
 - 全局 FilterChip：`scope_mode` / `handle_system` / `show_system_ui`
-- Dense 搜索 + **全部/已启用/待配置** Chip + 受管应用计数
+- Dense 搜索 + **全部/已拦截/仅观测** Chip + 受管应用计数
 - RecyclerView **受管列表** + 行内 Switch + 状态角标
 - Toolbar：**添加应用**（Half Sheet）、排序；移除全选/全不选
 - L3：`AppInterventionEditActivity` 干预规则编辑

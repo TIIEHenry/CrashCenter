@@ -19,7 +19,12 @@ class XposedEntry : IXposedHookLoadPackage {
 
     private fun evaluatePackage(lpparam: XC_LoadPackage.LoadPackageParam): ScopeDecision {
         if (selfCheck(lpparam)) {
-            return ScopeDecision(true, true, true)
+            return ScopeDecision(
+                shouldInstall = true,
+                shouldIntercept = true,
+                showNotify = true,
+                crashLogEnabled = true,
+            )
         }
 
         if (xSharedPreferences == null) {
@@ -31,11 +36,11 @@ class XposedEntry : IXposedHookLoadPackage {
 
     override fun handleLoadPackage(lpparam: XC_LoadPackage.LoadPackageParam) {
         val decision = evaluatePackage(lpparam)
-        if (!decision.shouldHook) {
+        if (!decision.shouldInstall) {
             return
         }
 
-        hookSafeLog("catch package: ${lpparam.packageName}")
+        hookSafeLog("catch package: ${lpparam.packageName} intercept=${decision.shouldIntercept}")
         XposedHelpers.findAndHookMethod(
             "android.app.Application",
             lpparam.classLoader,
@@ -56,14 +61,19 @@ class XposedEntry : IXposedHookLoadPackage {
         decision: ScopeDecision
     ) {
         val currentApplicationContext = param.thisObject as Application
-        CrashHandler.insert { throwable, source ->
+        val mode = if (decision.shouldIntercept) {
+            CrashHandler.Mode.INTERCEPT
+        } else {
+            CrashHandler.Mode.OBSERVE
+        }
+        CrashHandler.install(mode) { throwable, source ->
             CrashCapturePipeline.onException(
                 currentApplicationContext,
                 lpparam.packageName,
                 lpparam.appInfo,
                 throwable,
                 source,
-                decision
+                decision,
             )
         }
     }

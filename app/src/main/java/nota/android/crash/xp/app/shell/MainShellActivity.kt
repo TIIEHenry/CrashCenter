@@ -36,6 +36,7 @@ class MainShellActivity : AppCompatActivity() {
             applicationContext, prefs, ServiceLocator.rootAccessClient(applicationContext)
         )
         PrefMigrator.migrateManagedModelIfNeeded(applicationContext, prefs, legacyPrefState)
+        PrefMigrator.migrateObserveInterceptSplitIfNeeded(prefs)
         super.onCreate(savedInstanceState)
         binding = ActivityMainShellBinding.inflate(layoutInflater)
         setContentView(binding.root)
@@ -81,6 +82,10 @@ class MainShellActivity : AppCompatActivity() {
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return tabController.onOptionsItemSelected(item) || super.onOptionsItemSelected(item)
+    }
+
+    fun requestShellTab(tab: ShellTab) {
+        tabController.selectShellTab(tab)
     }
 
     private fun setupStatusBanner() {

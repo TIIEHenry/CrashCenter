@@ -112,6 +112,6 @@ adb logcat -s Xposed
 | 崩溃日志 / root 后端 | [crash-log-backends.md](../docs/architecture/crash-log-backends.md) |
 | Scope 模型 | [architecture/scope-and-prefs.md](../docs/architecture/scope-and-prefs.md) |
 | 构建安装 | [guides/build-and-install.md](../docs/guides/build-and-install.md) |
-| 发布 | [guides/release.md](../docs/guides/release.md) |
+| 发布 | [guides/release.md](../docs/guides/release.md) · [guides/xposed-module-repo.md](../docs/guides/xposed-module-repo.md) |
 | 设备验收 | [verification/README.md](verification/README.md) |
 | 术语 | [glossary.md](../docs/glossary.md) |

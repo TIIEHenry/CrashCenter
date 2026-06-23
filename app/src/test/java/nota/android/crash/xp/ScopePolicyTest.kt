@@ -16,38 +16,25 @@ class ScopePolicyTest {
     // ---------- Legacy mode (managedPackages == null) ----------
 
     @Test
-    fun `legacy scopeMode off - shouldHook true, showNotify true when not disabled`() {
-        val decision = ScopePolicy.evaluate(
-            packageName = TEST_PKG,
-            isSystemApp = false,
-            scopeMode = false,
-            handleSystem = false,
-            packageListDisabled = false,
-            managedPackages = null,
-            interventionRulesJson = "{}",
-        )
-        assertTrue(decision.shouldHook)
+    fun `legacy not disabled - install and intercept`() {
+        val decision = evaluateLegacy(disabled = false)
+        assertTrue(decision.shouldInstall)
+        assertTrue(decision.shouldIntercept)
         assertTrue(decision.showNotify)
-        assertTrue(decision.crashLogEnabled) // default
+        assertTrue(decision.crashLogEnabled)
     }
 
     @Test
-    fun `legacy scopeMode off - disabled package shouldHook true, showNotify false`() {
-        val decision = ScopePolicy.evaluate(
-            packageName = TEST_PKG,
-            isSystemApp = false,
-            scopeMode = false,
-            handleSystem = false,
-            packageListDisabled = true,
-            managedPackages = null,
-            interventionRulesJson = "{}",
-        )
-        assertTrue(decision.shouldHook)
+    fun `legacy disabled package - observe only`() {
+        val decision = evaluateLegacy(disabled = true)
+        assertTrue(decision.shouldInstall)
+        assertFalse(decision.shouldIntercept)
         assertFalse(decision.showNotify)
+        assertTrue(decision.crashLogEnabled)
     }
 
     @Test
-    fun `legacy scopeMode on - user app not in disabled list shouldHook true`() {
+    fun `legacy scopeMode on user app not disabled - install and intercept`() {
         val decision = ScopePolicy.evaluate(
             packageName = TEST_PKG,
             isSystemApp = false,
@@ -57,12 +44,12 @@ class ScopePolicyTest {
             managedPackages = null,
             interventionRulesJson = "{}",
         )
-        assertTrue(decision.shouldHook)
-        assertTrue(decision.showNotify)
+        assertTrue(decision.shouldInstall)
+        assertTrue(decision.shouldIntercept)
     }
 
     @Test
-    fun `legacy scopeMode on - user app in disabled list shouldHook false`() {
+    fun `legacy scopeMode on disabled list - observe only`() {
         val decision = ScopePolicy.evaluate(
             packageName = TEST_PKG,
             isSystemApp = false,
@@ -72,11 +59,12 @@ class ScopePolicyTest {
             managedPackages = null,
             interventionRulesJson = "{}",
         )
-        assertFalse(decision.shouldHook)
+        assertTrue(decision.shouldInstall)
+        assertFalse(decision.shouldIntercept)
     }
 
     @Test
-    fun `legacy scopeMode on - system app without handleSystem shouldHook false`() {
+    fun `legacy scopeMode on system without handleSystem - no install`() {
         val decision = ScopePolicy.evaluate(
             packageName = SYSTEM_PKG,
             isSystemApp = true,
@@ -86,11 +74,11 @@ class ScopePolicyTest {
             managedPackages = null,
             interventionRulesJson = "{}",
         )
-        assertFalse(decision.shouldHook)
+        assertFalse(decision.shouldInstall)
     }
 
     @Test
-    fun `legacy scopeMode on - system app with handleSystem shouldHook true`() {
+    fun `legacy scopeMode on system with handleSystem - install and intercept`() {
         val decision = ScopePolicy.evaluate(
             packageName = SYSTEM_PKG,
             isSystemApp = true,
@@ -100,28 +88,15 @@ class ScopePolicyTest {
             managedPackages = null,
             interventionRulesJson = "{}",
         )
-        assertTrue(decision.shouldHook)
+        assertTrue(decision.shouldInstall)
+        assertTrue(decision.shouldIntercept)
         assertTrue(decision.showNotify)
-    }
-
-    @Test
-    fun `legacy scopeMode on - system app with handleSystem but disabled shouldHook false`() {
-        val decision = ScopePolicy.evaluate(
-            packageName = SYSTEM_PKG,
-            isSystemApp = true,
-            scopeMode = true,
-            handleSystem = true,
-            packageListDisabled = true,
-            managedPackages = null,
-            interventionRulesJson = "{}",
-        )
-        assertFalse(decision.shouldHook)
     }
 
     // ---------- Managed mode ----------
 
     @Test
-    fun `managed - package not in managedPackages shouldHook false`() {
+    fun `managed package not in list - observe only`() {
         val decision = ScopePolicy.evaluate(
             packageName = TEST_PKG,
             isSystemApp = false,
@@ -131,45 +106,32 @@ class ScopePolicyTest {
             managedPackages = setOf("other.package"),
             interventionRulesJson = "{}",
         )
-        assertFalse(decision.shouldHook)
+        assertTrue(decision.shouldInstall)
+        assertFalse(decision.shouldIntercept)
         assertFalse(decision.showNotify)
     }
 
     @Test
-    fun `managed - package in managedPackages but no enabled rules shouldHook false`() {
+    fun `managed in list but no enabled rules - observe only`() {
         val json = """{"$TEST_PKG":{"rules":[],"updatedAt":0}}"""
-        val decision = ScopePolicy.evaluate(
-            packageName = TEST_PKG,
-            isSystemApp = false,
-            scopeMode = false,
-            handleSystem = false,
-            packageListDisabled = false,
-            managedPackages = setOf(TEST_PKG),
-            interventionRulesJson = json,
-        )
-        assertFalse(decision.shouldHook)
+        val decision = evaluateManaged(json)
+        assertTrue(decision.shouldInstall)
+        assertFalse(decision.shouldIntercept)
         assertFalse(decision.showNotify)
     }
 
     @Test
-    fun `managed - package with enabled rules shouldHook true`() {
+    fun `managed with enabled rules - install and intercept`() {
         val json = """{"$TEST_PKG":{"rules":[{"id":"r1","type":"CATCH_ALL","enabled":true}],"updatedAt":0}}"""
-        val decision = ScopePolicy.evaluate(
-            packageName = TEST_PKG,
-            isSystemApp = false,
-            scopeMode = false,
-            handleSystem = false,
-            packageListDisabled = false,
-            managedPackages = setOf(TEST_PKG),
-            interventionRulesJson = json,
-        )
-        assertTrue(decision.shouldHook)
+        val decision = evaluateManaged(json)
+        assertTrue(decision.shouldInstall)
+        assertTrue(decision.shouldIntercept)
         assertTrue(decision.showNotify)
         assertTrue(decision.crashLogEnabled)
     }
 
     @Test
-    fun `managed - system app in scopeMode without handleSystem shouldHook false`() {
+    fun `managed system in scopeMode without handleSystem - no install`() {
         val json = """{"$SYSTEM_PKG":{"rules":[{"id":"r1","type":"CATCH_ALL","enabled":true}],"updatedAt":0}}"""
         val decision = ScopePolicy.evaluate(
             packageName = SYSTEM_PKG,
@@ -180,160 +142,52 @@ class ScopePolicyTest {
             managedPackages = setOf(SYSTEM_PKG),
             interventionRulesJson = json,
         )
-        assertFalse(decision.shouldHook)
-        assertFalse(decision.showNotify)
+        assertFalse(decision.shouldInstall)
     }
 
     @Test
-    fun `managed - system app in scopeMode with handleSystem shouldHook true`() {
-        val json = """{"$SYSTEM_PKG":{"rules":[{"id":"r1","type":"CATCH_ALL","enabled":true}],"updatedAt":0}}"""
-        val decision = ScopePolicy.evaluate(
-            packageName = SYSTEM_PKG,
-            isSystemApp = true,
-            scopeMode = true,
-            handleSystem = true,
-            packageListDisabled = false,
-            managedPackages = setOf(SYSTEM_PKG),
-            interventionRulesJson = json,
-        )
-        assertTrue(decision.shouldHook)
-        assertTrue(decision.showNotify)
-    }
-
-    @Test
-    fun `managed - showNotify false when all rules explicitly set false`() {
+    fun `managed showNotify false when rule explicitly false`() {
         val json = """{"$TEST_PKG":{"rules":[{"id":"r1","type":"CATCH_ALL","enabled":true,"showNotify":false}],"updatedAt":0}}"""
-        val decision = ScopePolicy.evaluate(
-            packageName = TEST_PKG,
-            isSystemApp = false,
-            scopeMode = false,
-            handleSystem = false,
-            packageListDisabled = false,
-            managedPackages = setOf(TEST_PKG),
-            interventionRulesJson = json,
-        )
-        assertTrue(decision.shouldHook)
+        val decision = evaluateManaged(json)
+        assertTrue(decision.shouldIntercept)
         assertFalse(decision.showNotify)
     }
 
     @Test
-    fun `managed - crashLogEnabled false when all rules explicitly set false`() {
+    fun `managed crashLogEnabled false when rule explicitly false`() {
         val json = """{"$TEST_PKG":{"rules":[{"id":"r1","type":"CATCH_ALL","enabled":true,"crashLogEnabled":false}],"updatedAt":0}}"""
-        val decision = ScopePolicy.evaluate(
-            packageName = TEST_PKG,
-            isSystemApp = false,
-            scopeMode = false,
-            handleSystem = false,
-            packageListDisabled = false,
-            managedPackages = setOf(TEST_PKG),
-            interventionRulesJson = json,
-        )
-        assertTrue(decision.shouldHook)
+        val decision = evaluateManaged(json)
+        assertTrue(decision.shouldIntercept)
         assertFalse(decision.crashLogEnabled)
     }
 
     @Test
-    fun `managed - mixed showNotify uses any true`() {
-        val json = """{"$TEST_PKG":{"rules":[{"id":"r1","type":"CATCH_ALL","enabled":true,"showNotify":false},{"id":"r2","type":"CATCH_ALL","enabled":true,"showNotify":true}],"updatedAt":0}}"""
+    fun `managed empty managed set - observe only for any package`() {
         val decision = ScopePolicy.evaluate(
             packageName = TEST_PKG,
             isSystemApp = false,
             scopeMode = false,
             handleSystem = false,
             packageListDisabled = false,
-            managedPackages = setOf(TEST_PKG),
-            interventionRulesJson = json,
+            managedPackages = emptySet(),
+            interventionRulesJson = "{}",
         )
-        assertTrue(decision.showNotify)
+        assertTrue(decision.shouldInstall)
+        assertFalse(decision.shouldIntercept)
+    }
+
+    @Test
+    fun `managed disabled rules - observe only`() {
+        val json = """{"$TEST_PKG":{"rules":[{"id":"r1","type":"CATCH_ALL","enabled":false}],"updatedAt":0}}"""
+        val decision = evaluateManaged(json)
+        assertTrue(decision.shouldInstall)
+        assertFalse(decision.shouldIntercept)
     }
 
     // ---------- Ignored packages ----------
 
     @Test
-    fun `ignored package android shouldHook false`() {
-        val decision = ScopePolicy.evaluate(
-            packageName = IGNORED_PKG,
-            isSystemApp = true,
-            scopeMode = false,
-            handleSystem = true,
-            packageListDisabled = false,
-            managedPackages = null,
-            interventionRulesJson = "{}",
-        )
-        assertFalse(decision.shouldHook)
-        assertFalse(decision.showNotify)
-    }
-
-    @Test
-    fun `ignored package xposed installer shouldHook false even in managed mode`() {
-        val decision = ScopePolicy.evaluate(
-            packageName = "de.robv.android.xposed.installer",
-            isSystemApp = false,
-            scopeMode = false,
-            handleSystem = false,
-            packageListDisabled = false,
-            managedPackages = setOf("de.robv.android.xposed.installer"),
-            interventionRulesJson = """{"de.robv.android.xposed.installer":{"rules":[{"id":"r1","type":"CATCH_ALL","enabled":true}],"updatedAt":0}}""",
-        )
-        assertFalse(decision.shouldHook)
-        assertFalse(decision.showNotify)
-    }
-
-    @Test
-    fun `ignored package edXposed manager shouldHook false`() {
-        val decision = ScopePolicy.evaluate(
-            packageName = "org.meowcat.edxposed.manager",
-            isSystemApp = false,
-            scopeMode = false,
-            handleSystem = false,
-            packageListDisabled = false,
-            managedPackages = setOf("org.meowcat.edxposed.manager"),
-            interventionRulesJson = """{"org.meowcat.edxposed.manager":{"rules":[{"id":"r1","type":"CATCH_ALL","enabled":true}],"updatedAt":0}}""",
-        )
-        assertFalse(decision.shouldHook)
-        assertFalse(decision.showNotify)
-    }
-
-    @Test
-    fun `ignored package LSPosed manager shouldHook false`() {
-        val decision = ScopePolicy.evaluate(
-            packageName = "org.lsposed.manager",
-            isSystemApp = false,
-            scopeMode = false,
-            handleSystem = false,
-            packageListDisabled = false,
-            managedPackages = setOf("org.lsposed.manager"),
-            interventionRulesJson = """{"org.lsposed.manager":{"rules":[{"id":"r1","type":"CATCH_ALL","enabled":true}],"updatedAt":0}}""",
-        )
-        assertFalse(decision.shouldHook)
-        assertFalse(decision.showNotify)
-    }
-
-    @Test
-    fun `all ignored packages are blocked in legacy mode`() {
-        val ignoredPackages = listOf(
-            "android",
-            "de.robv.android.xposed.installer",
-            "org.meowcat.edxposed.manager",
-            "org.lsposed.manager",
-        )
-        for (pkg in ignoredPackages) {
-            val decision = ScopePolicy.evaluate(
-                packageName = pkg,
-                isSystemApp = false,
-                scopeMode = false,
-                handleSystem = false,
-                packageListDisabled = false,
-                managedPackages = null,
-                interventionRulesJson = "{}",
-            )
-            assertFalse("Package $pkg should be ignored", decision.shouldHook)
-            assertFalse("Package $pkg showNotify should be false", decision.showNotify)
-        }
-    }
-
-    @Test
-    fun `all ignored packages are blocked in managed mode`() {
+    fun `ignored packages never install`() {
         val ignoredPackages = listOf(
             "android",
             "de.robv.android.xposed.installer",
@@ -350,45 +204,15 @@ class ScopePolicyTest {
                 managedPackages = setOf(pkg),
                 interventionRulesJson = """{"$pkg":{"rules":[{"id":"r1","type":"CATCH_ALL","enabled":true}],"updatedAt":0}}""",
             )
-            assertFalse("Package $pkg should be ignored in managed mode", decision.shouldHook)
-            assertFalse("Package $pkg showNotify should be false in managed mode", decision.showNotify)
+            assertFalse("Package $pkg should be ignored", decision.shouldInstall)
+            assertFalse(decision.shouldIntercept)
         }
     }
 
     // ---------- Edge cases ----------
 
     @Test
-    fun `empty package name shouldHook false`() {
-        val decision = ScopePolicy.evaluate(
-            packageName = "",
-            isSystemApp = false,
-            scopeMode = false,
-            handleSystem = false,
-            packageListDisabled = false,
-            managedPackages = null,
-            interventionRulesJson = "{}",
-        )
-        assertTrue(decision.shouldHook) // empty is not in IGNORED_PACKAGES
-        assertTrue(decision.showNotify)
-    }
-
-    @Test
-    fun `managed mode with empty intervention rules JSON shouldHook false`() {
-        val decision = ScopePolicy.evaluate(
-            packageName = TEST_PKG,
-            isSystemApp = false,
-            scopeMode = false,
-            handleSystem = false,
-            packageListDisabled = false,
-            managedPackages = setOf(TEST_PKG),
-            interventionRulesJson = "{}",
-        )
-        assertFalse(decision.shouldHook)
-        assertFalse(decision.showNotify)
-    }
-
-    @Test
-    fun `managed mode with invalid JSON shouldHook false`() {
+    fun `managed invalid JSON - observe only`() {
         val decision = ScopePolicy.evaluate(
             packageName = TEST_PKG,
             isSystemApp = false,
@@ -398,196 +222,36 @@ class ScopePolicyTest {
             managedPackages = setOf(TEST_PKG),
             interventionRulesJson = "not json",
         )
-        assertFalse(decision.shouldHook)
-        assertFalse(decision.showNotify)
+        assertTrue(decision.shouldInstall)
+        assertFalse(decision.shouldIntercept)
     }
 
     @Test
-    fun `managed mode with disabled rules shouldHook false`() {
-        val json = """{"$TEST_PKG":{"rules":[{"id":"r1","type":"CATCH_ALL","enabled":false}],"updatedAt":0}}"""
-        val decision = ScopePolicy.evaluate(
-            packageName = TEST_PKG,
-            isSystemApp = false,
-            scopeMode = false,
-            handleSystem = false,
-            packageListDisabled = false,
-            managedPackages = setOf(TEST_PKG),
-            interventionRulesJson = json,
-        )
-        assertFalse(decision.shouldHook)
-        assertFalse(decision.showNotify)
-    }
-
-    @Test
-    fun `managed mode with mixed enabled and disabled rules only counts enabled`() {
+    fun `managed mixed enabled rules - intercept`() {
         val json = """{"$TEST_PKG":{"rules":[{"id":"r1","type":"CATCH_ALL","enabled":false},{"id":"r2","type":"CATCH_ALL","enabled":true}],"updatedAt":0}}"""
-        val decision = ScopePolicy.evaluate(
+        val decision = evaluateManaged(json)
+        assertTrue(decision.shouldIntercept)
+    }
+
+    private fun evaluateLegacy(disabled: Boolean): ScopeDecision =
+        ScopePolicy.evaluate(
             packageName = TEST_PKG,
             isSystemApp = false,
             scopeMode = false,
             handleSystem = false,
-            packageListDisabled = false,
-            managedPackages = setOf(TEST_PKG),
-            interventionRulesJson = json,
-        )
-        assertTrue(decision.shouldHook)
-        assertTrue(decision.showNotify)
-    }
-
-    @Test
-    fun `legacy mode with null managedPackages`() {
-        val decision = ScopePolicy.evaluate(
-            packageName = TEST_PKG,
-            isSystemApp = false,
-            scopeMode = true,
-            handleSystem = false,
-            packageListDisabled = false,
+            packageListDisabled = disabled,
             managedPackages = null,
             interventionRulesJson = "{}",
         )
-        assertTrue(decision.shouldHook)
-    }
 
-    @Test
-    fun `managed mode with null showNotify and crashLogEnabled uses defaults`() {
-        val json = """{"$TEST_PKG":{"rules":[{"id":"r1","type":"CATCH_ALL","enabled":true}],"updatedAt":0}}"""
-        val decision = ScopePolicy.evaluate(
+    private fun evaluateManaged(interventionRulesJson: String): ScopeDecision =
+        ScopePolicy.evaluate(
             packageName = TEST_PKG,
             isSystemApp = false,
             scopeMode = false,
             handleSystem = false,
             packageListDisabled = false,
             managedPackages = setOf(TEST_PKG),
-            interventionRulesJson = json,
+            interventionRulesJson = interventionRulesJson,
         )
-        assertTrue(decision.shouldHook)
-        assertTrue(decision.showNotify)   // globalDefaultShowNotify = true
-        assertTrue(decision.crashLogEnabled) // defaultEnabled = true
-    }
-
-    @Test
-    fun `managed mode with multiple rules mixed showNotify and crashLogEnabled`() {
-        val json = """{"$TEST_PKG":{"rules":[{"id":"r1","type":"CATCH_ALL","enabled":true,"showNotify":false,"crashLogEnabled":false},{"id":"r2","type":"CATCH_ALL","enabled":true,"showNotify":true,"crashLogEnabled":true}],"updatedAt":0}}"""
-        val decision = ScopePolicy.evaluate(
-            packageName = TEST_PKG,
-            isSystemApp = false,
-            scopeMode = false,
-            handleSystem = false,
-            packageListDisabled = false,
-            managedPackages = setOf(TEST_PKG),
-            interventionRulesJson = json,
-        )
-        assertTrue(decision.shouldHook)
-        assertTrue(decision.showNotify)   // any true
-        assertTrue(decision.crashLogEnabled) // any true
-    }
-
-    @Test
-    fun `managed mode with all rules showNotify null uses global default`() {
-        val json = """{"$TEST_PKG":{"rules":[{"id":"r1","type":"CATCH_ALL","enabled":true},{"id":"r2","type":"CATCH_ALL","enabled":true}],"updatedAt":0}}"""
-        val decision = ScopePolicy.evaluate(
-            packageName = TEST_PKG,
-            isSystemApp = false,
-            scopeMode = false,
-            handleSystem = false,
-            packageListDisabled = false,
-            managedPackages = setOf(TEST_PKG),
-            interventionRulesJson = json,
-        )
-        assertTrue(decision.shouldHook)
-        assertTrue(decision.showNotify)   // globalDefaultShowNotify = true
-        assertTrue(decision.crashLogEnabled) // defaultEnabled = true
-    }
-
-    @Test
-    fun `legacy scopeMode off - system app shouldHook true`() {
-        val decision = ScopePolicy.evaluate(
-            packageName = SYSTEM_PKG,
-            isSystemApp = true,
-            scopeMode = false,
-            handleSystem = false,
-            packageListDisabled = false,
-            managedPackages = null,
-            interventionRulesJson = "{}",
-        )
-        assertTrue(decision.shouldHook)
-        assertTrue(decision.showNotify)
-    }
-
-    @Test
-    fun `legacy scopeMode on - system app with handleSystem and disabled shouldHook false`() {
-        val decision = ScopePolicy.evaluate(
-            packageName = SYSTEM_PKG,
-            isSystemApp = true,
-            scopeMode = true,
-            handleSystem = true,
-            packageListDisabled = true,
-            managedPackages = null,
-            interventionRulesJson = "{}",
-        )
-        assertFalse(decision.shouldHook)
-    }
-
-    @Test
-    fun `managed mode with empty managed packages set shouldHook false`() {
-        val decision = ScopePolicy.evaluate(
-            packageName = TEST_PKG,
-            isSystemApp = false,
-            scopeMode = false,
-            handleSystem = false,
-            packageListDisabled = false,
-            managedPackages = emptySet(),
-            interventionRulesJson = "{}",
-        )
-        assertFalse(decision.shouldHook)
-        assertFalse(decision.showNotify)
-    }
-
-    @Test
-    fun `managed mode with only disabled rules and null showNotify defaults`() {
-        val json = """{"$TEST_PKG":{"rules":[{"id":"r1","type":"CATCH_ALL","enabled":false,"showNotify":true}],"updatedAt":0}}"""
-        val decision = ScopePolicy.evaluate(
-            packageName = TEST_PKG,
-            isSystemApp = false,
-            scopeMode = false,
-            handleSystem = false,
-            packageListDisabled = false,
-            managedPackages = setOf(TEST_PKG),
-            interventionRulesJson = json,
-        )
-        assertFalse(decision.shouldHook)
-        assertFalse(decision.showNotify)
-    }
-
-    @Test
-    fun `managed mode with valid JSON but package not in root keys shouldHook false`() {
-        val json = """{"other.package":{"rules":[{"id":"r1","type":"CATCH_ALL","enabled":true}],"updatedAt":0}}"""
-        val decision = ScopePolicy.evaluate(
-            packageName = TEST_PKG,
-            isSystemApp = false,
-            scopeMode = false,
-            handleSystem = false,
-            packageListDisabled = false,
-            managedPackages = setOf(TEST_PKG),
-            interventionRulesJson = json,
-        )
-        assertFalse(decision.shouldHook)
-        assertFalse(decision.showNotify)
-    }
-
-    @Test
-    fun `managed mode crashLogEnabled false when all rules explicitly set false`() {
-        val json = """{"$TEST_PKG":{"rules":[{"id":"r1","type":"CATCH_ALL","enabled":true,"crashLogEnabled":false},{"id":"r2","type":"CATCH_ALL","enabled":true,"crashLogEnabled":false}],"updatedAt":0}}"""
-        val decision = ScopePolicy.evaluate(
-            packageName = TEST_PKG,
-            isSystemApp = false,
-            scopeMode = false,
-            handleSystem = false,
-            packageListDisabled = false,
-            managedPackages = setOf(TEST_PKG),
-            interventionRulesJson = json,
-        )
-        assertTrue(decision.shouldHook)
-        assertFalse(decision.crashLogEnabled)
-    }
 }

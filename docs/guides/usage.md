@@ -30,13 +30,13 @@ CrashCenter（崩溃中心）是一个 Xposed 模块，**拦截目标 app 的 Ja
 
 | 机制 | 在哪里设置 | 控制什么 |
 |------|------------|----------|
-| **LSPosed 作用域** | Xposed / LSPosed 管理器 | 模块是否**注入**目标 app 进程 |
-| **应用内 Switch** | CrashCenter 列表 | 注入后是否**拦截**该 app 崩溃 |
-| **Scope Mode Chip** | CrashCenter 全局 Chip | 作用域模式下 hook 哪些包 |
+| **LSPosed 作用域** | Xposed / LSPosed 管理器 | 模块代码是否加载进目标 app 进程（**外层门控**） |
+| **应用内 Switch** | CrashCenter 受管列表 | 是否**拦截**崩溃（续命）；关闭时**仅观测**，进程可正常退出 |
+| **Scope Mode Chip** | CrashCenter 全局 Chip | 是否对**系统应用**安装捕获（见 [scope-and-prefs.md](../architecture/scope-and-prefs.md)） |
 
-仅在本应用里全开 Switch，但管理器未勾选目标 app → **不会 hook**。仅管理器勾选但 Switch 关闭 → 该包在禁用列表中，**也不拦截**。
+管理器未勾选目标 app → 模块**不会**进入该进程，无观测也无拦截。管理器已勾选、Switch 关闭 → **仍记录崩溃**到 `events.jsonl`，但不阻止 app 退出。
 
-崩溃日志（Phase 4）记录**已被 hook 且被拦截**的异常，存储于模块私有 `events.jsonl`；与「应用列表是否完整」无直接关系。列表完整性依赖 [包可见性权限](#包可见性android-11)（模块进程 `QUERY_ALL_PACKAGES`）。
+崩溃日志记录 LSPosed 作用域内、已被模块捕获的 Java 未捕获异常（含仅观测与已拦截），存储于模块私有 `events.jsonl`。
 
 ## 界面说明
 
@@ -127,7 +127,7 @@ Phase 3G 起，配置方式改为 **显式添加应用** + **干预规则**（[A
 ├─────────────────────────────┤
 │  状态条 · 包可见性条 · Chip   │
 ├─────────────────────────────┤
-│  搜索 + [全部][已启用][待配置] │
+│  搜索 + [全部][已拦截][仅观测] │
 ├─────────────────────────────┤
 │  受管应用列表（Switch + 角标） │
 └─────────────────────────────┘
@@ -141,21 +141,21 @@ Phase 3G 起，配置方式改为 **显式添加应用** + **干预规则**（[A
 
 | 操作 | 说明 |
 |------|------|
-| **添加应用** | 从已安装列表挑选；**不要求**预先配置规则；添加后 Switch 默认关 |
-| **待配置** | 在列表中但未启用干预；**不会** hook |
-| **Switch 打开** | 快捷启用；若无规则会自动创建「拦截未捕获异常」 |
-| **Switch 关闭** | 停用干预；应用仍在列表中 |
+| **添加应用** | 从已安装列表挑选；**不要求**预先配置规则；添加后 Switch 默认关（仅观测） |
+| **仅观测** | Switch 关闭：崩溃写入历史，**不**阻止 app 退出 |
+| **Switch 打开** | 启用拦截续命；若无规则会自动创建「拦截未捕获异常」 |
+| **Switch 关闭** | 停用拦截；应用仍在列表中，观测继续 |
 | **点击行** | 进入编辑页，可手动添加/删除规则、调整通知等 |
-| **移除应用** | 从列表删除，规则一并清除 |
+| **移除应用** | 从策展列表删除；若仍在 LSPosed 作用域内，观测不受影响 |
 
-新用户空列表时 **默认不 hook 任何 app**，需先添加并启用。
+受管列表为空时，**已纳入 LSPosed 作用域的应用仍会观测崩溃**；列表用于快捷配置 per-app 拦截与通知。
 
 ## Scope Mode 行为
 
-[Scope Mode](../glossary.md#scope-mode) 决定 hook 范围：
+[Scope Mode](../glossary.md#scope-mode)（[ADR-023](../decisions/023-injection-observe-intercept-split.md) 后）主要过滤**系统应用**是否安装捕获：
 
-- **关闭**（默认）：hook 所有 app（除 `android` 和 Xposed 管理器）；Switch 关闭的包写入禁用列表，仍不 hook
-- **开启**：仅 hook 列表中 Switch **开启**的非系统 app；若同时开启「处理系统应用」，系统 app 也可被 hook
+- **关闭**（默认）：对 LSPosed 作用域内第三方 app 安装观测；Legacy 模式下 Switch 关闭写入 `package_list` → **仅观测**
+- **开启**：另可按「处理系统应用」决定是否对系统 app 安装捕获；禁用列表内包为**仅观测**（不再完全不注入）
 
 ## 观测 tab
 
@@ -163,7 +163,7 @@ Phase 3G 起，配置方式改为 **显式添加应用** + **干预规则**（[A
 
 | 子页 | 说明 |
 |------|------|
-| **历史** | 按时间倒序显示已拦截崩溃；点击行打开半屏详情（完整 stack trace + 规则分析建议） |
+| **历史** | 按时间倒序显示已记录崩溃（含仅观测与已拦截） |
 | **统计** | 总次数、独立应用数、应用/异常 TOP、**异常类别 TOP**、**重复崩溃 TOP**、按日计数；点击应用 TOP 可进入**单应用观测页** |
 | **logcat** | 通过 SAF 导入 logcat 文本文件，浏览解析后的片段 |
 
@@ -177,20 +177,22 @@ Phase 3G 起，配置方式改为 **显式添加应用** + **干预规则**（[A
 | 保留上限 | 设置最大条数与文件大小（默认 500 条 / 8 MB） |
 | 清空历史 | 永久删除所有本地崩溃记录（需确认） |
 
-可在 **设置 → 崩溃日志** 相关 pref 中关闭写入（`crash_log_enabled`）；关闭后不再记录新崩溃，但不影响拦截行为。
+可在 **设置 → 崩溃日志** 相关 pref 中关闭写入（`crash_log_enabled`）；关闭后不再记录新崩溃，但不影响是否拦截。
 
 ### 单应用观测
 
-在 **统计** 子页点击 **应用 TOP** 某一行，进入该应用的观测页：显示拦截次数、最近崩溃时间与按时间排序的事件列表。点击列表项可查看完整 stack trace 与规则分析建议（与历史 tab 相同）。
+在 **统计** 子页点击 **应用 TOP** 某一行，进入该应用的观测页：显示崩溃次数、最近时间与事件列表。
 
 ## 崩溃反馈
 
-被 hook 的 app 发生异常时：
+**已拦截**（Switch ON）的 app 发生未捕获异常时：
 
-1. 弹出 Toast 显示异常信息
+1. 弹出 Toast 显示异常信息（若规则允许通知）
 2. 发送系统通知（可点击查看详情；Intent 携带 `crash_id`）
 3. App **不会退出**
 4. 若崩溃日志已启用，事件写入本地 `events.jsonl`
+
+**仅观测**（Switch OFF）时：通常无 Toast/通知；进程按系统路径退出；崩溃仍尝试写入 `events.jsonl`。
 
 通知或历史列表点开后进入**崩溃详情**：stack trace 为等宽字体（CodeEditor），可复制；若规则匹配成功，会显示**分析卡片**（异常类别、排查建议）。分析仅为参考，模块**不会**自动修复目标 app。
 
@@ -215,6 +217,7 @@ Phase 3G 起，配置方式改为 **显式添加应用** + **干预规则**（[A
 - [crash-stats-ui.md](../architecture/crash-stats-ui.md)
 - [crash-log-ipc.md](../architecture/crash-log-ipc.md)
 - [navigation-ia.md](../architecture/navigation-ia.md)
-- [architecture/overview.md](../architecture/overview.md)
+- [injection-observe-intercept-split.md](../architecture/injection-observe-intercept-split.md)
+- [ADR-023](../decisions/023-injection-observe-intercept-split.md)
 - [glossary.md](../glossary.md)
 - [build-and-install.md](build-and-install.md)

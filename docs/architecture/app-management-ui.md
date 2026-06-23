@@ -3,15 +3,27 @@ title: "受管应用与干预规则 UI"
 type: architecture
 status: accepted
 phase: 3
-updated: 2026-06-19
-summary: "配置域受管应用策展 + 行内 Switch 快捷干预 + 编辑页干预规则；Half Sheet 添加；无规则可添加"
+updated: 2026-06-23
+summary: "受管应用策展 + Switch 控拦截；ADR-023 全量观测 as-built"
 ---
 
 # 受管应用与干预规则 UI
 
 > 适用模块：`:app` 配置域  
-> 决策记录：[ADR-015](../decisions/015-managed-apps-intervention-rules.md)  
+> 决策记录：[ADR-015](../decisions/015-managed-apps-intervention-rules.md)、[ADR-023](../decisions/023-injection-observe-intercept-split.md)  
 > 现状对照：[configuration-ui.md](configuration-ui.md)、[scope-and-prefs.md](scope-and-prefs.md)
+
+## As-built（ADR-023，2026-06-23）
+
+| 概念 | 原语义（ADR-015） | 现语义 |
+|------|------------------|--------|
+| Switch OFF | 不 hook | **仅观测**（`shouldInstall=true`, `shouldIntercept=false`） |
+| Switch ON | hook + 拦截 | 不变 |
+| 未加入受管列表 | 不 hook | **仍观测**（若 LSPosed 已 scoped） |
+| 角标「仅观测」 | 「待配置」 | Switch OFF / 无 enabled 规则 |
+| 角标「已拦截」 | 「已启用」 | 至少一条 enabled `CATCH_ALL` |
+
+受管列表 = **策展 + 快捷配置**，非注入白名单。详见 [injection-observe-intercept-split.md](injection-observe-intercept-split.md)。
 
 ## 概述
 

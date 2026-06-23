@@ -46,6 +46,14 @@ object PrefMigrator {
         ManagedModelMigrator.migrateIfNeeded(context, prefs, legacyPrefState)
     }
 
+    /** ADR-023: behavioral migration marker; no prefs rewrite required. */
+    fun migrateObserveInterceptSplitIfNeeded(prefs: SharedPreferences) {
+        if (prefs.getBoolean(PrefManager.PREF_OBSERVE_INTERCEPT_SPLIT_MIGRATED, false)) {
+            return
+        }
+        prefs.edit { putBoolean(PrefManager.PREF_OBSERVE_INTERCEPT_SPLIT_MIGRATED, true) }
+    }
+
     data class LegacyPrefState(
         val hadPriorSession: Boolean,
         val importHadData: Boolean,

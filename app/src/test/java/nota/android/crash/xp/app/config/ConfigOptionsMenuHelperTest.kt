@@ -44,7 +44,7 @@ class ConfigOptionsMenuHelperTest {
             R.id.item_add_managed_app to addManaged,
         )
 
-        helper.prepareOptionsMenu(menu, isLegacyMode = true)
+        helper.prepareOptionsMenu(menu, isLegacyMode = true, managedListCount = 0)
 
         verify(selectAll).isVisible = true
         verify(cancelAll).isVisible = true
@@ -62,7 +62,7 @@ class ConfigOptionsMenuHelperTest {
             R.id.item_add_managed_app to addManaged,
         )
 
-        helper.prepareOptionsMenu(menu, isLegacyMode = false)
+        helper.prepareOptionsMenu(menu, isLegacyMode = false, managedListCount = 2)
 
         verify(selectAll).isVisible = false
         verify(cancelAll).isVisible = false
@@ -80,10 +80,24 @@ class ConfigOptionsMenuHelperTest {
             R.id.item_add_managed_app to addManaged,
         )
 
-        helper.prepareOptionsMenu(menu, isLegacyMode = null)
+        helper.prepareOptionsMenu(menu, isLegacyMode = null, managedListCount = 0)
 
         verify(selectAll).isVisible = false
         verify(cancelAll).isVisible = false
+        verify(addManaged).isVisible = false
+    }
+
+    @Test
+    fun `prepareOptionsMenu hides add managed app when managed list empty`() {
+        val addManaged = mockMenuItem()
+        val menu = mockMenu(
+            R.id.item_select_all to mockMenuItem(),
+            R.id.item_cancel_all to mockMenuItem(),
+            R.id.item_add_managed_app to addManaged,
+        )
+
+        helper.prepareOptionsMenu(menu, isLegacyMode = false, managedListCount = 0)
+
         verify(addManaged).isVisible = false
     }
 

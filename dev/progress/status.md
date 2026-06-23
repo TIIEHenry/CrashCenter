@@ -4,7 +4,7 @@ type: progress
 status: active
 phase: N/A
 updated: 2026-06-23
-summary: "4B-β RelayMerge、4D+ PerAppCrash、4G-V2 统计聚类 as-built；IS 矩阵待验"
+summary: "Phase 5 观测/拦截分离 as-built（ADR-023）；4B-β IS 矩阵待验"
 ---
 
 # 项目进度状态
@@ -14,8 +14,8 @@ summary: "4B-β RelayMerge、4D+ PerAppCrash、4G-V2 统计聚类 as-built；IS 
 | 项 | 状态 |
 |---|------|
 | 活跃 Phase | [Phase 3](../roadmap/active/phase3_ui_redesign.md) 🔄（LSPosed 手动 smoke + 3E M3 迁移） |
-| 并行 Phase | [Phase 4](../roadmap/active/phase4_crash_observability.md) 🔄 **4B-β / 4D+ / 4G-V2 部分 as-built**；**IS 矩阵待验** |
-| 阻塞 | LSPosed 手动项（Test 拦截、Switch→hook、激活状态条）；4B IS-1~IS-6 / IS-R1~IS-R5 真机矩阵 |
+| 并行 Phase | [Phase 4](../roadmap/active/phase4_crash_observability.md) 🔄 **IS 矩阵待验**；[Phase 5](../roadmap/active/phase5_observe_intercept_split.md) 🔄 **5.1–5.3 as-built** |
+| 阻塞 | LSPosed 手动 smoke（observe + intercept）；4B IS-1~IS-6 / IS-R1~IS-R5 真机矩阵 |
 | 验证基线 | `461QYGDD2226C` **2026-06-19**：consolidated smoke **PASS**；dark mode Meizu **PASS** |
 | 文档 | 2026-06-23 roadmap + 架构 as-built 同步；`docs/design/` accepted |
 
@@ -30,10 +30,11 @@ summary: "4B-β RelayMerge、4D+ PerAppCrash、4G-V2 统计聚类 as-built；IS 
 - **4F（部分）**：`LogcatFragment` SAF 导入；`scripts/adb-logcat-capture.sh`
 - **4G-MVP（部分）**：`RuleEngine` + `rules_v1.json` + 详情 lazy 分析卡片 + 单测
 - **4G-V2（部分）**：`CrashSignature` + `topCategories()` / `topClusters()` + 统计页双 TOP 区块；`CrashEvent.analysis` JSONL 持久化 defer
+- **5（部分）**：[ADR-023](../../docs/decisions/023-injection-observe-intercept-split.md)：`ScopeDecision` install/intercept 分离；`CrashHandler` 双模式；观测 `logSync`
 
 ### 待办
 
-- **3A**：LSPosed 手动 smoke → 补全 `dev/verification/smoke_20260619.md`
+- **5**：UI 文案 + 文档 as-built ✅；LSPosed observe+intercept smoke 待验
 - **4B**：IS 矩阵 → verification 报告 → ADR-017 accepted；Coordinator Phase 1 短窗（当前 RootSu 与 Phase 2 并行）
 - **4B-γ**：`CanonicalJsonlStore` 统一读写锁；ADR-021 accepted
 - **4D+**：配置 tab「崩溃记录」入口；统计页时间范围 Chip
@@ -43,6 +44,23 @@ summary: "4B-β RelayMerge、4D+ PerAppCrash、4G-V2 统计聚类 as-built；IS 
 ---
 
 ## Recent Sessions
+
+### 2026-06-23 — 观测菜单去重 + 空态 CTA
+
+- **菜单**：移除 Toolbar「统计」（与子 tab 重复）；`CrashHistoryMenuActions` 提取；`ObserveHostFragment` 按历史/统计/logcat 显隐菜单项
+- **空态**：历史「去配置」、统计「查看历史」；配置 tab 空列表时隐藏 Toolbar「添加应用」
+- **验证**：`:app:compileDebugKotlin` OK（Gradle daemon OOM 时 Studio build 通过）
+
+### 2026-06-23 — Phase 5 文档/UI 同步（ADR-023 实施后检查）
+
+- **UI**：`managed_status_*` / 筛选 Chip →「仅观测」「已拦截」；空态与移除确认文案
+- **文档**：`usage`、`scope-and-prefs`、`app-management-ui`、`crash-handler`、`crash-capture-pipeline`、`glossary`
+
+### 2026-06-23 — Phase 5 ADR-023 观测/拦截分离（编码）
+
+- **方案**：`injection-observe-intercept-split.md` + ADR-023 accepted；ADR-015 hook 门控 superseded
+- **编码**：`ScopePolicy` 全量 `shouldInstall`；Switch → `shouldIntercept`；`CrashHandler.install(INTERCEPT|OBSERVE)`；`CrashLogCoordinator.logSync`
+- **验证**：`ScopePolicyTest` / `CrashCapturePipelineTest`；`:app:assembleDebug` OK
 
 ### 2026-06-23 — 4B-β / 4D+ / 4G-V2 编码 + 文档 as-built
 

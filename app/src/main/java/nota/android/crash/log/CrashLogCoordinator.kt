@@ -10,6 +10,8 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.runBlocking
+import nota.android.crash.log.backend.TargetRelayBackend
 import nota.android.crash.xp.PrefManager
 
 /**
@@ -23,6 +25,7 @@ import nota.android.crash.xp.PrefManager
 object CrashLogCoordinator {
 
     private const val PARALLEL_TIMEOUT_MS = 2000L
+    private const val OBSERVE_SYNC_TIMEOUT_MS = 500L
 
     private val coordinatorScope = CoroutineScope(
         SupervisorJob() + Dispatchers.IO.limitedParallelism(1)
@@ -39,6 +42,28 @@ object CrashLogCoordinator {
             } catch (t: Throwable) {
                 hookSafeLog("CrashLogCoordinator failed: ${t.message}")
             }
+        }
+    }
+
+    /**
+     * Observe-mode path (ADR-023): block briefly so relay/canonical write completes before process exit.
+     */
+    fun logSync(
+        hookContext: Context,
+        event: nota.android.crash.common.data.CrashEvent,
+    ) {
+        try {
+            if (!isLoggingEnabled()) return
+            runBlocking {
+                withTimeout(OBSERVE_SYNC_TIMEOUT_MS) {
+                    when (TargetRelayBackend.append(hookContext, event, OBSERVE_SYNC_TIMEOUT_MS)) {
+                        is AppendResult.Success -> return@withTimeout
+                        is AppendResult.Failure -> runPhase2Parallel(hookContext, event)
+                    }
+                }
+            }
+        } catch (t: Throwable) {
+            hookSafeLog("CrashLogCoordinator logSync failed: ${t.message}")
         }
     }
 

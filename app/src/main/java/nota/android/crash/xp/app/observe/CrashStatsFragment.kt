@@ -49,7 +49,13 @@ class CrashStatsFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        EmptyState.bind(binding.emptyState.root, getString(R.string.stats_empty), R.drawable.ic_tab_observe)
+        EmptyState.bind(
+            binding.emptyState.root,
+            getString(R.string.stats_empty),
+            getString(R.string.stats_empty_action),
+            { (parentFragment as? ObserveHostFragment)?.selectSubTab(0) },
+            R.drawable.ic_tab_observe,
+        )
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.uiState.collect { renderState(it) }
@@ -75,6 +81,16 @@ class CrashStatsFragment : Fragment() {
 
         binding.scrollView.visibility = if (hasData) View.VISIBLE else View.GONE
         binding.emptyState.root.visibility = if (isEmpty) View.VISIBLE else View.GONE
+
+        if (isEmpty) {
+            EmptyState.bind(
+                binding.emptyState.root,
+                getString(R.string.stats_empty),
+                getString(R.string.stats_empty_action),
+                { (parentFragment as? ObserveHostFragment)?.selectSubTab(0) },
+                R.drawable.ic_tab_observe,
+            )
+        }
 
         if (hasData) {
             renderStats(stats)

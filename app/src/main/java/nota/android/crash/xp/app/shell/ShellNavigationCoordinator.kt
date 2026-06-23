@@ -82,8 +82,7 @@ class ShellNavigationCoordinator(
      * Prepare the options menu for the current tab.
      *
      * For [ShellTab.CONFIG] the menu is forwarded to [ConfigFragment].
-     * For [ShellTab.OBSERVE] the menu is forwarded to [ObserveHostFragment],
-     * which delegates to [CrashHistoryFragment].
+     * For [ShellTab.OBSERVE] the menu is forwarded to [ObserveHostFragment].
      */
     fun prepareOptionsMenu(menu: android.view.Menu) {
         when (viewModel.uiState.value.selectedTab) {
