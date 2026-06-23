@@ -13,13 +13,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-        with:
-          path: CrashCenter
-
-      - uses: actions/checkout@v4
-        with:
-          repository: TIIEHenry/CelestailRuler
-          path: CelestailRuler
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
@@ -31,11 +24,9 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
 
       - name: Build release APK
-        working-directory: CrashCenter
         run: ./gradlew :app:assembleRelease
 
       - name: Check APK output
-        working-directory: CrashCenter
         run: |
           echo "=== APK output directory ==="
           ls -la app/build/outputs/apk/release/ || echo "Directory not found!"
@@ -43,7 +34,6 @@ jobs:
           find app/build/outputs/apk/release/ -name "*.apk" -type f || echo "No APK files found!"
 
       - name: Extract changelog for release
-        working-directory: CrashCenter
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
           scripts/extract-changelog.sh "$VERSION" > release-notes.md
@@ -58,5 +48,5 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           name: ${{ github.ref_name }}
-          body_path: CrashCenter/release-notes.md
-          files: CrashCenter/app/build/outputs/apk/release/*.apk
+          body_path: release-notes.md
+          files: app/build/outputs/apk/release/*.apk
