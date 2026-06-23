@@ -36,6 +36,8 @@
     <string name="system_app_badge">系统</string>
     <string name="crash_info_title">崩溃详情</string>
     <string name="crash_detail_close">关闭崩溃详情</string>
+    <string name="crash_detail_copy">复制全部</string>
+    <string name="crash_detail_copied">已复制到剪贴板</string>
     <string name="permission_banner_title">应用列表不完整，请授予查看已安装应用权限</string>
     <string name="permission_banner_title_compact">应用列表不完整 · 点击授权</string>
     <string name="permission_grant_action">去授权</string>
@@ -45,6 +47,16 @@
     <string name="permission_settings_failed">无法打开应用设置</string>
     <string name="tab_config">配置</string>
     <string name="tab_observe">观测</string>
+    <string name="tab_history">历史</string>
+    <string name="tab_stats">统计</string>
+    <string name="stats_empty">暂无崩溃数据。启用崩溃日志后，崩溃统计将显示在此处。</string>
+    <string name="stats_loading">正在加载统计…</string>
+    <string name="stats_label_total">合计</string>
+    <string name="stats_label_unique_apps">涉及应用</string>
+    <string name="stats_label_most_recent">最近一次</string>
+    <string name="stats_section_top_packages">崩溃最多应用</string>
+    <string name="stats_section_top_exceptions">最常见异常类</string>
+    <string name="stats_none">—</string>
     <string name="crash_history_empty">暂无崩溃记录。启用崩溃日志后，被拦截的崩溃将显示在此处。</string>
     <string name="crash_history_loading">正在加载崩溃历史…</string>
     <string name="crash_event_subtitle_format">%1$s · %2$s · %3$s</string>
@@ -53,12 +65,48 @@
     <string name="crash_source_ueh_a11y">未捕获异常</string>
     <string name="crash_source_looper_a11y">主线程循环</string>
     <string name="observe_menu_filter">筛选</string>
+    <string name="observe_menu_filter_clear">清除筛选</string>
+    <string name="observe_filter_title">按包名筛选</string>
+    <string name="observe_filter_package_hint">例如 com.example.app</string>
     <string name="observe_menu_export">导出日志</string>
+    <string name="observe_export_privacy_title">导出崩溃日志</string>
+    <string name="observe_export_privacy_message">崩溃日志包含堆栈跟踪、包名和设备信息，请仅分享给可信方。</string>
+    <string name="observe_export_continue">继续</string>
+    <string name="observe_export_share">分享</string>
+    <string name="observe_export_save">保存到文件</string>
+    <string name="observe_export_saved">Zip 已保存</string>
     <string name="observe_menu_stats">统计</string>
+    <string name="observe_menu_retention">保留上限</string>
     <string name="observe_menu_clear_history">清除历史</string>
+    <string name="observe_menu_sort">排序</string>
+    <string name="observe_menu_package_filter">按应用筛选</string>
+    <string name="observe_sort_time_newest">最新优先</string>
+    <string name="observe_sort_time_oldest">最早优先</string>
+    <string name="observe_sort_package_asc">包名 (A–Z)</string>
+    <string name="observe_sort_package_desc">包名 (Z–A)</string>
+    <string name="observe_sort_exception_asc">异常类 (A–Z)</string>
+    <string name="observe_sort_exception_desc">异常类 (Z–A)</string>
+    <string name="observe_package_filter_title">按应用筛选</string>
+    <string name="observe_package_filter_all">全部应用</string>
+    <string name="observe_package_filter_count">%1$d 次崩溃</string>
+    <string name="observe_package_filter_clear">清除筛选</string>
+    <string name="observe_menu_package_filter_clear">筛选：%1$s</string>
     <string name="observe_clear_history_confirm_title">清除崩溃历史？</string>
     <string name="observe_clear_history_confirm_message">所有崩溃记录将被永久删除。</string>
     <string name="observe_clear_history_success">崩溃历史已清除</string>
+    <string name="retention_title">崩溃日志保留上限</string>
+    <string name="retention_max_entries_label">最大条目数（默认：500）</string>
+    <string name="retention_max_bytes_label">最大体积 MB（默认：8）</string>
+    <string name="retention_saved">保留上限已更新</string>
+    <string name="observe_export_no_events">暂无崩溃日志可导出</string>
+    <string name="observe_export_error">导出失败</string>
+    <string name="observe_stats_title">崩溃统计</string>
+    <string name="observe_stats_total">崩溃总数：%1$d</string>
+    <string name="observe_stats_unique_packages">涉及包名：%1$d</string>
+    <string name="observe_stats_most_recent">最近一次：%1$s</string>
+    <string name="observe_stats_top_packages">崩溃最多包名</string>
+    <string name="observe_stats_package_entry">%1$s：%2$d 次</string>
+    <string name="crash_detail_not_found">未找到崩溃记录：%1$s</string>
     <string name="legacy_app_row_a11y">%1$s，%2$s</string>
 
     <!-- Root status & crash test -->
@@ -95,6 +143,26 @@
     <string name="intervention_status_pending">待配置</string>
     <string name="rule_saved">规则已保存</string>
 
+    <!-- Logcat analysis (4F) -->
+    <string name="tab_logcat">Logcat</string>
+    <string name="observe_menu_import_logcat">导入 Logcat</string>
+    <string name="logcat_empty">未加载 Logcat 数据。请导入通过 adb logcat 抓取的 .txt 文件。</string>
+    <string name="logcat_loading">正在解析 Logcat…</string>
+    <string name="logcat_import_action">导入 Logcat 文件</string>
+    <string name="logcat_import_error">读取 Logcat 文件失败</string>
+    <string name="logcat_file_empty">Logcat 文件为空</string>
+    <string name="logcat_file_too_large">文件超过 5 MB，结果可能被截断</string>
+    <string name="logcat_level_fatal">F</string>
+    <string name="logcat_level_error">E</string>
+    <string name="logcat_level_warning">W</string>
+    <string name="logcat_level_info">I</string>
+    <string name="logcat_level_debug">D</string>
+
+    <!-- Crash analysis (4G) -->
+    <string name="analysis_suggestion_header">建议修复</string>
+    <string name="analysis_dev_suggestion_header">开发者详情</string>
+    <string name="analysis_disclaimer">AI 生成的启发式建议 — 请在应用前自行验证。</string>
+
     <!-- Plurals -->
     <plurals name="app_count">
         <item quantity="other">共 %1$d 个应用</item>
@@ -113,6 +181,12 @@
     </plurals>
     <plurals name="permission_list_partial_compact">
         <item quantity="other">仅 %1$d 个可见 · 点击授权</item>
+    </plurals>
+    <plurals name="logcat_entry_count">
+        <item quantity="other">%1$d 条</item>
+    </plurals>
+    <plurals name="logcat_entry_count_filtered">
+        <item quantity="other">显示 %1$d / %2$d 条</item>
     </plurals>
 
     <string name="per_app_empty">该应用尚无拦截记录。</string>
