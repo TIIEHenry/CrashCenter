@@ -44,9 +44,16 @@ object DirectFsBackend : CrashLogBackend {
                 PrefManager.PACKAGE_NAME,
                 Context.CONTEXT_IGNORE_SECURITY,
             )
-            val eventsFile = File(
+            val logDir = File(
                 moduleContext.filesDir,
-                "${FileCrashLogRepository.LOG_DIR}/${FileCrashLogRepository.EVENTS_FILE}",
+                FileCrashLogRepository.LOG_DIR,
+            )
+            if (!logDir.exists() && !logDir.mkdirs()) {
+                Log.w("DirectFsBackend", "Failed to create log directory: $logDir")
+            }
+            val eventsFile = File(
+                logDir,
+                FileCrashLogRepository.EVENTS_FILE,
             )
             CanonicalJsonlWriter.append(eventsFile, stamped)
             AppendResult.Success
