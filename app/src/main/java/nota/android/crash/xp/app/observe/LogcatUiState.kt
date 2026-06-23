@@ -3,6 +3,16 @@ package nota.android.crash.xp.app.observe
 import nota.android.crash.xp.app.common.HasErrorMessage
 import nota.android.crash.xp.app.common.LoadableState
 
+enum class SourceMode { NONE, ROOT, FILE }
+
+enum class LogcatBuffer(val id: String, val label: String, val minApi: Int = 0) {
+    MAIN("main", "Main"),
+    SYSTEM("system", "System"),
+    CRASH("crash", "Crash", 30),
+    EVENTS("events", "Events"),
+    RADIO("radio", "Radio"),
+}
+
 data class LogcatUiState(
     override val isLoading: Boolean = false,
     val entries: List<LogcatEntry> = emptyList(),
@@ -10,6 +20,8 @@ data class LogcatUiState(
     val activeLevels: Set<LogcatLevel> = DEFAULT_LEVELS,
     val isFiltered: Boolean = false,
     val totalRawCount: Int = 0,
+    val sourceMode: SourceMode = SourceMode.NONE,
+    val activeBuffer: LogcatBuffer = LogcatBuffer.MAIN,
     override val errorMessage: String? = null,
 ) : LoadableState, HasErrorMessage {
 

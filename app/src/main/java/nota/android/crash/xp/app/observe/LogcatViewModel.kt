@@ -1,9 +1,11 @@
 package nota.android.crash.xp.app.observe
 
+import android.content.Context
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import nota.android.crash.root.RootLogcatReader
 import nota.android.crash.xp.app.common.BaseFlowViewModel
 
 class LogcatViewModel(
@@ -71,5 +73,43 @@ class LogcatViewModel(
      */
     fun resetLevels() {
         emitState { copy(activeLevels = LogcatUiState.DEFAULT_LEVELS) }
+    }
+
+    /**
+     * Read a logcat buffer via root and update the UI state.
+     *
+     * @param context Android context for the reader
+     * @param buffer  which logcat buffer to read
+     */
+    fun loadFromRoot(context: Context, buffer: LogcatBuffer = LogcatBuffer.MAIN) {
+        loadWithState(viewModelScope) {
+            val rawText = withContext(ioDispatcher) {
+                RootLogcatReader.readBuffer(context, buffer)
+            }
+            if (rawText != null) {
+                val allEntries = LogcatParser.parse(rawText)
+                emitState {
+                    copy(
+                        isLoading = false,
+                        entries = allEntries,
+                        allEntries = allEntries,
+                        sourceMode = SourceMode.ROOT,
+                        activeBuffer = buffer,
+                        totalRawCount = allEntries.size,
+                    )
+                }
+            } else {
+                emitState { copy(isLoading = false, errorMessage = "Root logcat 读取失败") }
+            }
+        }
+    }
+
+    /**
+     * Switch to a different logcat buffer and reload from root.
+     */
+    fun switchBuffer(context: Context, buffer: LogcatBuffer) {
+        if (_uiState.value.sourceMode == SourceMode.ROOT) {
+            loadFromRoot(context, buffer)
+        }
     }
 }
