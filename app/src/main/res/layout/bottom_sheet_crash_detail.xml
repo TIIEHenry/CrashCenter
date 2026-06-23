@@ -4,16 +4,15 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:paddingBottom="@dimen/spacing_md">
+    android:orientation="vertical">
 
     <FrameLayout
+        android:id="@+id/sheetDragHandle"
         android:layout_width="match_parent"
         android:layout_height="@dimen/sheet_drag_handle_hit_height"
-        android:importantForAccessibility="noHideDescendants">
+        android:contentDescription="@string/bottomsheet_drag_handle_content_description">
 
         <View
-            android:id="@+id/sheetDragHandle"
             android:layout_width="@dimen/sheet_drag_handle_width"
             android:layout_height="@dimen/sheet_drag_handle_height"
             android:layout_gravity="center"

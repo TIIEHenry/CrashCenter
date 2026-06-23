@@ -14,15 +14,6 @@ class SelectOperateLayout(val editor: CodeIEditor, val layout: RecyclerView) {
     private val selectionOperateAdapter = SelectOperateAdapter()
     private val context = layout.context
 
-    private val noteBlock = SelectOperate(
-        context.getDrawableCompact(R.drawable.codeeditor_selectoperate_comment),
-        {
-            editor.noteBlock()
-        },
-        {
-            editor.noteDocBlock()
-            true
-        })
     private val selectMore = SelectOperate(
         context.getDrawableCompact(R.drawable.codeeditor_selectoperate_select_group),
         {
@@ -67,7 +58,7 @@ class SelectOperateLayout(val editor: CodeIEditor, val layout: RecyclerView) {
         }
         selectionOperateAdapter.submitList(
             listOf(
-                noteBlock, selectMore, cut, copy, paste, findReplace
+                selectMore, cut, copy, paste, findReplace
             )
         )
 

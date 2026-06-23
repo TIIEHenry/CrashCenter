@@ -26,6 +26,7 @@ class CrashLogViewerClient(
         quickFloatLayout.upView.visibility = View.GONE
         quickFloatLayout.downView.visibility = View.GONE
         layout.findViewById<View>(R.id.quick_input_layout)?.visibility = View.GONE
+        quickControlLayout.hide()
     }
 
     fun showStackTrace(text: String?) {

@@ -91,7 +91,7 @@ class CrashDetailBottomSheet : BottomSheetDialogFragment() {
 
     override fun onStart() {
         super.onStart()
-        configureCrashDetailBottomSheetAppearance()
+        configureCrashDetailBottomSheetAppearance(binding.root, binding.sheetDragHandle)
     }
 
     override fun onDestroyView() {

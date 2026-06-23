@@ -196,7 +196,5 @@
 
     <style name="AppTheme.Button" parent="Widget.Material3.Button.TextButton" />
 
-
-
 </resources>
 

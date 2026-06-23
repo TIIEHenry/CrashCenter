@@ -1,6 +1,7 @@
 package nota.android.crash.xp.app.common.ui
 
 import android.content.res.ColorStateList
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.content.ContextCompat
@@ -11,6 +12,7 @@ import com.google.android.material.shape.CornerFamily
 import com.google.android.material.shape.MaterialShapeDrawable
 import com.google.android.material.shape.ShapeAppearanceModel
 import nota.android.crash.xp.app.R
+import kotlin.math.abs
 
 private const val SHEET_HEIGHT_HALF_RATIO = 0.5f
 private const val SHEET_DETAIL_HALF_EXPANDED_RATIO = 0.85f
@@ -59,11 +61,14 @@ fun BottomSheetDialogFragment.configureBottomSheetAppearance() {
 }
 
 /**
- * Variant for the crash detail sheet: starts at 85% screen height
- * (half-expanded) and disables dragging so the CodeEditor can scroll
- * freely without touch conflicts.
+ * Crash detail sheet: uses a real 85% height at rest and a real 100% height
+ * when expanded. Only [dragHandle] resizes the sheet; the CodeEditor content
+ * itself never drags the container.
  */
-fun BottomSheetDialogFragment.configureCrashDetailBottomSheetAppearance() {
+fun BottomSheetDialogFragment.configureCrashDetailBottomSheetAppearance(
+    sheetContentRoot: View,
+    dragHandle: View,
+) {
     val sheetDialog = dialog as? BottomSheetDialog ?: return
     val bottomSheet = sheetDialog.findViewById<View>(
         com.google.android.material.R.id.design_bottom_sheet,
@@ -88,15 +93,86 @@ fun BottomSheetDialogFragment.configureCrashDetailBottomSheetAppearance() {
     bottomSheet.clipToOutline = true
     bottomSheet.elevation = resources.getDimension(R.dimen.sheet_elevation)
 
+    val displayHeight = resources.displayMetrics.heightPixels
+    val halfHeight = (displayHeight * SHEET_DETAIL_HALF_EXPANDED_RATIO).toInt()
+    val fullHeight = displayHeight
+
     val behavior = BottomSheetBehavior.from(bottomSheet)
-    behavior.isFitToContents = false
-    behavior.halfExpandedRatio = SHEET_DETAIL_HALF_EXPANDED_RATIO
-    behavior.state = BottomSheetBehavior.STATE_HALF_EXPANDED
-    // Disable dragging entirely so the CodeEditor can scroll without
-    // the BottomSheet intercepting the vertical drag.
+    behavior.isFitToContents = true
     behavior.isDraggable = false
+    behavior.skipCollapsed = true
+    behavior.isHideable = false
 
     bottomSheet.layoutParams = bottomSheet.layoutParams.apply {
+        height = halfHeight
+    }
+    behavior.state = BottomSheetBehavior.STATE_EXPANDED
+
+    fun applySheetHeight(targetHeight: Int) {
+        val clamped = targetHeight.coerceIn(halfHeight, fullHeight)
+        if (bottomSheet.layoutParams.height != clamped) {
+            bottomSheet.layoutParams = bottomSheet.layoutParams.apply {
+                height = clamped
+            }
+            bottomSheet.requestLayout()
+        }
+    }
+
+    applySheetHeight(halfHeight)
+
+    val touchSlop = android.view.ViewConfiguration.get(requireContext()).scaledTouchSlop
+    var startRawY = 0f
+    var startHeight = halfHeight
+    var dragging = false
+
+    dragHandle.setOnTouchListener { _, event ->
+        when (event.actionMasked) {
+            MotionEvent.ACTION_DOWN -> {
+                startRawY = event.rawY
+                startHeight = bottomSheet.layoutParams.height
+                dragging = false
+                true
+            }
+
+            MotionEvent.ACTION_MOVE -> {
+                val dy = event.rawY - startRawY
+                if (!dragging && abs(dy) > touchSlop) {
+                    dragging = true
+                }
+                if (dragging) {
+                    applySheetHeight((startHeight - dy).toInt())
+                }
+                true
+            }
+
+            MotionEvent.ACTION_UP,
+            MotionEvent.ACTION_CANCEL -> {
+                if (dragging) {
+                    val currentHeight = bottomSheet.layoutParams.height
+                    val midpoint = halfHeight + ((fullHeight - halfHeight) / 2)
+                    val snapHeight = if (currentHeight >= midpoint) fullHeight else halfHeight
+                    applySheetHeight(snapHeight)
+                    behavior.state = BottomSheetBehavior.STATE_EXPANDED
+                    dragging = false
+                    true
+                } else {
+                    false
+                }
+            }
+
+            else -> false
+        }
+    }
+
+    behavior.addBottomSheetCallback(object : BottomSheetBehavior.BottomSheetCallback() {
+        override fun onStateChanged(sheet: View, newState: Int) {
+            if (newState == BottomSheetBehavior.STATE_HIDDEN) dismissAllowingStateLoss()
+        }
+
+        override fun onSlide(sheet: View, slideOffset: Float) = Unit
+    })
+
+    sheetContentRoot.layoutParams = sheetContentRoot.layoutParams.apply {
         height = ViewGroup.LayoutParams.MATCH_PARENT
     }
 }
