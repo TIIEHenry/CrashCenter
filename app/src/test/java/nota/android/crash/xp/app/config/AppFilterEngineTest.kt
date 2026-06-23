@@ -750,6 +750,38 @@ class AppFilterEngineTest {
         assertTrue(AppFilterEngine.matchesCrashEvent(event, filter))
     }
 
+    // ─── matchesCrashEvent: exceptionClass filter ───
+
+    @Test
+    fun `matchesCrashEvent exceptionClass match`() {
+        val filter = CrashFilter(exceptionClass = "java.lang.NullPointerException")
+        assertTrue(AppFilterEngine.matchesCrashEvent(sampleEvent, filter))
+    }
+
+    @Test
+    fun `matchesCrashEvent exceptionClass mismatch`() {
+        val filter = CrashFilter(exceptionClass = "java.lang.IllegalStateException")
+        assertFalse(AppFilterEngine.matchesCrashEvent(sampleEvent, filter))
+    }
+
+    @Test
+    fun `matchesCrashEvent exceptionClass and packageName both match`() {
+        val filter = CrashFilter(
+            packageName = "com.example.app",
+            exceptionClass = "java.lang.NullPointerException",
+        )
+        assertTrue(AppFilterEngine.matchesCrashEvent(sampleEvent, filter))
+    }
+
+    @Test
+    fun `matchesCrashEvent exceptionClass matches but packageName mismatches`() {
+        val filter = CrashFilter(
+            packageName = "com.other.app",
+            exceptionClass = "java.lang.NullPointerException",
+        )
+        assertFalse(AppFilterEngine.matchesCrashEvent(sampleEvent, filter))
+    }
+
     // ─── matchesCrashEvent: additional filter criteria ───
 
     @Test
