@@ -7,6 +7,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import nota.android.crash.xp.app.common.BaseFlowViewModel
 import nota.android.crash.xp.app.common.HasErrorMessage
+import nota.android.crash.xp.app.common.safeLog
 
 data class AppInterventionEditUiState(
     val profile: AppInterventionProfile = AppInterventionProfile.EMPTY,
@@ -75,7 +76,11 @@ class AppInterventionEditViewModel(
 
     fun removeManagedApp() {
         viewModelScope.launch(ioDispatcher) {
-            repository.removeManagedPackage(packageName)
+            try {
+                repository.removeManagedPackage(packageName)
+            } catch (e: Exception) {
+                safeLog("AppInterventionEditViewModel", "removeManagedApp failed", e)
+            }
         }
     }
 
@@ -93,9 +98,13 @@ class AppInterventionEditViewModel(
 
     private fun saveProfile() {
         viewModelScope.launch(ioDispatcher) {
-            repository.saveProfile(packageName, _uiState.value.profile)
-            withContext(mainDispatcher) {
-                emitState { copy(saved = true) }
+            try {
+                repository.saveProfile(packageName, _uiState.value.profile)
+                withContext(mainDispatcher) {
+                    emitState { copy(saved = true) }
+                }
+            } catch (e: Exception) {
+                safeLog("AppInterventionEditViewModel", "saveProfile failed", e)
             }
         }
     }
