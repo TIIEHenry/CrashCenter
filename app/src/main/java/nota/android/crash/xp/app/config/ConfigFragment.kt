@@ -114,6 +114,7 @@ class ConfigFragment : Fragment() {
             viewModel = viewModel,
             showAddManagedAppSheet = ::showAddManagedAppSheet,
             showHelpDialog = { dialogHelper.showHelpDialog() },
+            showTestCrashDialog = { dialogHelper.showTestCrashDialog(::triggerTestCrash) },
         )
         dialogHelper = ConfigDialogHelper(
             context = requireContext(),
@@ -246,6 +247,10 @@ class ConfigFragment : Fragment() {
 
     private fun openPermissionRationaleDialog() {
         dialogHelper.showPermissionRationaleDialog()
+    }
+
+    private fun triggerTestCrash() {
+        throw RuntimeException("CrashCenter test crash — pipeline verification")
     }
 
     companion object {

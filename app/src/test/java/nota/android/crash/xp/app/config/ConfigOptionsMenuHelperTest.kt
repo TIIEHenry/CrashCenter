@@ -19,6 +19,7 @@ class ConfigOptionsMenuHelperTest {
     private lateinit var viewModel: ConfigViewModel
     private lateinit var showAddManagedAppSheet: () -> Unit
     private lateinit var showHelpDialog: () -> Unit
+    private lateinit var showTestCrashDialog: () -> Unit
     private lateinit var helper: ConfigOptionsMenuHelper
 
     @Before
@@ -26,7 +27,8 @@ class ConfigOptionsMenuHelperTest {
         viewModel = mock()
         showAddManagedAppSheet = mock()
         showHelpDialog = mock()
-        helper = ConfigOptionsMenuHelper(viewModel, showAddManagedAppSheet, showHelpDialog)
+        showTestCrashDialog = mock()
+        helper = ConfigOptionsMenuHelper(viewModel, showAddManagedAppSheet, showHelpDialog, showTestCrashDialog)
     }
 
     // ─── prepareOptionsMenu ───
@@ -125,6 +127,16 @@ class ConfigOptionsMenuHelperTest {
 
         assertTrue(result)
         verify(showHelpDialog).invoke()
+    }
+
+    @Test
+    fun `handleOptionsItem test crash calls showTestCrashDialog`() {
+        val item = mockMenuItem(R.id.item_test_crash)
+
+        val result = helper.handleOptionsItem(item)
+
+        assertTrue(result)
+        verify(showTestCrashDialog).invoke()
     }
 
     // ─── handleOptionsItem — unknown item ───

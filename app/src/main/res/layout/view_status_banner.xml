@@ -10,7 +10,7 @@
     android:gravity="center_vertical"
     android:minHeight="@dimen/status_banner_height"
     android:orientation="horizontal"
-    android:paddingHorizontal="@dimen/spacing_sm"
+    android:paddingHorizontal="@dimen/spacing_lg"
     android:paddingVertical="@dimen/spacing_xs">
 
     <ImageView
@@ -20,17 +20,35 @@
         android:contentDescription="@string/xposed_status_title"
         android:src="@drawable/ic_shield_off" />
 
-    <TextView
-        android:id="@+id/statusTitle"
+    <LinearLayout
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="@dimen/spacing_sm"
         android:layout_weight="1"
-        android:ellipsize="end"
-        android:maxLines="1"
-        android:text="@string/xposed_inactive_inline"
-        android:textColor="@color/statusInactiveText"
-        android:textSize="13sp"
-        android:textStyle="bold" />
+        android:gravity="center_vertical"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/statusTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:text="@string/xposed_inactive_inline"
+            android:textColor="@color/statusInactiveText"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/statusSubtitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:textColor="@color/statusInactiveText"
+            android:textSize="12sp"
+            android:visibility="gone" />
+
+    </LinearLayout>
 
 </LinearLayout>

@@ -38,6 +38,15 @@ internal class ConfigDialogHelper(
         return true
     }
 
+    fun showTestCrashDialog(onConfirmed: () -> Unit) {
+        MaterialAlertDialogBuilder(context)
+            .setTitle(R.string.test_crash_confirm_title)
+            .setMessage(R.string.test_crash_confirm_message)
+            .setPositiveButton(R.string.item_test_crash) { _, _ -> onConfirmed() }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
+    }
+
     fun showPermissionRationaleDialog() {
         MaterialAlertDialogBuilder(context)
             .setTitle(R.string.permission_rationale_title)

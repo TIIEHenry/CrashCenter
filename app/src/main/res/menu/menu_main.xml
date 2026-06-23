@@ -47,6 +47,10 @@
         android:title="@string/item_deselect_all" />
 
     <item
+        android:id="@+id/item_test_crash"
+        android:title="@string/item_test_crash" />
+
+    <item
         android:id="@+id/item_help"
         android:title="@string/item_about" />
 

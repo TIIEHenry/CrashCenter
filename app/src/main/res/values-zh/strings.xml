@@ -61,6 +61,11 @@
     <string name="observe_clear_history_success">崩溃历史已清除</string>
     <string name="legacy_app_row_a11y">%1$s，%2$s</string>
 
+    <!-- Root status & crash test -->
+    <string name="item_test_crash">测试崩溃</string>
+    <string name="test_crash_confirm_title">触发测试崩溃？</string>
+    <string name="test_crash_confirm_message">将抛出 RuntimeException 来验证崩溃拦截管线。如果模块已激活，崩溃应该被拦截并记录。</string>
+
     <!-- Managed apps (Phase 3G) -->
     <string name="managed_filter_enabled">已启用</string>
     <string name="managed_filter_pending">待配置</string>

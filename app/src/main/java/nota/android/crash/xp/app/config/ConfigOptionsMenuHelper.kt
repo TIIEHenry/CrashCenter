@@ -8,6 +8,7 @@ internal class ConfigOptionsMenuHelper(
     private val viewModel: ConfigViewModel,
     private val showAddManagedAppSheet: () -> Unit,
     private val showHelpDialog: () -> Unit,
+    private val showTestCrashDialog: () -> Unit,
 ) {
 
     fun prepareOptionsMenu(menu: Menu, isLegacyMode: Boolean?) {
@@ -32,6 +33,10 @@ internal class ConfigOptionsMenuHelper(
             }
             R.id.item_help -> {
                 showHelpDialog()
+                true
+            }
+            R.id.item_test_crash -> {
+                showTestCrashDialog()
                 true
             }
             else -> {

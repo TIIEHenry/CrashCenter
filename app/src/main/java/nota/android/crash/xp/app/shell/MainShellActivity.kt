@@ -49,7 +49,7 @@ class MainShellActivity : AppCompatActivity() {
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 shellViewModel.uiState.collect { state ->
-                    updateXposedStatusBanner(state.xposedActive)
+                    updateXposedStatusBanner(state)
                 }
             }
         }
@@ -58,11 +58,13 @@ class MainShellActivity : AppCompatActivity() {
         tabController.onCreate(initialTab)
 
         shellViewModel.refreshXposedStatus(isModuleActive())
+        shellViewModel.refreshRootStatus(applicationContext, ServiceLocator.rootAccessClient(applicationContext))
     }
 
     override fun onResume() {
         super.onResume()
         tabController.onResume()
+        shellViewModel.refreshRootStatus(applicationContext, ServiceLocator.rootAccessClient(applicationContext))
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -89,8 +91,14 @@ class MainShellActivity : AppCompatActivity() {
         }
     }
 
-    private fun updateXposedStatusBanner(active: Boolean) {
-        StatusBanner.bind(binding.statusBanner.root, active)
+    private fun updateXposedStatusBanner(state: ShellUiState) {
+        StatusBanner.bind(
+            root = binding.statusBanner.root,
+            active = state.xposedActive,
+            rootAvailability = state.rootAvailability,
+            activeBackendCount = state.activeBackendCount,
+            totalBackendCount = state.totalBackendCount,
+        )
     }
 
     private fun isModuleActive(): Boolean = ModuleActivation.isModuleActive()
