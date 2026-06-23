@@ -38,6 +38,8 @@ object CrashFeedbackFacade {
     private fun notificationIdFor(packageName: String): Int {
         return NOTIFY_ID_BASE + packageName.hashCode()
     }
+    private const val PREF_NAME = "notification_crash_counts"
+
     fun show(
         application: Application,
         packageName: String,
@@ -111,10 +113,15 @@ object CrashFeedbackFacade {
         }
         val contentIntent = PendingIntent.getActivity(application, 0, intent, pendingFlags)
 
+        val count = incrementCrashCount(pkgName)
+        val countText = resolveString(moduleContext, "notif_intercepted_count")
+            ?.let { String.format(it, count) }
+            ?: "Intercepted $count times"
+
         val title = resolveCrashTip(moduleContext, pkgName)
             ?.let { "$it - $appName" }
             ?: appName
-        val bigText = (throwable.localizedMessage ?: "") + "\n-----\n" + stackTrace
+        val bigText = countText + "\n" + (throwable.localizedMessage ?: "") + "\n-----\n" + stackTrace
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             notificationManager.createNotificationChannel(
@@ -122,15 +129,53 @@ object CrashFeedbackFacade {
             )
         }
 
-        val notification = NotificationCompat.Builder(application, CHANNEL_ID)
+        val builder = NotificationCompat.Builder(application, CHANNEL_ID)
             .setContentTitle(title)
-            .setContentText(throwable.localizedMessage)
+            .setContentText(countText)
             .setStyle(NotificationCompat.BigTextStyle().bigText(bigText))
             .setSmallIcon(appInfo.icon)
             .setContentIntent(contentIntent)
-            .build()
 
-        notificationManager.notify(notificationIdFor(pkgName), notification)
+        val viewAllLabel = resolveString(moduleContext, "notif_view_all") ?: "View all"
+        val viewAllIntent = Intent(Intent.ACTION_VIEW).apply {
+            component = ComponentName(
+                PrefManager.PACKAGE_NAME,
+                "nota.android.crash.xp.app.observe.PerAppCrashActivity",
+            )
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED
+            putExtra("packageName", pkgName)
+        }
+        val viewAllPending = PendingIntent.getActivity(
+            application,
+            pkgName.hashCode(),
+            viewAllIntent,
+            pendingFlags,
+        )
+        builder.addAction(0, viewAllLabel, viewAllPending)
+
+        notificationManager.notify(notificationIdFor(pkgName), builder.build())
+    }
+
+    private fun incrementCrashCount(packageName: String): Int {
+        return try {
+            val ctx = AndroidAppHelper.currentApplication()
+                .createPackageContext(PrefManager.PACKAGE_NAME, Context.CONTEXT_IGNORE_SECURITY)
+            val prefs = ctx.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+            val newCount = prefs.getInt(packageName, 0) + 1
+            prefs.edit().putInt(packageName, newCount).apply()
+            newCount
+        } catch (_: Throwable) {
+            1
+        }
+    }
+
+    private fun resolveString(context: Context, name: String): String? {
+        return try {
+            val resId = context.resources.getIdentifier(name, "string", PrefManager.PACKAGE_NAME)
+            if (resId != 0) context.getString(resId) else null
+        } catch (_: Throwable) {
+            null
+        }
     }
 
     private fun crashTipPrefix(packageName: String): String {

@@ -27,6 +27,7 @@ import nota.android.crash.xp.app.common.ui.LoadingState
 import nota.android.crash.xp.app.databinding.FragmentConfigBinding
 import nota.android.crash.xp.app.di.ServiceLocator
 import nota.android.crash.xp.app.di.configViewModelFactory
+import nota.android.crash.xp.app.observe.PerAppCrashActivity
 
 class ConfigFragment : Fragment() {
 
@@ -149,6 +150,10 @@ class ConfigFragment : Fragment() {
         val managedAdapter = ManagedAppAdapter().apply {
             onSwitchChanged = { app, enabled -> viewModel.setManagedSwitch(app.packageName, enabled) }
             onItemClick { _, data, _ -> openInterventionEdit(data.packageName) }
+            onItemLongClick { _, data, _ ->
+                openPerAppCrash(data.packageName)
+                true
+            }
         }
         managedController = ConfigListController(
             binding = binding,
@@ -241,6 +246,14 @@ class ConfigFragment : Fragment() {
         startActivity(
             Intent(requireContext(), AppInterventionEditActivity::class.java).apply {
                 putExtra(AppInterventionEditActivity.EXTRA_PACKAGE_NAME, packageName)
+            },
+        )
+    }
+
+    private fun openPerAppCrash(packageName: String) {
+        startActivity(
+            Intent(requireContext(), PerAppCrashActivity::class.java).apply {
+                putExtra(PerAppCrashActivity.EXTRA_PACKAGE_NAME, packageName)
             },
         )
     }

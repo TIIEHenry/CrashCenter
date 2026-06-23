@@ -44,6 +44,7 @@ object AppFilterEngine {
 
     fun matchesCrashEvent(event: CrashEvent, filter: CrashFilter): Boolean {
         filter.packageName?.let { if (event.packageName != it) return false }
+        filter.exceptionClass?.let { if (event.exceptionClass != it) return false }
         filter.source?.let { if (event.source != it) return false }
         filter.sinceMs?.let { if (event.timestampMs < it) return false }
         filter.untilMs?.let { if (event.timestampMs > it) return false }

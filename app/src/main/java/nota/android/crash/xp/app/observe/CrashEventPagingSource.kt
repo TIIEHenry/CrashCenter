@@ -28,7 +28,7 @@ class CrashEventPagingSource(
                 nextKey = nextKey,
             )
         } catch (e: Exception) {
-            Log.w("CrashEventPagingSource", "Paging load failed", e)
+            try { Log.w("CrashEventPagingSource", "Paging load failed", e) } catch (_: Throwable) {}
             LoadResult.Error(e)
         }
     }

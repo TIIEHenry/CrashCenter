@@ -165,6 +165,10 @@
     <string name="logcat_level_info">I</string>
     <string name="logcat_level_debug">D</string>
 
+    <!-- Notification -->
+    <string name="notif_intercepted_count">Intercepted %1$d times</string>
+    <string name="notif_view_all">View all</string>
+
     <!-- Crash analysis (4G) -->
     <string name="analysis_suggestion_header">Suggested fix</string>
     <string name="analysis_dev_suggestion_header">Developer details</string>
