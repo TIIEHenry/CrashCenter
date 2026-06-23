@@ -17,8 +17,13 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import android.widget.Toast
 import kotlinx.coroutines.launch
+import nota.android.crash.common.data.CrashEvent
+import nota.android.crash.log.CanonicalJsonlWriter
 import nota.android.crash.xp.app.R
+import nota.android.crash.xp.app.data.FileCrashLogRepository
+import java.util.UUID
 import nota.android.crash.xp.app.common.ui.CallbackSuppressor
 import nota.android.crash.xp.app.common.ui.showErrorToast
 import nota.android.crash.xp.app.common.ui.DenseSearchField
@@ -263,7 +268,20 @@ class ConfigFragment : Fragment() {
     }
 
     private fun triggerTestCrash() {
-        throw RuntimeException("CrashCenter test crash — pipeline verification")
+        val event = CrashEvent(
+            id = UUID.randomUUID().toString(),
+            packageName = requireContext().packageName,
+            exceptionClass = "java.lang.RuntimeException",
+            message = "CrashCenter test crash — pipeline verification",
+            stackTrace = "java.lang.RuntimeException: CrashCenter test crash — pipeline verification\n" +
+                "\tat nota.android.crash.xp.app.config.ConfigFragment.triggerTestCrash(ConfigFragment.kt:272)\n" +
+                "\tat nota.android.crash.xp.app.config.ConfigDialogHelper.showTestCrashDialog\$lambda(ConfigDialogHelper.kt:43)",
+            timestampMs = System.currentTimeMillis(),
+            source = "test",
+        )
+        val file = FileCrashLogRepository.eventsFile(requireContext())
+        CanonicalJsonlWriter.append(file, event)
+        Toast.makeText(requireContext(), R.string.test_crash_recorded, Toast.LENGTH_SHORT).show()
     }
 
     companion object {

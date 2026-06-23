@@ -112,7 +112,8 @@
     <!-- Root status & crash test -->
     <string name="item_test_crash">测试崩溃</string>
     <string name="test_crash_confirm_title">触发测试崩溃？</string>
-    <string name="test_crash_confirm_message">将抛出 RuntimeException 来验证崩溃拦截管线。如果模块已激活，崩溃应该被拦截并记录。</string>
+    <string name="test_crash_confirm_message">将写入一条模拟崩溃事件来验证记录管线。应用不会崩溃。</string>
+    <string name="test_crash_recorded">测试崩溃已记录到 events.jsonl</string>
 
     <!-- Managed apps (Phase 3G) -->
     <string name="managed_filter_enabled">已启用</string>

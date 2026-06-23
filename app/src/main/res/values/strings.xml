@@ -185,7 +185,8 @@
     <!-- Root status & crash test -->
     <string name="item_test_crash">Test crash</string>
     <string name="test_crash_confirm_title">Trigger test crash?</string>
-    <string name="test_crash_confirm_message">This will throw a RuntimeException to verify the crash interception pipeline. The crash should be intercepted and logged if the module is active.</string>
+    <string name="test_crash_confirm_message">This will write a synthetic crash event to the log to verify the recording pipeline. The app will not crash.</string>
+    <string name="test_crash_recorded">Test crash recorded to events.jsonl</string>
 
     <!-- Plurals -->
     <plurals name="app_count">
