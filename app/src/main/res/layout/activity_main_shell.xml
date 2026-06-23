@@ -53,12 +53,12 @@
             android:id="@+id/bottomNav"
             style="@style/AppTheme.BottomNavigation"
             android:layout_width="match_parent"
-            android:layout_height="@dimen/bottom_nav_height"
+            android:layout_height="wrap_content"
             android:background="?attr/colorSurface"
             app:elevation="0dp"
             app:itemIconTint="@color/bottom_nav_item_color"
             app:itemTextColor="@color/bottom_nav_item_color"
-            app:labelVisibilityMode="labeled"
+            app:labelVisibilityMode="selected"
             app:menu="@menu/menu_bottom_nav"
             tools:ignore="UnusedAttribute" />
 

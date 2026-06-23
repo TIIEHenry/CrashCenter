@@ -183,10 +183,6 @@
 
         <item name="android:background">@color/surface</item>
 
-        <item name="android:minHeight">@dimen/bottom_nav_height</item>
-
-        <item name="android:maxHeight">@dimen/bottom_nav_height</item>
-
         <!-- M3: suppress active indicator pill for flat Fluent look -->
         <item name="itemActiveIndicatorStyle">@style/AppTheme.BottomNavigation.ActiveIndicator</item>
 
