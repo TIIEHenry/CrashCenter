@@ -8,12 +8,16 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.core.view.isVisible
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
+import com.google.android.material.chip.Chip
 import kotlinx.coroutines.launch
+import nota.android.crash.analysis.RuleEngine
+import nota.android.crash.common.data.CrashAnalysis
 import nota.android.crash.xp.app.R
 import nota.android.crash.xp.app.common.ui.configureCrashDetailBottomSheetAppearance
 import nota.android.crash.xp.app.data.CrashDetailLoader
@@ -57,6 +61,7 @@ class CrashDetailBottomSheet : BottomSheetDialogFragment() {
     private val binding get() = checkNotNull(_binding) { "Binding accessed after onDestroyView" }
 
     private var currentStackTrace: String = ""
+    private var ruleEngine: RuleEngine? = null
 
     private val viewModel: CrashDetailViewModel by viewModels {
         ServiceLocator.crashDetailViewModelFactory(this, requireContext())
@@ -75,6 +80,8 @@ class CrashDetailBottomSheet : BottomSheetDialogFragment() {
         super.onViewCreated(view, savedInstanceState)
         binding.btnClose.setOnClickListener { dismiss() }
         binding.btnCopy.setOnClickListener { copyStackTraceToClipboard() }
+        binding.analysisDevSuggestionHeader.setOnClickListener { toggleDevSuggestion() }
+        initRuleEngine()
         observeViewModel()
     }
 
@@ -97,6 +104,7 @@ class CrashDetailBottomSheet : BottomSheetDialogFragment() {
                     ?: getString(R.string.crash_info_title)
                 currentStackTrace = a.stackTrace
                 binding.textStackTrace.text = a.stackTrace
+                runAnalysis(a.stackTrace)
             }
             is CrashDetailArgs.FromId -> {
                 if (a.crashId.isBlank()) {
@@ -117,6 +125,7 @@ class CrashDetailBottomSheet : BottomSheetDialogFragment() {
                                     binding.tvTitle.text = state.title
                                     currentStackTrace = state.stackTrace
                                     binding.textStackTrace.text = state.stackTrace
+                                    runAnalysis(state.stackTrace)
                                 }
                                 is CrashDetailUiState.Error -> {
                                     if (_binding == null) return@collect
@@ -137,6 +146,57 @@ class CrashDetailBottomSheet : BottomSheetDialogFragment() {
         val clipboard = requireContext().getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
         clipboard.setPrimaryClip(ClipData.newPlainText("crash_stack_trace", currentStackTrace))
         Toast.makeText(requireContext(), R.string.crash_detail_copied, Toast.LENGTH_SHORT).show()
+    }
+
+    private fun initRuleEngine() {
+        ruleEngine = try {
+            RuleEngine.fromAssets(requireContext())
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    private fun runAnalysis(stackTrace: String) {
+        val engine = ruleEngine ?: return
+        if (_binding == null) return
+        val firstLine = stackTrace.lineSequence().firstOrNull()?.trim().orEmpty()
+        val exceptionClass = firstLine
+            .removePrefix("Caused by:")
+            .substringBefore(':')
+            .substringBefore('@')
+            .trim()
+        val analysis = engine.match(exceptionClass, stackTrace)
+        if (analysis != null) {
+            showAnalysisCard(analysis)
+        } else {
+            binding.analysisCard.isVisible = false
+        }
+    }
+
+    private fun showAnalysisCard(analysis: CrashAnalysis) {
+        binding.analysisCategoryChip.text = analysis.category
+        binding.analysisRootCauseGroup.removeAllViews()
+        for (tag in analysis.rootCauseTags) {
+            val chip = Chip(requireContext()).apply {
+                text = tag
+                isClickable = false
+                setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 11f)
+            }
+            binding.analysisRootCauseGroup.addView(chip)
+        }
+        binding.analysisSuggestion.text = analysis.suggestion
+        binding.analysisDevSuggestion.text = analysis.devSuggestion
+        binding.analysisDevSuggestion.isVisible = false
+        binding.analysisDevSuggestionHeader.text = getString(R.string.analysis_dev_suggestion_header)
+        binding.analysisCard.isVisible = true
+    }
+
+    private fun toggleDevSuggestion() {
+        val devText = binding.analysisDevSuggestion
+        devText.isVisible = !devText.isVisible
+        val header = binding.analysisDevSuggestionHeader
+        val arrow = if (devText.isVisible) "▼ " else "▶ "
+        header.text = arrow + getString(R.string.analysis_dev_suggestion_header)
     }
 
     companion object {

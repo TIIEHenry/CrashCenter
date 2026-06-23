@@ -154,6 +154,11 @@
     <string name="logcat_level_info">I</string>
     <string name="logcat_level_debug">D</string>
 
+    <!-- Crash analysis (4G) -->
+    <string name="analysis_suggestion_header">Suggested fix</string>
+    <string name="analysis_dev_suggestion_header">Developer details</string>
+    <string name="analysis_disclaimer">AI-generated heuristic — verify before applying changes.</string>
+
     <!-- Root status & crash test -->
     <string name="item_test_crash">Test crash</string>
     <string name="test_crash_confirm_title">Trigger test crash?</string>

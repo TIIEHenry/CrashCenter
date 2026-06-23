@@ -1,0 +1,95 @@
+{
+  "version": 1,
+  "rules": [
+    {
+      "id": "anr",
+      "exceptionClassPatterns": [],
+      "stackTracePatterns": ["ANR in"],
+      "category": "Application Not Responding",
+      "rootCauseTags": ["Main thread blocked", "UI freeze"],
+      "suggestion": "Avoid long operations (network, database, file I/O) on the main thread.",
+      "devSuggestion": "Use AsyncTask, coroutines (Dispatchers.IO), or WorkManager for background work. Check for deadlock or lock contention in synchronized blocks. Use StrictMode to detect accidental main-thread I/O during development."
+    },
+    {
+      "id": "npe",
+      "exceptionClassPatterns": ["java.lang.NullPointerException"],
+      "stackTracePatterns": [],
+      "category": "Null Reference",
+      "rootCauseTags": ["Null dereference", "Uninitialized object"],
+      "suggestion": "Check for null references before accessing objects.",
+      "devSuggestion": "Enable Kotlin null-safety (val?: operator). Add null checks or use Optional. Initialize fields in constructors or @PostConstruct. Audit Intent extras, Bundle values, and cursor results for null."
+    },
+    {
+      "id": "oom",
+      "exceptionClassPatterns": ["java.lang.OutOfMemoryError"],
+      "stackTracePatterns": [],
+      "category": "Memory Exhaustion",
+      "rootCauseTags": ["Heap overflow", "Large allocation"],
+      "suggestion": "Reduce memory usage or image sizes.",
+      "devSuggestion": "Use BitmapFactory.Options.inSampleSize for image downsampling. Load large files in chunks via streams. Avoid holding references to Activities/Contexts in static fields. Profile with Android Studio Memory Profiler. Increase largeHeap if justified."
+    },
+    {
+      "id": "stack_overflow",
+      "exceptionClassPatterns": ["java.lang.StackOverflowError"],
+      "stackTracePatterns": [],
+      "category": "Stack Overflow",
+      "rootCauseTags": ["Infinite recursion", "Deep call chain"],
+      "suggestion": "Check for infinite recursion in method calls.",
+      "devSuggestion": "Verify all recursive methods have a valid base case. Check mutual recursion (A calls B calls A). Use iterative alternatives or explicit stacks for deep traversals. Set a recursion depth limit if appropriate."
+    },
+    {
+      "id": "security",
+      "exceptionClassPatterns": ["java.lang.SecurityException"],
+      "stackTracePatterns": [],
+      "category": "Permission Denied",
+      "rootCauseTags": ["Missing permission", "Permission revoked"],
+      "suggestion": "Check that all required permissions are granted.",
+      "devSuggestion": "Request runtime permissions before accessing protected APIs. Handle Permission Revocation gracefully (re-request or show rationale). Check for signature-level or system-level permission requirements. Verify AndroidManifest.xml declarations."
+    },
+    {
+      "id": "class_cast",
+      "exceptionClassPatterns": ["java.lang.ClassCastException"],
+      "stackTracePatterns": [],
+      "category": "Type Mismatch",
+      "rootCauseTags": ["Wrong cast", "Generic erasure"],
+      "suggestion": "Check type compatibility before casting.",
+      "devSuggestion": "Use 'is' checks or safe casts (as?) in Kotlin. Avoid raw types and unchecked casts with generics. Verify serialization/deserialization type consistency. Check Intent/Bundle extras before casting."
+    },
+    {
+      "id": "illegal_state",
+      "exceptionClassPatterns": ["java.lang.IllegalStateException"],
+      "stackTracePatterns": [],
+      "category": "Invalid State",
+      "rootCauseTags": ["Lifecycle violation", "State precondition failed"],
+      "suggestion": "Check component lifecycle state before performing operations.",
+      "devSuggestion": "Ensure Fragment/Activity is in correct lifecycle state (e.g., don't commit after onSaveInstanceState). Use viewLifecycleOwner for Fragment view operations. Add state guards before state-dependent API calls."
+    },
+    {
+      "id": "network_on_main",
+      "exceptionClassPatterns": ["android.os.NetworkOnMainThreadException"],
+      "stackTracePatterns": [],
+      "category": "Network on Main Thread",
+      "rootCauseTags": ["Blocking UI thread", "Network call on main"],
+      "suggestion": "Move network calls to a background thread.",
+      "devSuggestion": "Use coroutines with Dispatchers.IO, Retrofit with enqueue(), or OkHttp's async API. Wrap network calls in withContext(Dispatchers.IO). StrictMode can catch this during development."
+    },
+    {
+      "id": "sql",
+      "exceptionClassPatterns": ["android.database.sqlite.SQLiteException"],
+      "stackTracePatterns": [],
+      "category": "Database Error",
+      "rootCauseTags": ["Schema mismatch", "Corrupt database"],
+      "suggestion": "Check database schema and queries.",
+      "devSuggestion": "Verify table schema matches your queries (column names, types). Add incremental migrations in Room/onUpgrade. Handle database corruption with Room.databaseBuilder.fallbackToDestructiveMigration(). Use transactions for batch operations."
+    },
+    {
+      "id": "io",
+      "exceptionClassPatterns": ["java.io.IOException", "java.io.FileNotFoundException"],
+      "stackTracePatterns": [],
+      "category": "I/O Error",
+      "rootCauseTags": ["File access", "Stream failure"],
+      "suggestion": "Check file/network permissions and connectivity.",
+      "devSuggestion": "Check storage permissions (READ/WRITE_EXTERNAL_STORAGE, scoped storage). Handle FileNotFoundException and EOFException gracefully. Use try-with-resources (use{} in Kotlin) to close streams. Verify network availability before network I/O."
+    }
+  ]
+}

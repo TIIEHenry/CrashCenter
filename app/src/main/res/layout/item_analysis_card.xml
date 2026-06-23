@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/analysisCard"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginHorizontal="@dimen/content_padding_horizontal"
+    android:layout_marginTop="@dimen/spacing_sm"
+    android:background="@drawable/bg_analysis_card"
+    android:orientation="vertical"
+    android:paddingHorizontal="@dimen/spacing_lg"
+    android:paddingTop="@dimen/spacing_lg"
+    android:paddingBottom="@dimen/spacing_md"
+    android:visibility="gone">
+
+    <!-- Category chip -->
+    <com.google.android.material.chip.Chip
+        android:id="@+id/analysisCategoryChip"
+        style="@style/AppTheme.Chip"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:clickable="false"
+        android:textSize="13sp" />
+
+    <!-- Root cause tags -->
+    <com.google.android.material.chip.ChipGroup
+        android:id="@+id/analysisRootCauseGroup"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/spacing_sm"
+        app:chipSpacingHorizontal="@dimen/spacing_sm"
+        app:singleLine="true" />
+
+    <!-- User-facing suggestion -->
+    <TextView
+        android:id="@+id/analysisSuggestion"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/spacing_md"
+        android:lineSpacingMultiplier="1.3"
+        android:textColor="?android:attr/textColorPrimary"
+        android:textSize="14sp" />
+
+    <!-- Dev suggestion (collapsible, collapsed by default) -->
+    <TextView
+        android:id="@+id/analysisDevSuggestionHeader"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/spacing_sm"
+        android:background="?android:attr/selectableItemBackground"
+        android:clickable="true"
+        android:focusable="true"
+        android:paddingVertical="@dimen/spacing_xs"
+        android:text="@string/analysis_dev_suggestion_header"
+        android:textColor="?android:attr/textColorSecondary"
+        android:textSize="13sp" />
+
+    <TextView
+        android:id="@+id/analysisDevSuggestion"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/spacing_sm"
+        android:lineSpacingMultiplier="1.3"
+        android:textColor="?android:attr/textColorSecondary"
+        android:textSize="13sp"
+        android:visibility="gone" />
+
+    <!-- Disclaimer -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/spacing_md"
+        android:text="@string/analysis_disclaimer"
+        android:textColor="?android:attr/textColorSecondary"
+        android:textSize="11sp" />
+
+</LinearLayout>
