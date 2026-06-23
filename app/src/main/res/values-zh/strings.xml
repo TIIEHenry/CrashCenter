@@ -200,5 +200,7 @@
 
     <string name="stats_section_top_categories">异常类别 TOP</string>
     <string name="stats_section_top_clusters">重复崩溃 TOP</string>
+    <string name="notif_intercepted_count">已拦截 %1$d 次</string>
+    <string name="notif_view_all">查看全部</string>
 
 </resources>
