@@ -12,10 +12,17 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.withContext
 import nota.android.crash.common.data.CrashEvent
+import nota.android.crash.xp.app.BuildConfig
 import nota.android.crash.xp.app.common.BaseFlowViewModel
 import nota.android.crash.xp.app.common.safeLog
 import nota.android.crash.xp.app.data.CrashFilter
 import nota.android.crash.xp.app.data.CrashLogRepository
+import java.io.ByteArrayOutputStream
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+import java.util.zip.ZipEntry
+import java.util.zip.ZipOutputStream
 
 class CrashHistoryViewModel(
     private val repository: CrashLogRepository,
@@ -79,6 +86,42 @@ class CrashHistoryViewModel(
             safeLog("CrashHistoryViewModel", "exportEvents failed", e)
             null
         }
+    }
+
+    /**
+     * Returns all crash events packaged as a zip [ByteArray].
+     * The zip contains:
+     * - `crash_events.jsonl` — all events
+     * - `metadata.json` — export timestamp, event count, app version
+     * Returns null if no events exist or on error.
+     */
+    suspend fun exportZip(): ByteArray? = withContext(ioDispatcher) {
+        try {
+            val events = repository.getAll(CrashFilter(), limit = Int.MAX_VALUE, offset = 0)
+            if (events.isEmpty()) return@withContext null
+
+            val timestamp = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US).format(Date())
+            val baos = ByteArrayOutputStream()
+            ZipOutputStream(baos).use { zip ->
+                zip.putNextEntry(ZipEntry("crash_events.jsonl"))
+                events.forEach { event ->
+                    zip.write((event.toJsonLine() + "\n").toByteArray())
+                }
+                zip.closeEntry()
+
+                zip.putNextEntry(ZipEntry("metadata.json"))
+                zip.write(buildMetadataJson(timestamp, events.size).toByteArray())
+                zip.closeEntry()
+            }
+            baos.toByteArray()
+        } catch (e: Exception) {
+            safeLog("CrashHistoryViewModel", "exportZip failed", e)
+            null
+        }
+    }
+
+    private fun buildMetadataJson(timestamp: String, eventCount: Int): String {
+        return """{"exportTimestamp":"$timestamp","eventCount":$eventCount,"appVersion":"${BuildConfig.VERSION_NAME}"}"""
     }
 
     /**

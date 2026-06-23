@@ -11,6 +11,8 @@ import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.Toast
 
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
@@ -50,6 +52,20 @@ class CrashHistoryFragment : Fragment() {
 
     private lateinit var adapter: CrashHistoryPagingAdapter
     private var lastHistoryCleared = 0
+    private var privacyAcknowledgedThisSession = false
+
+    private lateinit var saveZipLauncher: ActivityResultLauncher<String>
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        saveZipLauncher = registerForActivityResult(
+            ActivityResultContracts.CreateDocument("application/zip"),
+        ) { uri ->
+            if (uri != null) {
+                writeZipToUri(uri)
+            }
+        }
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -176,8 +192,21 @@ class CrashHistoryFragment : Fragment() {
                 showClearHistoryDialog()
                 true
             }
+            R.id.item_observe_import_logcat -> {
+                navigateToLogcatTab()
+                true
+            }
             else -> false
         }
+    }
+
+    private fun navigateToLogcatTab() {
+        val host = parentFragment as? ObserveHostFragment ?: return
+        val tabLayout = host.view?.findViewById<com.google.android.material.tabs.TabLayout>(
+            R.id.tabLayout,
+        ) ?: return
+        // TAB_LOGCAT = 2
+        tabLayout.selectTab(tabLayout.getTabAt(2))
     }
 
     private fun showClearHistoryDialog() {
@@ -213,6 +242,43 @@ class CrashHistoryFragment : Fragment() {
     }
 
     private fun exportLogs() {
+        if (privacyAcknowledgedThisSession) {
+            showExportTypeDialog()
+        } else {
+            showPrivacyDialog()
+        }
+    }
+
+    private fun showPrivacyDialog() {
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle(R.string.observe_export_privacy_title)
+            .setMessage(R.string.observe_export_privacy_message)
+            .setPositiveButton(R.string.observe_export_continue) { _, _ ->
+                privacyAcknowledgedThisSession = true
+                showExportTypeDialog()
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
+    }
+
+    private fun showExportTypeDialog() {
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle(R.string.observe_menu_export)
+            .setItems(
+                arrayOf(
+                    getString(R.string.observe_export_share),
+                    getString(R.string.observe_export_save),
+                ),
+            ) { _, which ->
+                when (which) {
+                    0 -> shareLogs()
+                    1 -> saveLogsZip()
+                }
+            }
+            .show()
+    }
+
+    private fun shareLogs() {
         viewLifecycleOwner.lifecycleScope.launch {
             val jsonl = viewModel.exportEvents()
             if (jsonl == null) {
@@ -237,6 +303,29 @@ class CrashHistoryFragment : Fragment() {
                     addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                 }
                 startActivity(Intent.createChooser(intent, getString(R.string.observe_menu_export)))
+            } catch (e: Exception) {
+                Toast.makeText(requireContext(), R.string.observe_export_error, Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    private fun saveLogsZip() {
+        val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
+        saveZipLauncher.launch("crash_export_$timestamp.zip")
+    }
+
+    private fun writeZipToUri(uri: android.net.Uri) {
+        viewLifecycleOwner.lifecycleScope.launch {
+            val zipBytes = viewModel.exportZip()
+            if (zipBytes == null) {
+                Toast.makeText(requireContext(), R.string.observe_export_no_events, Toast.LENGTH_SHORT).show()
+                return@launch
+            }
+            try {
+                requireContext().contentResolver.openOutputStream(uri)?.use { out ->
+                    out.write(zipBytes)
+                }
+                Toast.makeText(requireContext(), R.string.observe_export_saved, Toast.LENGTH_SHORT).show()
             } catch (e: Exception) {
                 Toast.makeText(requireContext(), R.string.observe_export_error, Toast.LENGTH_SHORT).show()
             }

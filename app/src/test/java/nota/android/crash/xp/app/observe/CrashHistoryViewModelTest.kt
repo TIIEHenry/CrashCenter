@@ -17,10 +17,14 @@ import nota.android.crash.xp.app.data.FakeCrashLogRepository
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import org.json.JSONObject
+import java.util.zip.ZipInputStream
+import java.io.ByteArrayInputStream
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class CrashHistoryViewModelTest {
@@ -324,6 +328,80 @@ class CrashHistoryViewModelTest {
         createViewModel()
 
         val result = viewModel.exportEvents()
+        assertNull(result)
+    }
+
+    // ─── exportZip ───
+
+    @Test
+    fun `exportZip returns null when no events exist`() = testScope.runTest {
+        createViewModel()
+        val result = viewModel.exportZip()
+        assertNull(result)
+    }
+
+    @Test
+    fun `exportZip returns valid zip with expected entries`() = testScope.runTest {
+        repository.events = listOf(
+            CrashEvent(id = "e1", timestampMs = 1000L, packageName = "com.example.a", exceptionClass = "NullPointerException"),
+            CrashEvent(id = "e2", timestampMs = 2000L, packageName = "com.example.b", exceptionClass = "IllegalStateException"),
+        )
+        createViewModel()
+
+        val result = viewModel.exportZip()
+        assertNotNull(result)
+
+        val entries = mutableMapOf<String, String>()
+        ZipInputStream(ByteArrayInputStream(result!!)).use { zip ->
+            var entry = zip.nextEntry
+            while (entry != null) {
+                entries[entry.name] = zip.bufferedReader().readText()
+                entry = zip.nextEntry
+            }
+        }
+
+        assertTrue(entries.containsKey("crash_events.jsonl"))
+        assertTrue(entries.containsKey("metadata.json"))
+
+        val jsonlLines = entries["crash_events.jsonl"]!!.lines().filter { it.isNotBlank() }
+        assertEquals(2, jsonlLines.size)
+        assertTrue(jsonlLines[0].contains("\"id\""))
+        assertTrue(jsonlLines[1].contains("\"id\""))
+    }
+
+    @Test
+    fun `exportZip metadata contains correct event count and app version`() = testScope.runTest {
+        repository.events = listOf(
+            CrashEvent(id = "e1", timestampMs = 1000L, packageName = "com.example.a", exceptionClass = "NullPointerException"),
+            CrashEvent(id = "e2", timestampMs = 2000L, packageName = "com.example.b", exceptionClass = "IllegalStateException"),
+            CrashEvent(id = "e3", timestampMs = 3000L, packageName = "com.example.c", exceptionClass = "RuntimeException"),
+        )
+        createViewModel()
+
+        val result = viewModel.exportZip()
+        assertNotNull(result)
+
+        val entries = mutableMapOf<String, String>()
+        ZipInputStream(ByteArrayInputStream(result!!)).use { zip ->
+            var entry = zip.nextEntry
+            while (entry != null) {
+                entries[entry.name] = zip.bufferedReader().readText()
+                entry = zip.nextEntry
+            }
+        }
+
+        val metadata = JSONObject(entries["metadata.json"]!!)
+        assertEquals(3, metadata.getInt("eventCount"))
+        assertTrue(metadata.has("exportTimestamp"))
+        assertTrue(metadata.has("appVersion"))
+    }
+
+    @Test
+    fun `exportZip returns null when repository throws`() = testScope.runTest {
+        repository.throwOnGetAll = true
+        createViewModel()
+
+        val result = viewModel.exportZip()
         assertNull(result)
     }
 

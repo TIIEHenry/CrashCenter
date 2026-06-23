@@ -51,4 +51,12 @@
 
     <!-- Press overlay (iOS-style surface press) — light: black 8% -->
     <color name="press_overlay">#14000000</color>
+
+    <!-- Logcat level colors -->
+    <color name="logcat_fatal">#FFD32F2F</color>
+    <color name="logcat_error">#FFE53935</color>
+    <color name="logcat_warning">#FFFB8C00</color>
+    <color name="logcat_info">#FF43A047</color>
+    <color name="logcat_debug">#FF1E88E5</color>
+    <color name="logcat_verbose">#FF757575</color>
 </resources>

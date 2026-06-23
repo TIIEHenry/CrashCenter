@@ -70,6 +70,12 @@
     <string name="observe_filter_title">Filter by package</string>
     <string name="observe_filter_package_hint">e.g. com.example.app</string>
     <string name="observe_menu_export">Export logs</string>
+    <string name="observe_export_privacy_title">Export Crash Logs</string>
+    <string name="observe_export_privacy_message">Crash logs contain stack traces, package names, and device info. Share only with trusted parties.</string>
+    <string name="observe_export_continue">Continue</string>
+    <string name="observe_export_share">Share</string>
+    <string name="observe_export_save">Save to file</string>
+    <string name="observe_export_saved">Zip saved successfully</string>
     <string name="observe_menu_stats">Statistics</string>
     <string name="observe_menu_retention">Retention limits</string>
     <string name="observe_menu_clear_history">Clear history</string>
@@ -120,6 +126,21 @@
     <string name="intervention_status_pending">Pending setup</string>
     <string name="rule_saved">Rule saved</string>
 
+    <!-- Logcat analysis (4F) -->
+    <string name="tab_logcat">Logcat</string>
+    <string name="observe_menu_import_logcat">Import logcat</string>
+    <string name="logcat_empty">No logcat data loaded. Import a logcat file (.txt) captured via adb logcat.</string>
+    <string name="logcat_loading">Parsing logcat…</string>
+    <string name="logcat_import_action">Import logcat file</string>
+    <string name="logcat_import_error">Failed to read logcat file</string>
+    <string name="logcat_file_empty">Logcat file is empty</string>
+    <string name="logcat_file_too_large">File exceeds 5 MB; results may be truncated</string>
+    <string name="logcat_level_fatal">F</string>
+    <string name="logcat_level_error">E</string>
+    <string name="logcat_level_warning">W</string>
+    <string name="logcat_level_info">I</string>
+    <string name="logcat_level_debug">D</string>
+
     <!-- Plurals -->
     <plurals name="app_count">
         <item quantity="one">%1$d app</item>
@@ -144,6 +165,14 @@
     <plurals name="permission_list_partial_compact">
         <item quantity="one">%1$d app visible — tap to grant</item>
         <item quantity="other">%1$d apps visible — tap to grant</item>
+    </plurals>
+    <plurals name="logcat_entry_count">
+        <item quantity="one">%1$d entry</item>
+        <item quantity="other">%1$d entries</item>
+    </plurals>
+    <plurals name="logcat_entry_count_filtered">
+        <item quantity="one">%1$d of %2$d entries shown</item>
+        <item quantity="other">%1$d of %2$d entries shown</item>
     </plurals>
 
 </resources>

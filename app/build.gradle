@@ -43,6 +43,7 @@ android {
     buildFeatures {
         viewBinding true
         dataBinding false
+        buildConfig true
     }
     dependenciesInfo {
         includeInApk false
