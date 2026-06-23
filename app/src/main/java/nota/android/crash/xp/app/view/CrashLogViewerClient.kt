@@ -22,7 +22,7 @@ class CrashLogViewerClient(
 
     override fun initView() {
         super.initView()
-        codeEditor.isEditable = false
+        // Keep editor interactive (select, zoom, scroll) — don't set isEditable=false
         quickFloatLayout.upView.visibility = View.GONE
         quickFloatLayout.downView.visibility = View.GONE
         layout.findViewById<View>(R.id.quick_input_layout)?.visibility = View.GONE
