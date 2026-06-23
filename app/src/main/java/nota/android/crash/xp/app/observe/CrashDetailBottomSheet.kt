@@ -85,6 +85,8 @@ class CrashDetailBottomSheet : BottomSheetDialogFragment() {
         binding.btnCopy.setOnClickListener { copyStackTraceToClipboard() }
         binding.analysisDevSuggestionHeader.setOnClickListener { toggleDevSuggestion() }
         viewer = CrashLogViewerClient.attach(requireContext(), binding.viewerContainer)
+        // Disable BottomSheet drag when touching CodeEditor
+        configureBottomSheetForCodeEditor()
         initRuleEngine()
         observeViewModel()
     }
@@ -194,6 +196,16 @@ class CrashDetailBottomSheet : BottomSheetDialogFragment() {
         binding.analysisDevSuggestion.isVisible = false
         binding.analysisDevSuggestionHeader.text = getString(R.string.analysis_dev_suggestion_header)
         binding.analysisCard.isVisible = true
+    }
+
+    private fun configureBottomSheetForCodeEditor() {
+        // Let CodeEditor handle its own touch events (scroll, select)
+        // without triggering BottomSheet drag
+        val container = binding.viewerContainer
+        container.setOnTouchListener { v, event ->
+            v.parent.requestDisallowInterceptTouchEvent(true)
+            false
+        }
     }
 
     private fun toggleDevSuggestion() {
