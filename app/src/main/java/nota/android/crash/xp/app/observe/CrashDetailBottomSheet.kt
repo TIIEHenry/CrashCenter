@@ -13,6 +13,7 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import android.app.Dialog
 import android.util.Log
 import androidx.fragment.app.DialogFragment
 import com.google.android.material.chip.Chip
@@ -69,6 +70,10 @@ class CrashDetailBottomSheet : DialogFragment() {
         ServiceLocator.crashDetailViewModelFactory(this, requireContext())
     }
 
+    override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
+        return Dialog(requireContext(), android.R.style.Theme_Material_NoActionBar)
+    }
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -90,7 +95,6 @@ class CrashDetailBottomSheet : DialogFragment() {
 
     override fun onStart() {
         super.onStart()
-        // Full-screen dialog
         dialog?.window?.setLayout(
             ViewGroup.LayoutParams.MATCH_PARENT,
             ViewGroup.LayoutParams.MATCH_PARENT,
