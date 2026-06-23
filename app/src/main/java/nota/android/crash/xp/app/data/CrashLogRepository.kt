@@ -20,7 +20,7 @@ interface CrashLogRepository {
     fun getAll(filter: CrashFilter, limit: Int, offset: Int): List<CrashEvent>
     fun getById(id: String): CrashEvent?
     fun getCount(filter: CrashFilter): Int
-    fun getPackageCounts(): List<Pair<String, Int>>
+    fun getPackageCounts(filter: CrashFilter = CrashFilter()): List<Pair<String, Int>>
     fun deleteById(id: String): Boolean
     fun clear()
     fun applyRetention()
@@ -111,10 +111,10 @@ class FileCrashLogRepository(
         }
     }
 
-    override fun getPackageCounts(): List<Pair<String, Int>> {
+    override fun getPackageCounts(filter: CrashFilter): List<Pair<String, Int>> {
         return lock.read {
             val counts = mutableMapOf<String, Int>()
-            streamEvents { event ->
+            streamEvents(filter = filter) { event ->
                 counts[event.packageName] = (counts[event.packageName] ?: 0) + 1
                 true
             }

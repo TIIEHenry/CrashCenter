@@ -16,13 +16,14 @@ import nota.android.crash.xp.app.data.CrashLogRepository
 import nota.android.crash.xp.app.data.StatsAggregator
 
 class PerAppCrashViewModel(
-    private val packageName: String,
+    private val packageName: String?,
+    exceptionClass: String? = null,
     repository: CrashLogRepository,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) : BaseFlowViewModel<PerAppCrashUiState>(PerAppCrashUiState()) {
 
     private val aggregator = StatsAggregator(repository)
-    private val filter = CrashFilter(packageName = packageName)
+    private val filter = CrashFilter(packageName = packageName, exceptionClass = exceptionClass)
 
     val pagingData: Flow<PagingData<CrashEvent>> = Pager(
         config = PagingConfig(
@@ -35,7 +36,13 @@ class PerAppCrashViewModel(
 
     fun loadSummary() {
         loadWithState(viewModelScope) {
-            val summary = withContext(ioDispatcher) { aggregator.computePerAppStats(packageName) }
+            val summary = withContext(ioDispatcher) {
+                if (packageName != null) {
+                    aggregator.computePerAppStats(packageName)
+                } else {
+                    aggregator.computeFilteredStats(filter)
+                }
+            }
             emitState { copy(isLoading = false, summary = summary) }
         }
     }

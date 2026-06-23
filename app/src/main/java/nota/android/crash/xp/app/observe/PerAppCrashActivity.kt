@@ -27,20 +27,22 @@ import nota.android.crash.xp.app.di.perAppCrashViewModelFactory
 class PerAppCrashActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityPerAppCrashBinding
-    private lateinit var packageName: String
+    private var packageName: String? = null
+    private var exceptionClass: String? = null
     private lateinit var adapter: CrashHistoryPagingAdapter
 
     private val viewModel: PerAppCrashViewModel by viewModels {
-        ServiceLocator.perAppCrashViewModelFactory(this, packageName)
+        ServiceLocator.perAppCrashViewModelFactory(this, packageName, exceptionClass)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         packageName = intent.getStringExtra(EXTRA_PACKAGE_NAME)
-            ?: run {
-                finish()
-                return
-            }
+        exceptionClass = intent.getStringExtra(EXTRA_EXCEPTION_CLASS)
+        if (packageName == null && exceptionClass == null) {
+            finish()
+            return
+        }
 
         binding = ActivityPerAppCrashBinding.inflate(layoutInflater)
         setContentView(binding.root)
@@ -76,11 +78,20 @@ class PerAppCrashActivity : AppCompatActivity() {
     }
 
     private fun loadAppHeader() {
-        binding.tvPackageName.text = packageName
-        val appInfo = PackageInfoLoader.loadAppInfo(packageManager, packageName)?.second
+        val pkg = packageName
+        if (pkg == null) {
+            binding.tvPackageName.visibility = View.GONE
+            binding.tvLabel.text = exceptionClass ?: ""
+            binding.toolbar.title = exceptionClass ?: ""
+            binding.tvUninstalled.visibility = View.GONE
+            binding.ivIcon.setImageResource(R.mipmap.ic_launcher)
+            return
+        }
+        binding.tvPackageName.text = pkg
+        val appInfo = PackageInfoLoader.loadAppInfo(packageManager, pkg)?.second
         if (appInfo == null) {
-            binding.toolbar.title = packageName
-            binding.tvLabel.text = packageName
+            binding.toolbar.title = pkg
+            binding.tvLabel.text = pkg
             binding.tvUninstalled.visibility = View.VISIBLE
             binding.ivIcon.setImageResource(R.mipmap.ic_launcher)
             return
@@ -168,5 +179,6 @@ class PerAppCrashActivity : AppCompatActivity() {
 
     companion object {
         const val EXTRA_PACKAGE_NAME = "packageName"
+        const val EXTRA_EXCEPTION_CLASS = "extra_exception_class"
     }
 }

@@ -56,10 +56,11 @@ fun ServiceLocator.crashStatsViewModelFactory(context: Context): ViewModelProvid
 
 fun ServiceLocator.perAppCrashViewModelFactory(
     context: Context,
-    packageName: String,
+    packageName: String?,
+    exceptionClass: String? = null,
 ): ViewModelProvider.Factory =
     ViewModelFactory {
-        PerAppCrashViewModel(packageName, crashLogRepository(context))
+        PerAppCrashViewModel(packageName, exceptionClass, crashLogRepository(context))
     }
 
 fun ServiceLocator.addManagedAppViewModelFactory(context: Context): ViewModelProvider.Factory =

@@ -32,8 +32,8 @@ class FakeCrashLogRepository : CrashLogRepository {
         return filteredEvents(filter).size
     }
 
-    override fun getPackageCounts(): List<Pair<String, Int>> {
-        return events
+    override fun getPackageCounts(filter: CrashFilter): List<Pair<String, Int>> {
+        return filteredEvents(filter)
             .groupingBy { it.packageName }
             .eachCount()
             .entries

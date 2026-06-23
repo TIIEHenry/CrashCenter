@@ -44,6 +44,17 @@ class StatsAggregator(
         )
     }
 
+    suspend fun computeFilteredStats(filter: CrashFilter): PerAppStats {
+        val events = repository.getAll(filter, limit = Int.MAX_VALUE, offset = 0)
+        val topException = topExceptionClasses(events, limit = 1).firstOrNull()
+        return PerAppStats(
+            totalCount = events.size,
+            mostRecentTimestampMs = events.maxOfOrNull { it.timestampMs } ?: 0L,
+            topExceptionClass = topException?.exceptionClass,
+            topExceptionCount = topException?.count ?: 0,
+        )
+    }
+
     fun topPackages(events: List<CrashEvent>, limit: Int = TOP_N): List<PackageCount> =
         events.groupBy { it.packageName }
             .mapValues { it.value.size }

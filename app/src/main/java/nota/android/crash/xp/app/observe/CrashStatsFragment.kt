@@ -112,6 +112,7 @@ class CrashStatsFragment : Fragment() {
             entries = stats.topExceptionClasses,
             labelExtractor = ExceptionCount::exceptionClass,
             countExtractor = ExceptionCount::count,
+            onClick = { entry -> openPerAppCrashForException(entry.exceptionClass) },
         )
         binding.topExceptionsCard.visibility =
             if (stats.topExceptionClasses.isNotEmpty()) View.VISIBLE else View.GONE
@@ -123,6 +124,7 @@ class CrashStatsFragment : Fragment() {
             entries = stats.topCategories,
             labelExtractor = CategoryCount::category,
             countExtractor = CategoryCount::count,
+            onClick = { entry -> openPerAppCrashForException(entry.category) },
         )
         binding.topCategoriesCard.visibility =
             if (stats.topCategories.isNotEmpty()) View.VISIBLE else View.GONE
@@ -173,6 +175,14 @@ class CrashStatsFragment : Fragment() {
         startActivity(
             Intent(requireContext(), PerAppCrashActivity::class.java).apply {
                 putExtra(PerAppCrashActivity.EXTRA_PACKAGE_NAME, packageName)
+            },
+        )
+    }
+
+    private fun openPerAppCrashForException(exceptionClass: String) {
+        startActivity(
+            Intent(requireContext(), PerAppCrashActivity::class.java).apply {
+                putExtra(PerAppCrashActivity.EXTRA_EXCEPTION_CLASS, exceptionClass)
             },
         )
     }
