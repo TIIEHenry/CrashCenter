@@ -13,14 +13,14 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
-import android.app.Dialog
 import android.util.Log
-import androidx.fragment.app.DialogFragment
+import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.google.android.material.chip.Chip
 import kotlinx.coroutines.launch
 import nota.android.crash.analysis.RuleEngine
 import nota.android.crash.common.data.CrashAnalysis
 import nota.android.crash.xp.app.R
+import nota.android.crash.xp.app.common.ui.configureCrashDetailBottomSheetAppearance
 import nota.android.crash.xp.app.data.CrashDetailLoader
 import nota.android.crash.xp.app.di.ServiceLocator
 import nota.android.crash.xp.app.di.crashDetailViewModelFactory
@@ -57,7 +57,7 @@ sealed class CrashDetailArgs {
     }
 }
 
-class CrashDetailBottomSheet : DialogFragment() {
+class CrashDetailBottomSheet : BottomSheetDialogFragment() {
 
     private var _binding: BottomSheetCrashDetailBinding? = null
     private val binding get() = checkNotNull(_binding) { "Binding accessed after onDestroyView" }
@@ -68,10 +68,6 @@ class CrashDetailBottomSheet : DialogFragment() {
 
     private val viewModel: CrashDetailViewModel by viewModels {
         ServiceLocator.crashDetailViewModelFactory(this, requireContext())
-    }
-
-    override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
-        return Dialog(requireContext(), android.R.style.Theme_Material_NoActionBar)
     }
 
     override fun onCreateView(
@@ -95,10 +91,7 @@ class CrashDetailBottomSheet : DialogFragment() {
 
     override fun onStart() {
         super.onStart()
-        dialog?.window?.setLayout(
-            ViewGroup.LayoutParams.MATCH_PARENT,
-            ViewGroup.LayoutParams.MATCH_PARENT,
-        )
+        configureCrashDetailBottomSheetAppearance()
     }
 
     override fun onDestroyView() {

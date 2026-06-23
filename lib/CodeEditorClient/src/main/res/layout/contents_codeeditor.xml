@@ -11,7 +11,7 @@
 		android:layout_width="match_parent"
 		android:layout_height="0dp"
 		android:background="@color/main_content_background_color"
-		app:layout_constraintBottom_toTopOf="@+id/quick_input_layout"
+		app:layout_constraintBottom_toTopOf="@+id/select_operate_layout"
 		app:layout_constraintEnd_toEndOf="parent"
 		app:layout_constraintStart_toStartOf="parent"
 		app:layout_constraintTop_toTopOf="parent" />
@@ -86,9 +86,9 @@
 		android:background="@color/main_float_background_color"
 		android:elevation="2dp"
 		android:visibility="gone"
-		app:layout_constraintBottom_toTopOf="@id/quick_input_layout"
+		app:layout_constraintBottom_toBottomOf="parent"
 		app:layout_constraintEnd_toEndOf="parent"
-		app:layout_constraintStart_toEndOf="parent"
+		app:layout_constraintStart_toStartOf="parent"
 		tools:visibility="visible" />
 	
 	
