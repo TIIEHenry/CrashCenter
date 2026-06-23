@@ -40,18 +40,26 @@
 
     <item
         android:id="@+id/item_select_all"
-        android:title="@string/item_select_all" />
+        android:icon="@drawable/ic_select_all"
+        android:title="@string/item_select_all"
+        app:showAsAction="never" />
 
     <item
         android:id="@+id/item_cancel_all"
-        android:title="@string/item_deselect_all" />
+        android:icon="@drawable/ic_deselect_all"
+        android:title="@string/item_deselect_all"
+        app:showAsAction="never" />
 
     <item
         android:id="@+id/item_test_crash"
-        android:title="@string/item_test_crash" />
+        android:icon="@drawable/ic_bug_report"
+        android:title="@string/item_test_crash"
+        app:showAsAction="never" />
 
     <item
         android:id="@+id/item_help"
-        android:title="@string/item_about" />
+        android:icon="@drawable/ic_info"
+        android:title="@string/item_about"
+        app:showAsAction="never" />
 
 </menu>

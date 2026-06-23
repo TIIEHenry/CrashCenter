@@ -10,11 +10,15 @@
 
     <item
         android:id="@+id/item_observe_package_filter"
-        android:title="@string/observe_menu_package_filter" />
+        android:icon="@drawable/ic_app_visibility"
+        android:title="@string/observe_menu_package_filter"
+        app:showAsAction="never" />
 
     <item
         android:id="@+id/item_observe_sort"
-        android:title="@string/observe_menu_sort">
+        android:icon="@drawable/ic_sort"
+        android:title="@string/observe_menu_sort"
+        app:showAsAction="ifRoom">
         <menu>
             <item
                 android:id="@+id/item_sort_time_newest"
@@ -39,19 +43,27 @@
 
     <item
         android:id="@+id/item_observe_export"
-        android:title="@string/observe_menu_export" />
+        android:icon="@drawable/ic_export"
+        android:title="@string/observe_menu_export"
+        app:showAsAction="never" />
 
     <item
         android:id="@+id/item_observe_import_logcat"
-        android:title="@string/observe_menu_import_logcat" />
+        android:icon="@drawable/ic_import"
+        android:title="@string/observe_menu_import_logcat"
+        app:showAsAction="never" />
 
     <item
         android:id="@+id/item_observe_stats"
-        android:title="@string/observe_menu_stats" />
+        android:icon="@drawable/ic_stats"
+        android:title="@string/observe_menu_stats"
+        app:showAsAction="never" />
 
     <item
         android:id="@+id/item_observe_retention"
-        android:title="@string/observe_menu_retention" />
+        android:icon="@drawable/ic_settings"
+        android:title="@string/observe_menu_retention"
+        app:showAsAction="never" />
 
     <item
         android:id="@+id/item_clear_history"
