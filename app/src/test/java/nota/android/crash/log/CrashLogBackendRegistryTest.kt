@@ -136,12 +136,25 @@ class CrashLogBackendRegistryTest {
     // ─── module-side backends ───
 
     @Test
-    fun `enabledModuleBackends with empty prefs returns RootFsBackend by default`() {
+    fun `enabledModuleBackends with empty prefs returns module backends by default`() {
         val prefs = FakeSharedPreferences()
         val backends = CrashLogBackendRegistry.enabledModuleBackends(prefs)
         val ids = backends.map { it.id }
         assertTrue(ids.contains(BackendId.ROOT_FS))
+        assertTrue(ids.contains(BackendId.RELAY_MERGE))
+        assertEquals(2, backends.size)
+    }
+
+    @Test
+    fun `enabledModuleBackends disables relay_merge when pref is false`() {
+        val prefs = FakeSharedPreferences(
+            PrefManager.PREF_CRASH_LOG_BACKEND_RELAY_MERGE to false,
+        )
+        val backends = CrashLogBackendRegistry.enabledModuleBackends(prefs)
+        val ids = backends.map { it.id }
         assertEquals(1, backends.size)
+        assertTrue(ids.contains(BackendId.ROOT_FS))
+        assertTrue(ids.none { it == BackendId.RELAY_MERGE })
     }
 
     @Test
@@ -150,17 +163,21 @@ class CrashLogBackendRegistryTest {
             PrefManager.PREF_CRASH_LOG_BACKEND_ROOT_FS to false,
         )
         val backends = CrashLogBackendRegistry.enabledModuleBackends(prefs)
-        assertTrue(backends.isEmpty())
+        val ids = backends.map { it.id }
+        assertEquals(1, backends.size)
+        assertTrue(ids.contains(BackendId.RELAY_MERGE))
     }
 
     @Test
     fun `enabledModuleBackends includes root_fs when pref is true`() {
         val prefs = FakeSharedPreferences(
             PrefManager.PREF_CRASH_LOG_BACKEND_ROOT_FS to true,
+            PrefManager.PREF_CRASH_LOG_BACKEND_RELAY_MERGE to true,
         )
         val backends = CrashLogBackendRegistry.enabledModuleBackends(prefs)
-        assertEquals(1, backends.size)
+        assertEquals(2, backends.size)
         assertEquals(BackendId.ROOT_FS, backends[0].id)
+        assertEquals(BackendId.RELAY_MERGE, backends[1].id)
     }
 
     @Test

@@ -3,8 +3,8 @@ title: "崩溃日志多后端存储"
 type: architecture
 status: accepted
 phase: 4
-updated: 2026-06-22
-summary: "CrashLogBackend 抽象、4B-α Phase 2 并行写入已实现；root / ingest defer 4B-β；canonical JSONL 为 SSOT"
+updated: 2026-06-23
+summary: "CrashLogBackend 抽象、4B-α Phase 2 并行 + 4B-β RelayMerge ingest as-built；canonical JSONL 为 SSOT"
 ---
 
 # 崩溃日志多后端存储
@@ -22,7 +22,9 @@ summary: "CrashLogBackend 抽象、4B-α Phase 2 并行写入已实现；root / 
 2. **hook 侧并行写入** — root 短窗优先，失败后多 IPC 并行
 3. **模块侧 root ingest** — 管理器用 root 读取各 app 私有 relay，合并进 canonical 存储并供 UI 管理
 
-**4B-α 范围**：hook 侧 Phase 2 三后端并行；`RootSuBackend` 与模块侧 `CrashLogIngestCoordinator` **defer 4B-β**。
+**4B-α 范围**：hook 侧 Phase 2 三后端并行。
+
+**4B-β 范围（2026-06-23 部分 as-built）**：`RootSuBackend`、`RootFsBackend`、`RelayMergeBackend` + `CrashLogIngestCoordinator`（模块启动 harvest）；ingest 按 `event.id` dedupe（ADR-017 proposed）。
 
 **不变量**（与 [crash-logging.md](crash-logging.md) 一致）：
 
@@ -119,17 +121,18 @@ Provider IPC 细节见 [crash-log-ipc.md § As-built](crash-log-ipc.md#as-builtc
 
 ### backendWritten 字段
 
-JSONL 每行含 `backendWritten: ["provider_insert", ...]`，记录该次 append 成功的 backend wire name。多后端并行时各 backend 独立 stamp 自身 id（canonical 可能有多行同 `id` — 4B-β ingest dedupe 待建）。
+JSONL 每行含 `backendWritten: ["provider_insert", ...]`，记录该次 append 成功的 backend wire name。多后端并行时各 backend 独立 stamp；relay ingest 经 `RelayMergeBackend` 按 `id` dedupe 后合并为一行（`ingestedFrom` 标注来源）。
 
-### defer 4B-β
+### As-built 4B-β（2026-06-23，部分）
 
 | 组件 | 状态 |
 |------|------|
-| `RootSuBackend`（Phase 1） | 未实现 |
-| `CrashLogIngestCoordinator` | 未实现 |
-| `RootFsBackend` / `RelayMergeBackend` | 未实现 |
-| relay → canonical merge / dedupe | 未实现 |
-| `ingestedFrom` 字段 | 未实现 |
+| `RootSuBackend`（hook） | ✅ 与 Phase 2 **并行**注册（非原 Phase 1 短窗串行） |
+| `RootFsBackend`（模块） | ✅ `RootAccessClient` + libsu |
+| `RelayMergeBackend`（模块） | ✅ root 扫描 `crashcenter_relay/` → canonical append；`id` dedupe；删已 ingest relay |
+| `CrashLogIngestCoordinator` | ✅ `Application.onCreate` 委托 `RelayMergeBackend.harvest()` |
+| `ingestedFrom` 字段 | ✅ relay merge 路径写入（如 `target_relay`） |
+| IS-R1~IS-R5 真机矩阵 | 待 `dev/verification/` |
 
 ---
 
@@ -195,13 +198,13 @@ enum class ProcessSlot { HOOK, MODULE }
 
 | BackendId | tier | 进程 | 说明 |
 |-----------|------|------|------|
-| `root_su` | 0 | HOOK | `su` append canonical JSONL — **defer 4B-β** |
+| `root_su` | 0 | HOOK | `su` append canonical JSONL — ✅ 4B-β（与 Phase 2 并行） |
 | `provider_insert` | 1 | HOOK | `ContentResolver.insert` → [CrashLogProvider](crash-log-ipc.md) |
 | `direct_fs` | 2 | HOOK | `createPackageContext(module).filesDir` 直写 |
 | `target_relay` | 3 | HOOK | 写目标 app 私有 relay（同 UID，几乎必成功） |
-| `root_fsm` | 0 | MODULE | libsu RootService 读写 / merge — **defer 4B-β** |
+| `root_fsm` | 0 | MODULE | libsu RootService 读写 — ✅ 4B-β |
 | `local_fs` | 1 | MODULE | 同 UID canonical 读写（`FileCrashLogRepository` 读路径 ✅） |
-| `relay_merge` | 2 | MODULE | 扫描 relay 目录 merge — **defer 4B-β** |
+| `relay_merge` | 2 | MODULE | 扫描 relay 目录 merge + dedupe — ✅ 4B-β |
 | `logcat` | 9 | HOOK | 调试，不参与 success 判定；分析见 [adb-logcat-analysis.md](adb-logcat-analysis.md) |
 
 ---
@@ -291,9 +294,9 @@ su -c 'base64 -d >> /data/data/nota.android.crash.xp.app/files/crash_logs/events
 
 ---
 
-## 模块侧：CrashLogIngestCoordinator（defer 4B-β）
+## 模块侧：CrashLogIngestCoordinator（as-built 4B-β）
 
-> **4B-α 未实现**。以下为 4B-β 目标规格；4B-α 仅 `FileCrashLogRepository` 读 canonical。
+> **2026-06-23**：`CrashLogIngestCoordinator` 在 `CrashCenterApplication.onCreate` 调度 IO 协程；root 可用且 `crash_log_enabled` + `relay_merge` pref 开启时，委托 **`RelayMergeBackend.harvest()`**。扫描、dedupe、append、删 relay 逻辑在 `RelayMergeBackend`；Coordinator 为薄调度层。
 
 **管理器用 root 读取各 app 私有 relay，合并进 canonical，并供 UI 管理。**
 

@@ -1,10 +1,10 @@
 ---
 title: "Phase 4: 崩溃可观测性"
 type: roadmap
-status: draft
+status: in_progress
 phase: 4
-updated: 2026-06-22
-summary: "4B-α 多后端写入已编码；4B-γ canonical FS 方案；4C-β 半屏详情 + CodeEditor 已编码；4D 统计待实施"
+updated: 2026-06-23
+summary: "4C–4G-V2 部分 as-built；IS 矩阵与 4B-γ/配置入口待验"
 ---
 
 # Phase 4: 崩溃可观测性
@@ -50,21 +50,26 @@ summary: "4B-α 多后端写入已编码；4B-γ canonical FS 方案；4C-β 半
 ### 4B-β — root 优先 + ingest
 
 > 统一 Root 方案：[unified-root-service.md](../../../docs/architecture/unified-root-service.md)（单 `CrashCenterRootService` + `RootBroker`）；实施前 ADR-023。
+>
+> **2026-06-23 as-built**：`RootSuBackend`、`RootFsBackend`、`RelayMergeBackend`（`CrashLogIngestCoordinator` 委托 harvest）、`CrashLogIngestCoordinator`（`CrashCenterApplication.onCreate`）已编码；ingest 按 `event.id` dedupe（ADR-017 proposed）；`RootSu` 当前与 Phase 2 后端**并行**（非 ADR-008 原 Phase 1 短窗串行）。
 
-- [ ] `RootSuBackend`（hook，`ShellOnlyAdapter` append canonical）
-- [ ] Coordinator Phase 1 root 短窗（≤1500ms）
-- [ ] 模块 `RootFsBackend` + `RelayMergeBackend`（libsu，参考 AppSnapShotor）
-- [ ] `CrashLogIngestCoordinator`：模块启动 / Provider 回调触发
+- [x] `RootSuBackend`（hook，`ShellOnlyAdapter` append canonical）
+- [~] Coordinator Phase 1 root 短窗（≤1500ms）— **偏离**：现与 Phase 2 并行，待 IS 矩阵后决定是否重构
+- [x] 模块 `RootFsBackend`（libsu / `RootAccessClient`）
+- [x] `RelayMergeBackend`（模块侧 root harvest relay → canonical，id dedupe）
+- [x] `CrashLogIngestCoordinator`：模块启动 ingest relay → canonical JSONL
 - [ ] 验收 IS-R1~IS-R5（见 [crash-log-backends.md](../../../docs/architecture/crash-log-backends.md)）
 - [ ] 真机矩阵记录于 `dev/verification/`
 
 ### 4B-γ — Canonical 文件系统一致性
 
 > 方案：[crash-log-filesystem.md](../../../docs/architecture/crash-log-filesystem.md)；决策 [ADR-021](../../../docs/decisions/021-canonical-jsonl-io-consistency.md)（proposed）。**不依赖** root；可与 IS 矩阵并行。
+>
+> **2026-06-23 as-built**：`CanonicalJsonlWriter` 提供 append + retention + `FileLock`；`FileCrashLogRepository` 读路径 dedupe + 降序；delete/clear 仍走 Repository 独立锁，未合并为 `CanonicalJsonlStore`。
 
-- [ ] `CanonicalJsonlStore`：`append` / `applyRetention` / `deleteById` / `clear` 统一 `FileLock`（FS-1、FS-2）
-- [ ] `FileCrashLogRepository`：`timestampMs` 降序 + 读路径 `distinctBy { id }`（FS-3）
-- [ ] 单测：append ∥ delete 同文件；排序 / dedupe（FS-4）
+- [~] `CanonicalJsonlStore`：`CanonicalJsonlWriter` 覆盖 append/retention；delete/clear 未统一（FS-1、FS-2 部分）
+- [x] `FileCrashLogRepository`：`timestampMs` 降序 + 读路径按 `id` dedupe（FS-3）
+- [x] 单测：`CanonicalJsonlWriterTest`（retention、并发 append）；`FileCrashLogRepositoryTest` 排序/dedupe（FS-4 部分）
 - [ ] DirectFs `mkdirs` 失败可观测（FS-5）
 - [ ] 真机 FS-6 / FS-7（删改与 hook 写交错）
 
@@ -100,7 +105,7 @@ Provider / DirectFs / Relay 作为 `CrashLogBackend` 实现，不再单独 Phase
 
 ### 4C-β — 崩溃历史
 
-- [x] `ObserveHostFragment`：观测 tab 宿主；4C 先仅「历史」子页（4D 再加「统计」内层 TabLayout）
+- [x] `ObserveHostFragment`：观测 tab 宿主；内层 TabLayout **历史 | 统计 | logcat**（4D/4F 已接入）
 - [x] `CrashHistoryFragment`：时间倒序历史列表（scaffolding + `FileCrashLogRepository` 读 `events.jsonl`）
 - [x] 列表：时间、包名、异常类、应用名（`CrashEventRow`）
 - [x] 详情页：`CrashDetailBottomSheet`（壳内半屏）+ `ActivityCrashInfo`（通知全屏）；共用 `CrashLogViewerClient` / CodeEditor
@@ -114,28 +119,29 @@ Provider / DirectFs / Relay 作为 `CrashLogBackend` 实现，不再单独 Phase
 
 需求详见 [crash-stats-ui.md](../../../docs/architecture/crash-stats-ui.md)。
 
-- [ ] **全局统计页**（观测 → 统计子 tab）：摘要卡片、时间 Chip、应用/异常 TOP N
-- [ ] **单应用观测页**：包级摘要 + 过滤列表；自全局统计下钻
-- [ ] `StatsAggregator` + `CrashLogRepository` 扫描 `events.jsonl`
-- [ ] 按日计数简单列表（无重型图表）
-- [ ] 「清空历史」与确认对话框（全局 Toolbar）
-- [ ] retention pref：`crash_log_enabled`、`crash_log_max_entries`
+- [x] **全局统计页**（观测 → 统计子 tab）：摘要卡片、应用/异常 TOP 5、按日计数列表
+- [x] **单应用观测页**：`PerAppCrashActivity`（包级摘要 + Paging 列表）；统计页应用 TOP 行下钻
+- [x] `StatsAggregator` + `CrashLogRepository` 扫描 `events.jsonl`
+- [x] 按日计数简单列表（无重型图表）
+- [x] 「清空历史」与确认对话框（观测 Toolbar）
+- [x] retention pref：`crash_log_enabled`、`crash_log_max_entries`、`crash_log_max_bytes`
 - [ ] （4D+）配置 tab 应用行菜单「崩溃记录」入口
 
 ## 4E — P3：导出与扩展
 
-- [ ] SAF 导出 JSONL / zip（导出前隐私提示）
-- [ ] 通知 Intent 传 `crash_id` 替代整段 stack
+- [x] SAF 导出 zip（`events.jsonl` + `metadata.json`；导出前隐私提示）
+- [x] 通知 Intent 传 `crash_id`（通知正文仍含 stack 预览）
 - [ ] （可选）JSONL → Room 迁移或 sidecar `stats.json` 索引
-- [ ] 更新 [usage.md](../../../docs/guides/usage.md) 用户可见说明
+- [x] 更新 [usage.md](../../../docs/guides/usage.md) 用户可见说明
 
 ## 4F — logcat 分析（可选，与 4E 并行）
 
 需求详见 [adb-logcat-analysis.md](../../../docs/architecture/adb-logcat-analysis.md)。
 
-- [ ] P0：`scripts/adb-logcat-capture` + 解析摘要；验收模板扩展
-- [ ] P1：观测 tab「导入 logcat」SAF + 片段列表 + CodeEditor 详情
+- [x] P0：`scripts/adb-logcat-capture.sh`（开发者 adb 采集）
+- [x] P1：观测 tab「logcat」子页 + SAF 导入 + 片段列表 + 详情
 - [ ] P1b：（可选）root `logcat -d` 扫描
+- [ ] 验收模板扩展（`dev/verification/`）
 
 ## 4G — 智能分析（backlog，依赖 4C 详情页）
 
@@ -143,17 +149,17 @@ Provider / DirectFs / Relay 作为 `CrashLogBackend` 实现，不再单独 Phase
 
 ### 4G-MVP — 规则分类 + 模板建议
 
-- [ ] `CrashEvent.analysis` schema + `RuleEngine`（`exceptionType` + `rootCauseTags`）
-- [ ] `assets/crash_analysis/rules_v1.json` + i18n 模板
-- [ ] 模块进程 `AnalysisWorker`：ingest 或首次打开详情时 lazy 分析
-- [ ] 详情页 `AnalysisCard`：分类 Chip + user/developer 建议 + 免责声明
-- [ ] 单元测试：典型 stack → 预期 category/tags
+- [~] `CrashEvent.analysis` schema — **`CrashAnalysis` + `RuleEngine` 已编码**；JSONL 持久化 defer
+- [x] `assets/crash_analysis/rules_v1.json`（英文模板；i18n defer）
+- [~] 模块进程分析：**详情打开时 lazy**（`CrashDetailBottomSheet.runAnalysis`）；ingest `AnalysisWorker` defer
+- [x] 详情页 `AnalysisCard`：分类 Chip + rootCauseTags + user/dev 建议 + 免责声明
+- [x] 单元测试：`RuleEngineTest` 典型 stack → category/tags
 
 ### 4G-V2 — 签名聚类 + 统计扩展
 
-- [ ] `signatureHash` / `clusterId` 规范化算法
-- [ ] `StatsAggregator.topClusters()` / `topCategories()`
-- [ ] 全局统计页「异常类别 TOP」「重复崩溃 TOP」
+- [x] `signatureHash` / `clusterId` 规范化算法（`CrashSignature`，读时计算，不写 JSONL）
+- [x] `StatsAggregator.topClusters()` / `topCategories()`
+- [x] 全局统计页「异常类别 TOP」「重复崩溃 TOP」
 - [ ] （可选）`signatures.jsonl` 内置签名库
 
 ### 4G-V3 — 可选 LLM / PC 分析

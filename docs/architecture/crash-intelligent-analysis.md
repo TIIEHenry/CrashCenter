@@ -3,8 +3,8 @@ title: "崩溃智能分析"
 type: architecture
 status: proposed
 phase: 4
-updated: 2026-06-19
-summary: "在 JSONL 观测层之上做规则分类、签名聚类与诊断建议；默认端侧离线，不自动修复目标 app"
+updated: 2026-06-23
+summary: "4G-MVP + 4G-V2 部分 as-built：RuleEngine、详情 lazy 分析、CrashSignature 统计聚类；JSONL analysis 持久化 defer"
 ---
 
 # 崩溃智能分析
@@ -323,6 +323,21 @@ scripts/                analyze-crashes.py（V3）
 
 ---
 
+## As-built（2026-06-23，4G-MVP + 4G-V2 部分）
+
+| 项 | 实现 |
+|----|------|
+| 数据类 | `CrashAnalysis`（`category`、`rootCauseTags`、`suggestion`、`devSuggestion`）— **未**写入 `CrashEvent` JSONL |
+| 引擎 | `RuleEngine` + `assets/crash_analysis/rules_v1.json`（英文；NPE/OOM/ANR 等 ~10 条规则） |
+| 触发 | `CrashDetailBottomSheet` 加载 stack 后 **lazy** `match()`；无 `AnalysisWorker` / ingest 预分析 |
+| UI 详情 | `AnalysisCard`：分类 Chip、rootCause Chip 行、用户建议、可展开开发者建议、免责声明 |
+| 聚类 | `CrashSignature`：stack 前 5 帧规范化 → `signatureHash`（16 hex）/ `clusterId`（12 字符）；**读时计算**，不写 JSONL |
+| 统计扩展 | `StatsAggregator.topCategories()`（`RuleEngine.match` 或 `shortExceptionClass` 回退）、`topClusters()`；`CrashStatsFragment` 展示「异常类别 TOP」「重复崩溃 TOP」 |
+| 测试 | `RuleEngineTest`、`StatsAggregatorTest`（聚类/分类） |
+| **defer** | `CrashEvent.analysis` JSONL 持久化、`AnalysisWorker` ingest 路径、i18n 模板、`signatures.jsonl` |
+
+---
+
 ## E. 分阶段路线图
 
 与 [phase4_crash_observability.md](../../dev/roadmap/active/phase4_crash_observability.md) 对齐：**4G 为观测层之后 backlog**，不阻塞 4B–4E。
@@ -330,8 +345,8 @@ scripts/                analyze-crashes.py（V3）
 | 阶段 | 内容 | 交付 |
 |------|------|------|
 | **前置** | Phase 4B–4C：`CrashEvent` + 历史详情 CodeEditor | 无分析 UI |
-| **4G-MVP** | `RuleEngine` v1、`exceptionType` + 2–3 个 `rootCauseTags`、详情页分析卡片、免责声明 | 规则分类 + 模板建议 |
-| **4G-V2** | `signatureHash` / `clusterId`、统计页「同类崩溃 TOP」、可选 `signatures.jsonl` | 去重聚类 |
+| **4G-MVP** | `RuleEngine` v1、`category` + `rootCauseTags`、详情页分析卡片、免责声明 | 规则分类 + 模板建议（**2026-06-23 部分 as-built**） |
+| **4G-V2** | `signatureHash` / `clusterId`、统计页「同类崩溃 TOP」、可选 `signatures.jsonl` | 去重聚类（**2026-06-23 部分 as-built**） |
 | **4G-V3** | PC `analyze-crashes.py`；可选端侧 LLM 实验开关 | 增强说明 |
 | **4G+** | logcat 导入事件走分析管道；与 JSONL 对账 UI | 见 [adb-logcat-analysis.md](adb-logcat-analysis.md) P2 |
 

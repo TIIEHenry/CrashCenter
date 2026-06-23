@@ -3,6 +3,7 @@ package nota.android.crash.log
 import android.content.Context
 import kotlinx.coroutines.runBlocking
 import nota.android.crash.common.data.CrashEvent
+import nota.android.crash.log.backend.RelayMergeBackend
 import nota.android.crash.root.RootAccessClient
 import nota.android.crash.root.RootAvailability
 import nota.android.crash.xp.app.data.FileCrashLogRepository
@@ -307,11 +308,11 @@ class CrashLogIngestCoordinatorTest {
                 .thenReturn(listOf("e3.txt"))
         }
 
-        val refs = runBlocking { CrashLogIngestCoordinator.scanRelayFiles(mockRoot) }
+        val refs = runBlocking { RelayMergeBackend.scanRelayFiles(mockRoot) }
 
         assertEquals(2, refs.size)
-        assertTrue(refs.contains(CrashLogIngestCoordinator.RelayFileRef(0, "com.a", "e1.json")))
-        assertTrue(refs.contains(CrashLogIngestCoordinator.RelayFileRef(0, "com.a", "e2.json")))
+        assertTrue(refs.contains(RelayMergeBackend.RelayFileRef(0, "com.a", "e1.json")))
+        assertTrue(refs.contains(RelayMergeBackend.RelayFileRef(0, "com.a", "e2.json")))
         // e3.txt is not .json, so excluded
     }
 

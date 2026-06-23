@@ -15,6 +15,7 @@ data class CrashEvent(
     val stackTrace: String = "",
     val source: String? = null,
     val backendWritten: List<String> = emptyList(),
+    val ingestedFrom: String? = null,
 ) {
     fun withBackendWritten(backends: List<String>): CrashEvent =
         copy(backendWritten = backends.distinct())

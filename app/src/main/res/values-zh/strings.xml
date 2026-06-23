@@ -115,4 +115,16 @@
         <item quantity="other">仅 %1$d 个可见 · 点击授权</item>
     </plurals>
 
+    <string name="per_app_empty">该应用尚无拦截记录。</string>
+    <string name="per_app_loading">正在加载崩溃记录…</string>
+    <string name="per_app_uninstalled">已卸载</string>
+    <string name="per_app_summary_format">本应用拦截 %1$d 次 · 最近 %2$s</string>
+    <string name="per_app_top_exception_format">最多：%1$s（%2$d 次）</string>
+    <plurals name="per_app_count">
+        <item quantity="other">%d 条崩溃记录</item>
+    </plurals>
+
+    <string name="stats_section_top_categories">异常类别 TOP</string>
+    <string name="stats_section_top_clusters">重复崩溃 TOP</string>
+
 </resources>

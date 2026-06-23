@@ -3,8 +3,8 @@ title: "导航与信息架构"
 type: architecture
 status: accepted
 phase: 4
-updated: 2026-06-21
-summary: "分阶段导航：Phase 3/4B 无 tab；Phase 4C+ 双底栏（配置 | 观测），观测内 TabLayout（历史 | 统计）；路由表见 ui-routing.md"
+updated: 2026-06-23
+summary: "分阶段导航：Phase 4C+ 双底栏（配置 | 观测），观测内 TabLayout（历史 | 统计 | logcat）；路由表见 ui-routing.md"
 ---
 
 # 导航与信息架构
@@ -98,9 +98,9 @@ Shell 拥有所有跨 tab chrome：
 
 | 子 tab | Phase | 内容 |
 |--------|-------|------|
-| **历史** | 4C | 时间倒序列表 → 按 `crash_id` 打开 **`CrashDetailBottomSheet`**（壳内半屏） |
-| **统计** | 4D | 按包名/异常类 TOP N、日/周摘要；清空、retention — 详见 [crash-stats-ui.md](crash-stats-ui.md) |
-| （Toolbar 菜单） | 4E | SAF 导出、`crash_log_enabled` 等运维项 |
+| **历史** | 4C | 时间倒序列表 → `CrashDetailBottomSheet`；Toolbar 筛选/排序/导出/清空/retention |
+| **统计** | 4D | 全局摘要、TOP N、按日计数 — 详见 [crash-stats-ui.md](crash-stats-ui.md) |
+| **logcat** | 4F | SAF 导入 logcat 文本 → 片段列表 → 详情（见 [adb-logcat-analysis.md](adb-logcat-analysis.md)） |
 
 观测域设置挂在观测 tab 的 Toolbar 或统计页脚，**不**增设第三个 bottom tab。
 
@@ -154,7 +154,7 @@ Design System 来自 Phase 3 已落地的 Fluent/AppSnapShotor token，但应从
 |------|---------------|-------------------|
 | Bottom tab 数 | **3**（存档 \| 时间线 \| 应用） | **2**（配置 \| 观测） |
 | 设置 | 独立 `SettingsActivity`，Toolbar 进入 | 不进 tab；全局 hook 设置在 **配置 tab** 同屏 Chip（ADR-005） |
-| Tab 内再分 tab | 应用 tab 内 `TabLayout`（用户/系统筛选） | **观测 tab** 内 `TabLayout`（历史 \| 统计） |
+| Tab 内再分 tab | 应用 tab 内 `TabLayout`（用户/系统筛选） | **观测 tab** 内 `TabLayout`（历史 \| 统计 \| logcat） |
 | 底栏组件 | `FloatingBottomNav` + 3× `ImageButton` | 可选同款壳层，**2 项** |
 | 产品主轴 | 三条独立工作流（存档、时间线、应用配置） | 干预 vs 观测两层；统计为历史的聚合视图，不必独立顶级 tab |
 

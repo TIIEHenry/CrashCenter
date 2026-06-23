@@ -6,12 +6,14 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.savedstate.SavedStateRegistryOwner
+import nota.android.crash.analysis.RuleEngine
 import nota.android.crash.xp.app.config.AddManagedAppViewModel
 import nota.android.crash.xp.app.config.AppInterventionEditViewModel
 import nota.android.crash.xp.app.config.ConfigViewModel
 import nota.android.crash.xp.app.observe.CrashDetailViewModel
 import nota.android.crash.xp.app.observe.CrashHistoryViewModel
 import nota.android.crash.xp.app.observe.CrashStatsViewModel
+import nota.android.crash.xp.app.observe.PerAppCrashViewModel
 
 /**
  * Generic ViewModel factory that delegates creation to a lambda.
@@ -46,7 +48,18 @@ fun ServiceLocator.crashHistoryViewModelFactory(context: Context): ViewModelProv
 
 fun ServiceLocator.crashStatsViewModelFactory(context: Context): ViewModelProvider.Factory =
     ViewModelFactory {
-        CrashStatsViewModel(crashLogRepository(context))
+        CrashStatsViewModel(
+            crashLogRepository(context),
+            RuleEngine.fromAssets(context),
+        )
+    }
+
+fun ServiceLocator.perAppCrashViewModelFactory(
+    context: Context,
+    packageName: String,
+): ViewModelProvider.Factory =
+    ViewModelFactory {
+        PerAppCrashViewModel(packageName, crashLogRepository(context))
     }
 
 fun ServiceLocator.addManagedAppViewModelFactory(context: Context): ViewModelProvider.Factory =

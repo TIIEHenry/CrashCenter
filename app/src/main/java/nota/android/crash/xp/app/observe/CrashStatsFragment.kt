@@ -1,6 +1,8 @@
 package nota.android.crash.xp.app.observe
 
+import android.content.Intent
 import android.os.Bundle
+import android.util.TypedValue
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -15,6 +17,8 @@ import nota.android.crash.xp.app.R
 import nota.android.crash.xp.app.common.ui.EmptyState
 import nota.android.crash.xp.app.common.ui.showErrorToast
 import nota.android.crash.xp.app.common.ui.LoadingState
+import nota.android.crash.xp.app.data.CategoryCount
+import nota.android.crash.xp.app.data.ClusterCount
 import nota.android.crash.xp.app.data.CrashStats
 import nota.android.crash.xp.app.data.ExceptionCount
 import nota.android.crash.xp.app.data.PackageCount
@@ -95,6 +99,7 @@ class CrashStatsFragment : Fragment() {
             entries = stats.topPackages,
             labelExtractor = PackageCount::packageName,
             countExtractor = PackageCount::count,
+            onClick = { entry -> openPerAppCrash(entry.packageName) },
         )
         binding.topPackagesCard.visibility =
             if (stats.topPackages.isNotEmpty()) View.VISIBLE else View.GONE
@@ -112,6 +117,28 @@ class CrashStatsFragment : Fragment() {
             if (stats.topExceptionClasses.isNotEmpty()) View.VISIBLE else View.GONE
         binding.topExceptionsHeader.visibility =
             if (stats.topExceptionClasses.isNotEmpty()) View.VISIBLE else View.GONE
+
+        renderEntries(
+            container = binding.topCategoriesContainer,
+            entries = stats.topCategories,
+            labelExtractor = CategoryCount::category,
+            countExtractor = CategoryCount::count,
+        )
+        binding.topCategoriesCard.visibility =
+            if (stats.topCategories.isNotEmpty()) View.VISIBLE else View.GONE
+        binding.topCategoriesHeader.visibility =
+            if (stats.topCategories.isNotEmpty()) View.VISIBLE else View.GONE
+
+        renderEntries(
+            container = binding.topClustersContainer,
+            entries = stats.topClusters,
+            labelExtractor = ClusterCount::label,
+            countExtractor = ClusterCount::count,
+        )
+        binding.topClustersCard.visibility =
+            if (stats.topClusters.isNotEmpty()) View.VISIBLE else View.GONE
+        binding.topClustersHeader.visibility =
+            if (stats.topClusters.isNotEmpty()) View.VISIBLE else View.GONE
     }
 
     private fun <T> renderEntries(
@@ -119,15 +146,35 @@ class CrashStatsFragment : Fragment() {
         entries: List<T>,
         labelExtractor: (T) -> String,
         countExtractor: (T) -> Int,
+        onClick: ((T) -> Unit)? = null,
     ) {
         container.removeAllViews()
         val inflater = LayoutInflater.from(requireContext())
+        val selectableBackground = if (onClick != null) {
+            val typedValue = TypedValue()
+            requireContext().theme.resolveAttribute(android.R.attr.selectableItemBackground, typedValue, true)
+            typedValue.resourceId
+        } else {
+            0
+        }
         for (entry in entries) {
             val itemView = inflater.inflate(R.layout.item_stat_entry, container, false)
             itemView.findViewById<TextView>(R.id.entryLabel).text = labelExtractor(entry)
             itemView.findViewById<TextView>(R.id.entryCount).text = countExtractor(entry).toString()
+            if (onClick != null) {
+                itemView.setBackgroundResource(selectableBackground)
+                itemView.setOnClickListener { onClick(entry) }
+            }
             container.addView(itemView)
         }
+    }
+
+    private fun openPerAppCrash(packageName: String) {
+        startActivity(
+            Intent(requireContext(), PerAppCrashActivity::class.java).apply {
+                putExtra(PerAppCrashActivity.EXTRA_PACKAGE_NAME, packageName)
+            },
+        )
     }
 
     companion object {

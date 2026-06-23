@@ -10,6 +10,7 @@ enum class BackendId(val wireName: String) {
     PROVIDER_INSERT("provider_insert"),
     DIRECT_FS("direct_fs"),
     TARGET_RELAY("target_relay"),
+    RELAY_MERGE("relay_merge"),
 }
 
 enum class BackendAvailability {

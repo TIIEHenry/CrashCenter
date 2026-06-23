@@ -3,8 +3,8 @@ title: "崩溃统计与单应用观测 UI 需求"
 type: architecture
 status: accepted
 phase: 4
-updated: 2026-06-20
-summary: "observe/detail 域中的全局统计页与单应用崩溃列表/统计页 IA、路由、指标和数据聚合需求（Phase 4D）"
+updated: 2026-06-23
+summary: "observe/detail 域全局统计页与单应用观测页 as-built（4D+ 部分）"
 ---
 
 # 崩溃统计与单应用观测 UI 需求
@@ -37,6 +37,19 @@ summary: "observe/detail 域中的全局统计页与单应用崩溃列表/统计
 | Per-app | `PerAppCrashActivity` | 单应用摘要与事件列表 |
 
 Design System 复用 [configuration-ui.md](configuration-ui.md) 中固化的 Fluent token 与 `CrashEventRow`、`FilterChipRow`、`EmptyState`、`LoadingState`；统计页不得重新定义一套视觉语言。
+
+## As-built（2026-06-23，4D+ 部分）
+
+| 项 | 实现 |
+|----|------|
+| 载体 | `ObserveHostFragment` → **统计** 子 tab → `CrashStatsFragment` |
+| 聚合 | `StatsAggregator.computeStats()` 全量扫描 `events.jsonl`（`getAll` limit=MAX） |
+| 摘要 | 总次数、独立包数、最近崩溃时间 |
+| TOP N | 应用 TOP 5、异常类 TOP 5、**异常类别 TOP 5**、**重复崩溃 TOP 5**（4G-V2） |
+| 趋势 | 按日计数列表（`yyyy-MM-dd`，降序） |
+| 空/加载 | `EmptyState` / `LoadingState` |
+| 单应用下钻 | `PerAppCrashActivity`（`packageName` extra）；统计页应用 TOP 行点击；`StatsAggregator.computePerAppStats` + Paging 列表 + `CrashDetailBottomSheet` |
+| **未实现** | 统计页时间范围 Chip；配置 tab「崩溃记录」入口；深链 `crashcenter://app/{packageName}` |
 
 ---
 

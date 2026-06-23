@@ -3,8 +3,8 @@ title: "崩溃日志采集与统计"
 type: architecture
 status: accepted
 phase: 4
-updated: 2026-06-20
-summary: "hook 侧异步持久化全量拦截崩溃；4B-α 部分 MVP 已实现；多后端编排见 crash-log-backends.md"
+updated: 2026-06-23
+summary: "CrashEvent JSONL 模型、retention、ingestedFrom；4B-α/β 多后端见 crash-log-backends"
 ---
 
 # 崩溃日志采集与统计
@@ -61,7 +61,7 @@ Application.onCreate (目标进程)
 | SharedPreferences `crash` | scope / 禁用列表 / `crash_log_*` 开关 | 否 |
 | [XSharedPreferences](../decisions/003-xsharedpreferences-cross-process.md) | hook 侧**只读**配置 | 否 |
 | `files/crash_logs/events.jsonl` | canonical append-only JSONL | **是**（模块 UID 写） |
-| `files/crashcenter_relay/{id}.json` | 目标 app 同 UID relay 副本 | 待 4B-β ingest merge |
+| `files/crashcenter_relay/{id}.json` | 目标 app 同 UID relay 副本 | ✅ 4B-β `RelayMergeBackend` harvest |
 | `FileCrashLogRepository` | 模块侧读 canonical（4C UI 用） | 读路径已实现 |
 | `ActivityCrashInfo` | Intent extra 展示**单次** stack | 不保留历史 |
 
@@ -85,7 +85,7 @@ Application.onCreate (目标进程)
 | `causeClasses` | defer | 未写入 JSONL |
 | `isSystemApp` | defer | 未写入 JSONL |
 | `moduleVersion` | defer | 未写入 JSONL |
-| `ingestedFrom` | defer | 4B-β ingest 字段 |
+| `ingestedFrom` | ✅ | relay ingest 来源（如 `target_relay`）；仅 merge 路径写入 |
 
 边界：仅 **Java 层**异常；Native crash、ANR 不在 scope（与 [crash-handler.md](crash-handler.md) 一致）。
 

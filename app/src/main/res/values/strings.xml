@@ -57,7 +57,18 @@
     <string name="stats_label_most_recent">Most recent</string>
     <string name="stats_section_top_packages">Top crashing packages</string>
     <string name="stats_section_top_exceptions">Top exception classes</string>
+    <string name="stats_section_top_categories">Top crash categories</string>
+    <string name="stats_section_top_clusters">Top duplicate crashes</string>
     <string name="stats_none">—</string>
+    <string name="per_app_empty">No intercept records for this app yet.</string>
+    <string name="per_app_loading">Loading crash records…</string>
+    <string name="per_app_uninstalled">Uninstalled</string>
+    <string name="per_app_summary_format">%1$d intercepts · last %2$s</string>
+    <string name="per_app_top_exception_format">Most common: %1$s (%2$d)</string>
+    <plurals name="per_app_count">
+        <item quantity="one">%d crash record</item>
+        <item quantity="other">%d crash records</item>
+    </plurals>
     <string name="crash_history_empty">No crash records yet. Intercepted crashes will appear here once crash logging is enabled.</string>
     <string name="crash_history_loading">Loading crash history…</string>
     <string name="crash_event_subtitle_format">%1$s · %2$s · %3$s</string>

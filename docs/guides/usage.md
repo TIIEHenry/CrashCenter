@@ -3,8 +3,8 @@ title: "用户使用指南"
 type: guide
 status: accepted
 phase: N/A
-updated: 2026-06-19
-summary: "模块安装、界面说明、scope 与 LSPosed 作用域、包可见性、崩溃观测 FAQ"
+updated: 2026-06-23
+summary: "模块安装、界面说明、scope 与 LSPosed 作用域、观测 tab、崩溃分析 FAQ"
 ---
 
 # 用户使用指南
@@ -36,11 +36,15 @@ CrashCenter（崩溃中心）是一个 Xposed 模块，**拦截目标 app 的 Ja
 
 仅在本应用里全开 Switch，但管理器未勾选目标 app → **不会 hook**。仅管理器勾选但 Switch 关闭 → 该包在禁用列表中，**也不拦截**。
 
-崩溃日志（Phase 4 计划）只记录**已被 hook 且被拦截**的异常；与「应用列表是否完整」无直接关系。列表完整性依赖 [包可见性权限](#包可见性android-11)（模块进程 `QUERY_ALL_PACKAGES`）。
+崩溃日志（Phase 4）记录**已被 hook 且被拦截**的异常，存储于模块私有 `events.jsonl`；与「应用列表是否完整」无直接关系。列表完整性依赖 [包可见性权限](#包可见性android-11)（模块进程 `QUERY_ALL_PACKAGES`）。
 
 ## 界面说明
 
-> **当前已发布版本**仍为全量应用列表 + Switch（ADR-002）。**Phase 3G** 将改为受管应用模型 — 见 [app-management-ui.md](../architecture/app-management-ui.md)。
+主界面为 **双底栏**：**配置** | **观测**（见 [navigation-ia.md](../architecture/navigation-ia.md)）。
+
+### 配置 tab
+
+> **当前版本**使用受管应用模型（Phase 3G）。详见 [app-management-ui.md](../architecture/app-management-ui.md)。
 
 主界面自上而下分为以下区域（详见 [configuration-ui.md](../architecture/configuration-ui.md)）：
 
@@ -153,17 +157,44 @@ Phase 3G 起，配置方式改为 **显式添加应用** + **干预规则**（[A
 - **关闭**（默认）：hook 所有 app（除 `android` 和 Xposed 管理器）；Switch 关闭的包写入禁用列表，仍不 hook
 - **开启**：仅 hook 列表中 Switch **开启**的非系统 app；若同时开启「处理系统应用」，系统 app 也可被 hook
 
+## 观测 tab
+
+底栏选择 **观测** 后，内层有三个子页：
+
+| 子页 | 说明 |
+|------|------|
+| **历史** | 按时间倒序显示已拦截崩溃；点击行打开半屏详情（完整 stack trace + 规则分析建议） |
+| **统计** | 总次数、独立应用数、应用/异常 TOP、**异常类别 TOP**、**重复崩溃 TOP**、按日计数；点击应用 TOP 可进入**单应用观测页** |
+| **logcat** | 通过 SAF 导入 logcat 文本文件，浏览解析后的片段 |
+
+### 观测 Toolbar 菜单（历史子页）
+
+| 选项 | 说明 |
+|------|------|
+| 筛选 / 按包名筛选 | 缩小历史列表范围 |
+| 排序 | 按时间、包名或异常类排序 |
+| 导出日志 | 将崩溃记录打包为 zip（含隐私提示） |
+| 保留上限 | 设置最大条数与文件大小（默认 500 条 / 8 MB） |
+| 清空历史 | 永久删除所有本地崩溃记录（需确认） |
+
+可在 **设置 → 崩溃日志** 相关 pref 中关闭写入（`crash_log_enabled`）；关闭后不再记录新崩溃，但不影响拦截行为。
+
+### 单应用观测
+
+在 **统计** 子页点击 **应用 TOP** 某一行，进入该应用的观测页：显示拦截次数、最近崩溃时间与按时间排序的事件列表。点击列表项可查看完整 stack trace 与规则分析建议（与历史 tab 相同）。
+
 ## 崩溃反馈
 
 被 hook 的 app 发生异常时：
 
 1. 弹出 Toast 显示异常信息
-2. 发送系统通知（可点击查看完整 stack trace）
+2. 发送系统通知（可点击查看详情；Intent 携带 `crash_id`）
 3. App **不会退出**
+4. 若崩溃日志已启用，事件写入本地 `events.jsonl`
 
-通知点开后进入**崩溃详情**页，stack trace 为等宽字体，长按可选中复制。
+通知或历史列表点开后进入**崩溃详情**：stack trace 为等宽字体（CodeEditor），可复制；若规则匹配成功，会显示**分析卡片**（异常类别、排查建议）。分析仅为参考，模块**不会**自动修复目标 app。
 
-当前版本**不持久化**历史崩溃；Phase 4 将支持本地崩溃历史与统计（见 [crash-logging.md](../architecture/crash-logging.md)）。技术说明：崩溃日志**不能**用 XSharedPreferences 传递，须模块私有存储 + IPC — 见 [crash-log-ipc FAQ](../architecture/crash-log-ipc.md#方案取舍与常见疑问)。
+技术说明：崩溃日志**不能**用 XSharedPreferences 传递，须模块私有存储 + IPC — 见 [crash-log-ipc FAQ](../architecture/crash-log-ipc.md#方案取舍与常见疑问)。
 
 ## 兼容性
 
@@ -180,6 +211,8 @@ Phase 3G 起，配置方式改为 **显式添加应用** + **干预规则**（[A
 - [ADR-015](../decisions/015-managed-apps-intervention-rules.md)
 - [configuration-ui.md](../architecture/configuration-ui.md)
 - [crash-logging.md](../architecture/crash-logging.md)
+- [crash-intelligent-analysis.md](../architecture/crash-intelligent-analysis.md)
+- [crash-stats-ui.md](../architecture/crash-stats-ui.md)
 - [crash-log-ipc.md](../architecture/crash-log-ipc.md)
 - [navigation-ia.md](../architecture/navigation-ia.md)
 - [architecture/overview.md](../architecture/overview.md)

@@ -78,6 +78,8 @@ class CrashStatsViewModelTest {
         assertEquals(0L, stats.mostRecentTimestampMs)
         assertTrue(stats.topPackages.isEmpty())
         assertTrue(stats.topExceptionClasses.isEmpty())
+        assertTrue(stats.topCategories.isEmpty())
+        assertTrue(stats.topClusters.isEmpty())
         assertTrue(stats.dailyCounts.isEmpty())
     }
 

@@ -5,6 +5,7 @@ import android.content.SharedPreferences
 import de.robv.android.xposed.XSharedPreferences
 import nota.android.crash.log.backend.DirectFsBackend
 import nota.android.crash.log.backend.ProviderBackend
+import nota.android.crash.log.backend.RelayMergeBackend
 import nota.android.crash.log.backend.RootFsBackend
 import nota.android.crash.log.backend.RootSuBackend
 import nota.android.crash.log.backend.TargetRelayBackend
@@ -26,6 +27,7 @@ object CrashLogBackendRegistry {
 
     private val moduleBackends: List<CrashLogBackend> = listOf(
         RootFsBackend,
+        RelayMergeBackend,
     )
 
     fun enabledHookPhase2Backends(prefs: SharedPreferences): List<CrashLogBackend> {
@@ -59,6 +61,8 @@ object CrashLogBackendRegistry {
             when (backend.id) {
                 BackendId.ROOT_FS ->
                     prefs.getBoolean(PrefManager.PREF_CRASH_LOG_BACKEND_ROOT_FS, true)
+                BackendId.RELAY_MERGE ->
+                    prefs.getBoolean(PrefManager.PREF_CRASH_LOG_BACKEND_RELAY_MERGE, true)
                 else -> false
             }
         }

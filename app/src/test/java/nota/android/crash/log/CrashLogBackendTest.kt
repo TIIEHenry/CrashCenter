@@ -12,12 +12,13 @@ class CrashLogBackendTest {
     @Test
     fun `BackendId has all expected values`() {
         val ids = BackendId.entries
-        assertEquals(5, ids.size)
+        assertEquals(6, ids.size)
         assertTrue(ids.contains(BackendId.ROOT_SU))
         assertTrue(ids.contains(BackendId.ROOT_FS))
         assertTrue(ids.contains(BackendId.PROVIDER_INSERT))
         assertTrue(ids.contains(BackendId.DIRECT_FS))
         assertTrue(ids.contains(BackendId.TARGET_RELAY))
+        assertTrue(ids.contains(BackendId.RELAY_MERGE))
     }
 
     @Test
@@ -27,6 +28,7 @@ class CrashLogBackendTest {
         assertEquals("provider_insert", BackendId.PROVIDER_INSERT.wireName)
         assertEquals("direct_fs", BackendId.DIRECT_FS.wireName)
         assertEquals("target_relay", BackendId.TARGET_RELAY.wireName)
+        assertEquals("relay_merge", BackendId.RELAY_MERGE.wireName)
     }
 
     @Test

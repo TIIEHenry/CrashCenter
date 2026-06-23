@@ -3,8 +3,8 @@ title: "架构决策 backlog 与文档缺口"
 type: plan
 status: active
 phase: N/A
-updated: 2026-06-22
-summary: "待决 ADR、实现与架构文档漂移；4B-γ crash-log-filesystem + ADR-021 proposed"
+updated: 2026-06-23
+summary: "待决 ADR、实现与架构文档漂移；4B-β RelayMerge dedupe 已编码；IS 矩阵待验"
 ---
 
 # 架构决策 backlog 与文档缺口
@@ -25,7 +25,7 @@ summary: "待决 ADR、实现与架构文档漂移；4B-γ crash-log-filesystem 
 | **架构文档 stale** | 8 | 与 MainShell / ServiceLocator / SDK 37 等不一致 |
 | **架构文档 proposed/draft** | 4+ | 4D+ 规格 proposed；design/ 已 accepted（2026-06-22） |
 
-**当前最大风险**：观测层 **4B-α 已编码**，但 **4B-β root ingest + dedupe** 与 **IS-1~IS-6 真机矩阵** 未决且未验收；同时 **ui-routing.md / crash-data-layer.md** 仍描述 Phase 3 或理想接口，削弱文档 SSOT 价值。
+**当前最大风险**：**4B-β relay ingest + id dedupe 已编码**（`RelayMergeBackend`），但 **IS-1~IS-6 / IS-R1~IS-R5 真机矩阵** 未验收、**ADR-017 仍为 proposed**；`crash-data-layer.md` 部分段落仍滞后于 Paging as-built。
 
 ---
 
@@ -47,11 +47,11 @@ summary: "待决 ADR、实现与架构文档漂移；4B-γ crash-log-filesystem 
 
 | 项 | 内容 |
 |----|------|
-| **背景** | 三后端并行时 canonical JSONL **可能出现同 `id` 多行**（各 backend 独立 stamp）；文档写 *4B-β ingest dedupe 待建* |
+| **背景** | 三后端并行时 canonical JSONL **可能出现同 `id` 多行**（各 backend 独立 stamp）；**relay ingest** 经 `RelayMergeBackend` 按 `id` dedupe（2026-06-23 as-built）；hook 直写 canonical 仍可能重复 |
 | **分叉** | A) ingest 时按 `id` 合并为一行并写 `backendWritten[]`；B) 读路径 dedupe（Repository 层）；C) 写路径协调器只 append 一次 canonical，backend 仅写 relay |
 | **影响** | 统计准确性、历史列表重复行、retention 计数 |
-| **建议** | **ADR-017** proposed — ingest 时按 `id` 合并；读路径可选 `distinctBy` |
-| **阻塞** | 4D 统计、4B IS 矩阵判定 |
+| **建议** | **ADR-017** proposed — relay ingest 已选 A；读路径 `FileCrashLogRepository` 已有 `distinctBy id`；hook 直写重复待 IS 矩阵后定 |
+| **状态** | ✅ **relay merge 已实现**；hook 多后端写 canonical 重复行 **待决** |
 
 #### D-03 · IS-1~IS-6 验收失败时的降级策略
 

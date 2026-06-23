@@ -34,6 +34,9 @@
             android:name=".config.AppInterventionEditActivity"
             android:exported="false" />
         <activity
+            android:name=".observe.PerAppCrashActivity"
+            android:exported="false" />
+        <activity
             android:exported="true"
             android:name="nota.android.crash.ActivityCrashInfo"
             android:launchMode="singleTask" >
