@@ -18,7 +18,10 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.chip.Chip
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import nota.android.crash.root.RootLogcatReader
 import nota.android.crash.xp.app.R
 import nota.android.crash.xp.app.common.ui.EmptyState
 import nota.android.crash.xp.app.common.ui.LoadingState
@@ -59,16 +62,18 @@ class LogcatFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         setupList()
-        setupChips()
+        setupModeChips()
+        setupBufferChips()
+        setupLevelChips()
         EmptyState.bind(binding.emptyState.root, getString(R.string.logcat_empty), R.drawable.ic_tab_observe)
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.uiState.collect { renderState(it) }
             }
         }
-        // Auto-launch SAF if no data loaded yet
+        // Auto-load from root if available, otherwise prompt file import
         if (viewModel.uiState.value.entries.isEmpty() && savedInstanceState == null) {
-            launchFilePicker()
+            checkRootAndLoad()
         }
     }
 
@@ -89,7 +94,68 @@ class LogcatFragment : Fragment() {
         }
     }
 
-    private fun setupChips() {
+    private fun setupModeChips() {
+        val rootAvailable = RootLogcatReader.isAvailable(requireContext())
+        binding.chipModeRoot.isEnabled = rootAvailable
+        if (!rootAvailable) {
+            binding.chipModeRoot.isChecked = false
+            binding.chipModeFile.isChecked = true
+        }
+
+        binding.chipGroupMode.setOnCheckedStateChangeListener { _, checkedIds ->
+            val checkedId = checkedIds.firstOrNull() ?: return@setOnCheckedStateChangeListener
+            when (checkedId) {
+                R.id.chipModeRoot -> {
+                    binding.bufferChipRow.visibility = View.VISIBLE
+                    val buffer = resolveSelectedBuffer()
+                    viewModel.loadFromRoot(requireContext(), buffer)
+                }
+                R.id.chipModeFile -> {
+                    binding.bufferChipRow.visibility = View.GONE
+                    if (viewModel.uiState.value.entries.isEmpty()) {
+                        launchFilePicker()
+                    }
+                }
+            }
+        }
+
+        // Initial visibility
+        val initialMode = viewModel.uiState.value.sourceMode
+        if (initialMode == SourceMode.ROOT) {
+            binding.chipModeRoot.isChecked = true
+            binding.bufferChipRow.visibility = View.VISIBLE
+        } else if (initialMode == SourceMode.FILE) {
+            binding.chipModeFile.isChecked = true
+            binding.bufferChipRow.visibility = View.GONE
+        } else if (!rootAvailable) {
+            binding.bufferChipRow.visibility = View.GONE
+        }
+    }
+
+    private fun setupBufferChips() {
+        val bufferChipMap = mapOf(
+            R.id.chipBufferMain to LogcatBuffer.MAIN,
+            R.id.chipBufferSystem to LogcatBuffer.SYSTEM,
+            R.id.chipBufferCrash to LogcatBuffer.CRASH,
+            R.id.chipBufferEvents to LogcatBuffer.EVENTS,
+            R.id.chipBufferRadio to LogcatBuffer.RADIO,
+        )
+        // Sync checked chip with current active buffer
+        val activeBuffer = viewModel.uiState.value.activeBuffer
+        for ((chipId, buffer) in bufferChipMap) {
+            binding.root.findViewById<Chip>(chipId)?.let { chip ->
+                if (buffer == activeBuffer) chip.isChecked = true
+            }
+        }
+
+        binding.chipGroupBuffer.setOnCheckedStateChangeListener { _, checkedIds ->
+            val checkedId = checkedIds.firstOrNull() ?: return@setOnCheckedStateChangeListener
+            val buffer = bufferChipMap[checkedId] ?: return@setOnCheckedStateChangeListener
+            viewModel.switchBuffer(requireContext(), buffer)
+        }
+    }
+
+    private fun setupLevelChips() {
         val chipMap = mapOf(
             R.id.chipFatal to LogcatLevel.FATAL,
             R.id.chipError to LogcatLevel.ERROR,
@@ -100,6 +166,38 @@ class LogcatFragment : Fragment() {
         for ((chipId, level) in chipMap) {
             binding.root.findViewById<Chip>(chipId)?.setOnCheckedChangeListener { _, _ ->
                 viewModel.toggleLevel(level)
+            }
+        }
+    }
+
+    private fun resolveSelectedBuffer(): LogcatBuffer {
+        val bufferChipMap = mapOf(
+            R.id.chipBufferMain to LogcatBuffer.MAIN,
+            R.id.chipBufferSystem to LogcatBuffer.SYSTEM,
+            R.id.chipBufferCrash to LogcatBuffer.CRASH,
+            R.id.chipBufferEvents to LogcatBuffer.EVENTS,
+            R.id.chipBufferRadio to LogcatBuffer.RADIO,
+        )
+        for ((chipId, buffer) in bufferChipMap) {
+            if (binding.root.findViewById<Chip>(chipId)?.isChecked == true) return buffer
+        }
+        return LogcatBuffer.MAIN
+    }
+
+    private fun checkRootAndLoad() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            val available = withContext(Dispatchers.IO) {
+                RootLogcatReader.isAvailable(requireContext())
+            }
+            if (available) {
+                binding.chipModeRoot.isChecked = true
+                binding.bufferChipRow.visibility = View.VISIBLE
+                viewModel.loadFromRoot(requireContext(), resolveSelectedBuffer())
+            } else {
+                binding.chipModeRoot.isEnabled = false
+                binding.chipModeFile.isChecked = true
+                binding.bufferChipRow.visibility = View.GONE
+                launchFilePicker()
             }
         }
     }
@@ -143,13 +241,27 @@ class LogcatFragment : Fragment() {
             LoadingState.bind(binding.loadingPanel.root, getString(R.string.logcat_loading))
         }
 
+        // Sync mode chips (avoid triggering listener loops)
+        val isRootMode = state.sourceMode == SourceMode.ROOT
+        if (isRootMode && !binding.chipModeRoot.isChecked) {
+            binding.chipModeRoot.isChecked = true
+        } else if (state.sourceMode == SourceMode.FILE && !binding.chipModeFile.isChecked) {
+            binding.chipModeFile.isChecked = true
+        }
+        binding.bufferChipRow.visibility = if (isRootMode) View.VISIBLE else View.GONE
+
+        // Sync active buffer chip
+        if (isRootMode) {
+            syncBufferChip(state.activeBuffer)
+        }
+
         val hasData = !state.isLoading && state.entries.isNotEmpty()
         val isEmpty = !state.isLoading && state.entries.isEmpty()
 
-        binding.contentContainer.visibility = if (hasData) View.VISIBLE else View.GONE
-        binding.emptyState.root.visibility = if (isEmpty) View.VISIBLE else View.GONE
+        binding.contentContainer.visibility = if (hasData || isRootMode) View.VISIBLE else View.GONE
+        binding.emptyState.root.visibility = if (isEmpty && !isRootMode) View.VISIBLE else View.GONE
 
-        if (isEmpty && !state.isLoading) {
+        if (isEmpty && !state.isLoading && !isRootMode) {
             EmptyState.bind(
                 binding.emptyState.root,
                 getString(R.string.logcat_empty),
@@ -157,6 +269,9 @@ class LogcatFragment : Fragment() {
                 { launchFilePicker() },
                 R.drawable.ic_tab_observe,
             )
+        } else if (isEmpty && !state.isLoading && isRootMode) {
+            binding.contentContainer.visibility = View.VISIBLE
+            binding.entryCount.text = getString(R.string.logcat_root_unavailable)
         }
 
         if (hasData) {
@@ -176,6 +291,20 @@ class LogcatFragment : Fragment() {
         }
 
         requireContext().showErrorToast(state.errorMessage) { viewModel.clearError() }
+    }
+
+    private fun syncBufferChip(buffer: LogcatBuffer) {
+        val chipId = when (buffer) {
+            LogcatBuffer.MAIN -> R.id.chipBufferMain
+            LogcatBuffer.SYSTEM -> R.id.chipBufferSystem
+            LogcatBuffer.CRASH -> R.id.chipBufferCrash
+            LogcatBuffer.EVENTS -> R.id.chipBufferEvents
+            LogcatBuffer.RADIO -> R.id.chipBufferRadio
+        }
+        val chip = binding.root.findViewById<Chip>(chipId)
+        if (chip != null && !chip.isChecked) {
+            chip.isChecked = true
+        }
     }
 
     private fun showEntryDetail(entry: LogcatEntry) {

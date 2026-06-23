@@ -13,6 +13,98 @@
         android:visibility="gone"
         tools:visibility="visible">
 
+        <!-- Source mode chips (Root / File) -->
+        <HorizontalScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:clipToPadding="false"
+            android:paddingHorizontal="@dimen/spacing_sm"
+            android:scrollbars="none">
+
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/chipGroupMode"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingVertical="@dimen/spacing_sm"
+                app:singleLine="true"
+                app:singleSelection="true">
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipModeRoot"
+                    style="@style/AppTheme.Chip"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:checked="true"
+                    android:text="@string/logcat_mode_root" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipModeFile"
+                    style="@style/AppTheme.Chip"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/logcat_mode_file" />
+
+            </com.google.android.material.chip.ChipGroup>
+
+        </HorizontalScrollView>
+
+        <!-- Buffer selection chips (Root mode only) -->
+        <HorizontalScrollView
+            android:id="@+id/bufferChipRow"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:clipToPadding="false"
+            android:paddingHorizontal="@dimen/spacing_sm"
+            android:scrollbars="none">
+
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/chipGroupBuffer"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingBottom="@dimen/spacing_sm"
+                app:singleLine="true"
+                app:singleSelection="true">
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipBufferMain"
+                    style="@style/AppTheme.Chip"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:checked="true"
+                    android:text="@string/logcat_buffer_main" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipBufferSystem"
+                    style="@style/AppTheme.Chip"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/logcat_buffer_system" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipBufferCrash"
+                    style="@style/AppTheme.Chip"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/logcat_buffer_crash" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipBufferEvents"
+                    style="@style/AppTheme.Chip"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/logcat_buffer_events" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipBufferRadio"
+                    style="@style/AppTheme.Chip"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/logcat_buffer_radio" />
+
+            </com.google.android.material.chip.ChipGroup>
+
+        </HorizontalScrollView>
+
         <!-- Level filter chips -->
         <HorizontalScrollView
             android:layout_width="match_parent"

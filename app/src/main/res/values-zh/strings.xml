@@ -157,6 +157,14 @@
     <string name="logcat_level_warning">W</string>
     <string name="logcat_level_info">I</string>
     <string name="logcat_level_debug">D</string>
+    <string name="logcat_mode_root">Root 读取</string>
+    <string name="logcat_mode_file">导入文件</string>
+    <string name="logcat_buffer_main">Main</string>
+    <string name="logcat_buffer_system">System</string>
+    <string name="logcat_buffer_crash">Crash</string>
+    <string name="logcat_buffer_events">Events</string>
+    <string name="logcat_buffer_radio">Radio</string>
+    <string name="logcat_root_unavailable">Root 不可用</string>
 
     <!-- Crash analysis (4G) -->
     <string name="analysis_suggestion_header">建议修复</string>

@@ -164,6 +164,14 @@
     <string name="logcat_level_warning">W</string>
     <string name="logcat_level_info">I</string>
     <string name="logcat_level_debug">D</string>
+    <string name="logcat_mode_root">Root</string>
+    <string name="logcat_mode_file">File</string>
+    <string name="logcat_buffer_main">Main</string>
+    <string name="logcat_buffer_system">System</string>
+    <string name="logcat_buffer_crash">Crash</string>
+    <string name="logcat_buffer_events">Events</string>
+    <string name="logcat_buffer_radio">Radio</string>
+    <string name="logcat_root_unavailable">Root unavailable</string>
 
     <!-- Notification -->
     <string name="notif_intercepted_count">Intercepted %1$d times</string>
