@@ -114,7 +114,7 @@ interface CrashLogRepository {
     fun getCount(filter: CrashFilter): Int
     fun deleteById(id: String): Boolean
     fun clear()
-    fun observeChanges(): Flow<Unit>   // stub: returns emptyFlow()
+    // fun observeChanges(): Flow<Unit>   // deferred: not yet in interface; UI uses Paging3 refresh + onResume
     fun applyRetention()
 }
 ```
@@ -123,7 +123,7 @@ interface CrashLogRepository {
 
 | 策略 | 说明 |
 |------|------|
-| 当前实现 | `observeChanges()` 返回 `emptyFlow()` — stub，UI 通过 Paging3 `refresh` 手动刷新 |
+| 当前实现 | `observeChanges()` **未加入接口**；UI 通过 Paging3 `refresh` + `onResume` 手动刷新 |
 | 未来方案 | `FileObserver` 或轮询 `lastModified`；ingest/Provider 写入后通知 `observeChanges` |
 | 线程 | `Dispatchers.IO`；UI 层在 ViewModel 内 `viewModelScope` 收集 |
 

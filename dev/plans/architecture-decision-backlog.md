@@ -67,7 +67,7 @@ summary: "待决 ADR、实现与架构文档漂移；4B-β RelayMerge dedupe 已
 
 | 项 | 内容 |
 |----|------|
-| **背景** | 文档定义 `observeChanges()`、`clear()`、`deleteById()`、`applyRetention()`；[FileCrashLogRepository.kt](../../app/src/main/java/nota/android/crash/xp/app/data/CrashLogRepository.kt) ~~**仅** `getAll/getById/getCount`，LRU 200 + mtime 失效，**无 Flow**~~ **已实现** `deleteById`、`clear`、`observeChanges()`、`applyRetention()` |
+| **背景** | 文档定义 `observeChanges()`、`clear()`、`deleteById()`、`applyRetention()`；[FileCrashLogRepository.kt](../../app/src/main/java/nota/android/crash/xp/app/data/CrashLogRepository.kt) ~~**仅** `getAll/getById/getCount`，LRU 200 + mtime 失效，**无 Flow**~~ **已实现** `deleteById`、`clear`、`applyRetention()`；`observeChanges()` **deferred**（未加入接口，UI 用 Paging3 refresh） |
 | **分叉** | ~~A) 修订 crash-data-layer 对齐 as-built，4D 再扩展接口；B) 补全 Repository 接口再写 4D UI；C) 引入 Paging3 为唯一列表读口，废弃 offset 扫描~~ → **已选 B，接口已补全** |
 | **影响** | CrashHistoryPagingSource、StatsAggregator、清空历史、导出 |
 | **建议** | ~~**先修订 crash-data-layer（as-built 节）**，4D 启动前 **ADR-019** 定 *清空/retention 是否经 Repository*~~ **已解决 — 接口已扩展，待 ADR-019 定 retention 策略** |
