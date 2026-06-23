@@ -6,6 +6,7 @@ import de.robv.android.xposed.XposedBridge
 import nota.android.crash.feedback.CrashFeedbackFacade
 import nota.android.crash.log.CrashEventBuilder
 import nota.android.crash.log.CrashLogCoordinator
+import nota.android.crash.log.hookSafeLog
 import androidx.annotation.VisibleForTesting
 import nota.android.crash.xp.ScopeDecision
 
@@ -38,7 +39,8 @@ object CrashCapturePipeline {
             var appLabel: String? = null
             try {
                 appLabel = appInfo.loadLabel(application.packageManager).toString()
-            } catch (_: Throwable) {
+            } catch (e: Throwable) {
+                hookSafeLog("CrashCapturePipeline", "Failed to load app label", e)
             }
 
             val processName = CrashEventBuilder.resolveProcessName(application, packageName)

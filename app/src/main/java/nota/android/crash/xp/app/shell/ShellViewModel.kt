@@ -1,8 +1,10 @@
 package nota.android.crash.xp.app.shell
 
 import android.content.Context
+import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import nota.android.crash.log.BackendAvailability
@@ -12,6 +14,7 @@ import nota.android.crash.xp.app.common.BaseFlowViewModel
 
 class ShellViewModel(
     private val savedStateHandle: SavedStateHandle,
+    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) : BaseFlowViewModel<ShellUiState>(restoredUiState(savedStateHandle)) {
 
     fun setSelectedTab(tab: ShellTab) {
@@ -42,8 +45,8 @@ class ShellViewModel(
                         totalBackendCount = backends.size,
                     )
                 }
-            } catch (_: Throwable) {
-                // Silently ignore probe failures — banner will show stale or default state
+            } catch (e: Throwable) {
+                Log.w("ShellViewModel", "refreshRootStatus failed", e)
             }
         }
     }

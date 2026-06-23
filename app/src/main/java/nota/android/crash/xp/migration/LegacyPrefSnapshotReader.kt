@@ -2,6 +2,7 @@ package nota.android.crash.xp.migration
 
 import android.content.Context
 import android.content.SharedPreferences
+import android.util.Log
 import android.util.Xml
 import kotlinx.coroutines.runBlocking
 import nota.android.crash.root.RootAccessClient
@@ -75,7 +76,8 @@ class LegacyPrefSnapshotReader(private val rootAccessClient: RootAccessClient) {
                 }
 
                 Snapshot(booleans, stringSets)
-            } catch (_: Exception) {
+            } catch (e: Exception) {
+                Log.w("LegacyPrefSnapshotReader", "Failed to parse legacy prefs XML", e)
                 null
             }
         }
@@ -114,7 +116,8 @@ class LegacyPrefSnapshotReader(private val rootAccessClient: RootAccessClient) {
             )
             val legacy = legacyContext.getSharedPreferences(LEGACY_PREF_FILE, Context.MODE_PRIVATE)
             snapshotFromPrefs(legacy)
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            Log.w("LegacyPrefSnapshotReader", "Failed to read legacy prefs via package context", e)
             null
         }
     }
@@ -124,7 +127,8 @@ class LegacyPrefSnapshotReader(private val rootAccessClient: RootAccessClient) {
         val xml = runBlocking {
             try {
                 rootAccessClient.readText(path)
-            } catch (_: Exception) {
+            } catch (e: Exception) {
+                Log.w("LegacyPrefSnapshotReader", "Failed to read legacy prefs via root", e)
                 null
             }
         }

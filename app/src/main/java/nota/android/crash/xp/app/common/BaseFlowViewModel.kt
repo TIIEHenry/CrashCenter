@@ -32,14 +32,16 @@ abstract class BaseFlowViewModel<S>(initialState: S) : ViewModel() {
         scope: CoroutineScope,
         block: suspend () -> Unit,
     ) {
-        val state = _uiState.value as LoadableState
+        val state = _uiState.value as? LoadableState
+            ?: throw IllegalStateException("State ${_uiState.value?.let { it::class.simpleName }} must implement LoadableState")
         _uiState.value = state.copyWithLoading(true) as S
         scope.launch {
             try {
                 block()
             } catch (e: Exception) {
                 safeLog("BaseFlowViewModel", "load failed", e)
-                val current = _uiState.value as LoadableState
+                val current = _uiState.value as? LoadableState
+                    ?: throw IllegalStateException("State ${_uiState.value?.let { it::class.simpleName }} must implement LoadableState")
                 _uiState.value = current.copyWithError(e.message) as S
             }
         }
