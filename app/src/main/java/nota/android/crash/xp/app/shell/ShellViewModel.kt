@@ -1,7 +1,6 @@
 package nota.android.crash.xp.app.shell
 
 import android.content.Context
-import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.CoroutineDispatcher
@@ -11,6 +10,7 @@ import nota.android.crash.log.BackendAvailability
 import nota.android.crash.log.CrashLogBackendRegistry
 import nota.android.crash.root.RootAccessClient
 import nota.android.crash.xp.app.common.BaseFlowViewModel
+import nota.android.crash.xp.app.common.safeLog
 
 class ShellViewModel(
     private val savedStateHandle: SavedStateHandle,
@@ -46,7 +46,7 @@ class ShellViewModel(
                     )
                 }
             } catch (e: Throwable) {
-                Log.w("ShellViewModel", "refreshRootStatus failed", e)
+                safeLog("ShellViewModel", "refreshRootStatus failed", e)
             }
         }
     }

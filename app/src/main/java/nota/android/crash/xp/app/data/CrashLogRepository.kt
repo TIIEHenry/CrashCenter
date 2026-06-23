@@ -17,9 +17,9 @@ import kotlin.concurrent.read
 import kotlin.concurrent.write
 
 interface CrashLogRepository {
-    fun getAll(filter: CrashFilter, limit: Int, offset: Int): List<CrashEvent>
+    fun getAll(filter: CrashFilter = CrashFilter(), limit: Int, offset: Int): List<CrashEvent>
     fun getById(id: String): CrashEvent?
-    fun getCount(filter: CrashFilter): Int
+    fun getCount(filter: CrashFilter = CrashFilter()): Int
     fun getPackageCounts(filter: CrashFilter = CrashFilter()): List<Pair<String, Int>>
     fun deleteById(id: String): Boolean
     fun clear()
