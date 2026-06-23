@@ -1,6 +1,7 @@
 package nota.android.crash.root
 
 import android.util.Base64
+import android.util.Log
 import com.topjohnwu.superuser.Shell
 
 /**
@@ -31,7 +32,8 @@ class ShellOnlyAdapter : RootAccessClient {
                 shell.isRoot -> RootAvailability.AVAILABLE
                 else -> RootAvailability.DENIED
             }
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            Log.w("ShellOnlyAdapter", "probe failed", e)
             RootAvailability.UNAVAILABLE
         }
     }
@@ -40,7 +42,8 @@ class ShellOnlyAdapter : RootAccessClient {
         return try {
             val result = Shell.cmd("timeout $TIMEOUT_SEC su -c cat \"$path\"").exec()
             if (result.isSuccess) result.out.joinToString("\n") else null
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            Log.w("ShellOnlyAdapter", "readText failed", e)
             null
         }
     }
@@ -49,7 +52,8 @@ class ShellOnlyAdapter : RootAccessClient {
         return try {
             val result = Shell.cmd("timeout $TIMEOUT_SEC su -c ls \"$path\"").exec()
             if (result.isSuccess) result.out else emptyList()
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            Log.w("ShellOnlyAdapter", "listDir failed", e)
             emptyList()
         }
     }
@@ -63,7 +67,8 @@ class ShellOnlyAdapter : RootAccessClient {
                 "timeout $remainingSec su -c 'printf %s \"$encoded\" | base64 -d >> \"$path\"'"
             ).exec()
             result.isSuccess
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            Log.w("ShellOnlyAdapter", "appendBytes failed", e)
             false
         }
     }
@@ -72,7 +77,8 @@ class ShellOnlyAdapter : RootAccessClient {
         return try {
             val result = Shell.cmd("timeout $TIMEOUT_SEC su -c rm \"$path\"").exec()
             result.isSuccess
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            Log.w("ShellOnlyAdapter", "delete failed", e)
             false
         }
     }

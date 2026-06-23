@@ -1,6 +1,7 @@
 package nota.android.crash.log
 
 import android.content.Context
+import android.util.Log
 import androidx.annotation.VisibleForTesting
 import nota.android.crash.log.backend.RelayMergeBackend
 import nota.android.crash.root.RootAccessClient
@@ -36,8 +37,8 @@ object CrashLogIngestCoordinator {
     internal suspend fun ingest(context: Context, rootClient: RootAccessClient) {
         try {
             ingestImpl(context, rootClient)
-        } catch (_: Throwable) {
-            // Silent failure
+        } catch (e: Throwable) {
+            Log.w("CrashLogIngestCoordinator", "ingest failed", e)
         }
     }
 
