@@ -30,6 +30,7 @@ class LogcatViewModel(
                 copy(
                     isLoading = false,
                     entries = entries,
+                    allEntries = allEntries,
                     isFiltered = crashOnly,
                     totalRawCount = allEntries.size,
                 )
@@ -38,14 +39,17 @@ class LogcatViewModel(
     }
 
     /**
-     * Re-parse the current entries with crash-only filter.
+     * Apply or remove the crash-only filter using the stored [LogcatUiState.allEntries].
      */
     fun setCrashFilter(crashOnly: Boolean) {
         val current = _uiState.value
-        if (current.entries.isEmpty()) return
-        // Re-parse from scratch is not possible here; toggle isFiltered on existing entries
-        // For a new file load, crashOnly is passed to loadFromText
-        emitState { copy(isFiltered = crashOnly) }
+        if (current.allEntries.isEmpty()) return
+        val filtered = if (crashOnly) {
+            LogcatParser.filterCrashRelated(current.allEntries)
+        } else {
+            current.allEntries
+        }
+        emitState { copy(entries = filtered, isFiltered = crashOnly) }
     }
 
     /**

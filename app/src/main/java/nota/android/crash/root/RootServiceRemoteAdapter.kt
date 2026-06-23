@@ -12,7 +12,6 @@ import com.topjohnwu.superuser.nio.FileSystemManager
 import kotlinx.coroutines.withTimeout
 import nota.android.crash.root.service.CrashCenterRootService
 import nota.android.crash.root.service.RootBroker
-import java.io.InputStream
 import java.nio.channels.Channels
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
@@ -107,16 +106,6 @@ class RootServiceRemoteAdapter(private val context: Context) : RootAccessClient 
             fsm.getFile(path).list()?.toList() ?: emptyList()
         } catch (_: Exception) {
             emptyList()
-        }
-    }
-
-    override suspend fun openRead(path: String): InputStream? {
-        val fsm = getFsManager() ?: return null
-        return try {
-            val channel = fsm.openChannel(path, FileSystemManager.MODE_READ_ONLY)
-            Channels.newInputStream(channel)
-        } catch (_: Exception) {
-            null
         }
     }
 

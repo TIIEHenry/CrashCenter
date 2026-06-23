@@ -9,7 +9,6 @@ import nota.android.crash.xp.PrefManager
 import java.io.BufferedReader
 import java.io.File
 import java.io.FileReader
-import java.io.FileWriter
 import java.util.Collections
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicLong
@@ -127,46 +126,15 @@ class FileCrashLogRepository(
 
     override fun deleteById(id: String): Boolean {
         return lock.write {
-            if (!eventsFile.isFile) return@write false
-
-            val tempFile = File(eventsFile.parentFile, "${eventsFile.name}.tmp")
-            var deleted = false
-
-            BufferedReader(FileReader(eventsFile)).use { reader ->
-                java.io.FileWriter(tempFile).use { writer ->
-                    reader.lineSequence().forEach { line ->
-                        val trimmed = line.trim()
-                        if (trimmed.isEmpty()) return@forEach
-
-                        val event = CrashEvent.fromJson(trimmed)
-                        if (event != null && event.id == id) {
-                            deleted = true
-                            return@forEach // skip this line
-                        }
-                        writer.write(line)
-                        writer.write("\n")
-                    }
-                }
-            }
-
-            if (deleted) {
-                if (tempFile.length() == 0L) {
-                    eventsFile.delete()
-                } else {
-                    tempFile.renameTo(eventsFile)
-                }
-                invalidateCache()
-            } else {
-                tempFile.delete()
-            }
-
+            val deleted = CanonicalJsonlWriter.deleteById(eventsFile, id)
+            if (deleted) invalidateCache()
             deleted
         }
     }
 
     override fun clear() {
         lock.write {
-            eventsFile.delete()
+            CanonicalJsonlWriter.clear(eventsFile)
             invalidateCache()
         }
     }

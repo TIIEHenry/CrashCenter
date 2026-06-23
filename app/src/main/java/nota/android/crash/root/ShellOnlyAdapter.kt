@@ -2,7 +2,6 @@ package nota.android.crash.root
 
 import android.util.Base64
 import com.topjohnwu.superuser.Shell
-import java.io.InputStream
 
 /**
  * Hook-process implementation of [RootAccessClient].
@@ -53,11 +52,6 @@ class ShellOnlyAdapter : RootAccessClient {
         } catch (_: Exception) {
             emptyList()
         }
-    }
-
-    override suspend fun openRead(path: String): InputStream? {
-        // Not supported via shell — callers should use RootServiceRemoteAdapter
-        return null
     }
 
     override suspend fun appendBytes(path: String, data: ByteArray, deadlineMs: Long): Boolean {

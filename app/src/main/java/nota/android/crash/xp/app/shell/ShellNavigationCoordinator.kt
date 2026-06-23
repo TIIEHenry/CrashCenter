@@ -75,7 +75,7 @@ class ShellNavigationCoordinator(
     /** @return the menu resource to inflate for [tab], or `null` to clear. */
     fun optionsMenuResForTab(tab: ShellTab): Int? = when (tab) {
         ShellTab.CONFIG -> R.menu.menu_main
-        ShellTab.OBSERVE -> R.menu.menu_observe_stub
+        ShellTab.OBSERVE -> R.menu.menu_observe
     }
 
     /**

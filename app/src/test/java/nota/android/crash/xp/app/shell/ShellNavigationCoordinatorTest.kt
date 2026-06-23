@@ -188,7 +188,7 @@ class ShellNavigationCoordinatorTest {
     fun `optionsMenuResForTab returns correct resources`() {
         assertEquals(nota.android.crash.xp.app.R.menu.menu_main,
             coordinator.optionsMenuResForTab(ShellTab.CONFIG))
-        assertEquals(nota.android.crash.xp.app.R.menu.menu_observe_stub,
+        assertEquals(nota.android.crash.xp.app.R.menu.menu_observe,
             coordinator.optionsMenuResForTab(ShellTab.OBSERVE))
     }
 

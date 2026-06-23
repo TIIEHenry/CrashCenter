@@ -45,6 +45,56 @@ object CanonicalJsonlWriter {
         }
     }
 
+    /**
+     * Deletes all lines whose parsed [CrashEvent.id] matches [id].
+     * Returns `true` if at least one line was removed, `false` if the id was not found
+     * or the file does not exist.
+     */
+    fun deleteById(eventsFile: File, id: String): Boolean {
+        if (!eventsFile.isFile) return false
+        RandomAccessFile(eventsFile, "rw").use { raf ->
+            val lock = raf.channel.lock()
+            try {
+                val lines = readLinesUtf8(raf)
+                val filtered = lines.filter { line ->
+                    val event = CrashEvent.fromJson(line)
+                    event == null || event.id != id
+                }
+                if (filtered.size == lines.size) return false // id not found
+
+                if (filtered.isEmpty()) {
+                    eventsFile.delete()
+                } else {
+                    raf.setLength(0)
+                    raf.seek(0)
+                    filtered.forEach { line ->
+                        raf.write(line.toByteArray(Charsets.UTF_8))
+                        raf.write('\n'.code)
+                    }
+                }
+            } finally {
+                lock.release()
+            }
+        }
+        return true
+    }
+
+    /**
+     * Removes [eventsFile] under a file lock so concurrent writers finish first.
+     * No-op if the file does not exist.
+     */
+    fun clear(eventsFile: File) {
+        if (!eventsFile.isFile) return
+        RandomAccessFile(eventsFile, "rw").use { raf ->
+            val lock = raf.channel.lock()
+            try {
+                eventsFile.delete()
+            } finally {
+                lock.release()
+            }
+        }
+    }
+
     fun applyRetention(eventsFile: File) {
         if (!eventsFile.isFile) return
         RandomAccessFile(eventsFile, "rw").use { raf ->

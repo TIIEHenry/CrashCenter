@@ -19,7 +19,22 @@ object DirectFsBackend : CrashLogBackend {
     override val tier = 2
     override val runsOn = ProcessSlot.HOOK
 
-    override fun probe(context: Context): BackendAvailability = BackendAvailability.MAYBE
+    override fun probe(context: Context): BackendAvailability {
+        return try {
+            val moduleContext = context.createPackageContext(
+                PrefManager.PACKAGE_NAME,
+                Context.CONTEXT_IGNORE_SECURITY,
+            )
+            val logDir = File(
+                moduleContext.filesDir,
+                FileCrashLogRepository.LOG_DIR,
+            )
+            if (logDir.exists() || logDir.mkdirs()) BackendAvailability.READY
+            else BackendAvailability.UNAVAILABLE
+        } catch (_: Throwable) {
+            BackendAvailability.UNAVAILABLE
+        }
+    }
 
     override fun append(context: Context, event: CrashEvent, deadlineMs: Long): AppendResult {
         return appendWithSafeWrite(event) { stamped ->

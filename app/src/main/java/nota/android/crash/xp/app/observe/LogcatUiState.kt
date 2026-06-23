@@ -6,6 +6,7 @@ import nota.android.crash.xp.app.common.LoadableState
 data class LogcatUiState(
     override val isLoading: Boolean = false,
     val entries: List<LogcatEntry> = emptyList(),
+    val allEntries: List<LogcatEntry> = emptyList(),
     val activeLevels: Set<LogcatLevel> = DEFAULT_LEVELS,
     val isFiltered: Boolean = false,
     val totalRawCount: Int = 0,

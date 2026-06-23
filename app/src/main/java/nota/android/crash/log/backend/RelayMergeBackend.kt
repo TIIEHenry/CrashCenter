@@ -1,6 +1,7 @@
 package nota.android.crash.log.backend
 
 import android.content.Context
+import android.util.Log
 import androidx.annotation.VisibleForTesting
 import nota.android.crash.common.data.CrashEvent
 import nota.android.crash.log.AppendResult
@@ -27,6 +28,7 @@ object RelayMergeBackend : CrashLogBackend {
 
     private const val USER_BASE_PATH = "/data/user"
     private const val MAX_USER_ID = 150
+    private const val MAX_RELAY_FILES = 1000
 
     override val id = BackendId.RELAY_MERGE
     override val tier = 2
@@ -125,6 +127,10 @@ object RelayMergeBackend : CrashLogBackend {
                 for (fileName in files) {
                     if (fileName.endsWith(".json")) {
                         result.add(RelayFileRef(userId, packageName, fileName))
+                        if (result.size >= MAX_RELAY_FILES) {
+                            Log.w("RelayMergeBackend", "Hit relay file limit ($MAX_RELAY_FILES), stopping scan early")
+                            return result
+                        }
                     }
                 }
             }

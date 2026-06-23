@@ -14,7 +14,8 @@ import nota.android.crash.xp.PrefManager
 
 /**
  * Hook-side crash log coordinator (4B-α).
- * Phase 2 parallel: Provider + DirectFs + TargetRelay (RootSu deferred to 4B-β).
+ * Phase 2 parallel: Provider + DirectFs + TargetRelay + RootSuBackend
+ * all run concurrently with a shared timeout.
  *
  * Sequential validation/formatting on a single dispatcher, then parallel backend
  * writes with timeout via structured coroutines.
