@@ -1,6 +1,7 @@
 package nota.android.crash.xp.migration
 
 import android.content.Context
+import android.util.Log
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.os.Build
@@ -61,7 +62,8 @@ object ManagedModelMigrator {
                 packageManager.getPackageInfo(context.packageName, 0)
             }
             packageInfo.lastUpdateTime - packageInfo.firstInstallTime > UPGRADE_TIME_GRACE_MS
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            Log.w("ManagedModelMigrator", "Failed to query package info for upgrade check", e)
             false
         }
     }

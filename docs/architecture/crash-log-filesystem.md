@@ -1,9 +1,9 @@
 ---
 title: "Canonical JSONL 文件系统一致性"
 type: architecture
-status: proposed
+status: accepted
 phase: 4
-updated: 2026-06-22
+updated: 2026-06-23
 summary: "events.jsonl 跨进程读写、FileLock 统一、时间倒序读口、dedupe 与 IS 验收；衔接 ADR-017 / 4B-β"
 ---
 
@@ -13,7 +13,7 @@ summary: "events.jsonl 跨进程读写、FileLock 统一、时间倒序读口、
 > 存储决策：[ADR-007](../decisions/007-crash-log-cross-process-storage.md)、[ADR-008](../decisions/008-multi-backend-crash-log-storage.md)
 > 多后端与 ingest：[crash-log-backends.md](crash-log-backends.md)、[ADR-017](../decisions/017-root-ingest-and-dedupe.md)
 > 读口消费：[crash-data-layer.md](crash-data-layer.md)、[crash-history-ui.md](crash-history-ui.md)
-> I/O 决策：[ADR-021](../decisions/021-canonical-jsonl-io-consistency.md)（proposed）
+> I/O 决策：[ADR-021](../decisions/021-canonical-jsonl-io-consistency.md)（accepted）
 
 ## 概述
 
@@ -128,7 +128,7 @@ flowchart TB
 
 ## 3. Dedupe 与 relay 可见性
 
-**SSOT 决策**：[ADR-017](../decisions/017-root-ingest-and-dedupe.md)（proposed）。
+**SSOT 决策**：[ADR-017](../decisions/017-root-ingest-and-dedupe.md)（accepted）。
 
 | 层级 | 职责 | 优先级 |
 |------|------|--------|

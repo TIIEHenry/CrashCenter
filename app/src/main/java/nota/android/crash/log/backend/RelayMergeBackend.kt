@@ -46,8 +46,8 @@ object RelayMergeBackend : CrashLogBackend {
     suspend fun harvest(context: Context, rootClient: RootAccessClient) {
         try {
             harvestImpl(context, rootClient)
-        } catch (_: Throwable) {
-            // Silent failure — relay harvest is best-effort
+        } catch (e: Throwable) {
+            Log.w("RelayMergeBackend", "Relay harvest failed", e)
         }
     }
 
@@ -58,8 +58,8 @@ object RelayMergeBackend : CrashLogBackend {
         for ((userId, packageName, fileName) in relayFiles) {
             try {
                 mergeRelayFile(rootClient, eventsFile, canonicalIds, userId, packageName, fileName)
-            } catch (_: Throwable) {
-                // Per-file failure is non-fatal
+            } catch (e: Throwable) {
+                Log.d("RelayMergeBackend", "Failed to merge relay file: $userId/$packageName/$fileName", e)
             }
         }
     }
@@ -101,7 +101,8 @@ object RelayMergeBackend : CrashLogBackend {
 
         val userIds = try {
             rootClient.listDir(USER_BASE_PATH)
-        } catch (_: Throwable) {
+        } catch (e: Throwable) {
+            Log.d("RelayMergeBackend", "Failed to list user dirs", e)
             return emptyList()
         }
 
@@ -112,7 +113,8 @@ object RelayMergeBackend : CrashLogBackend {
             val userPath = "$USER_BASE_PATH/$userId"
             val packages = try {
                 rootClient.listDir(userPath)
-            } catch (_: Throwable) {
+            } catch (e: Throwable) {
+                Log.d("RelayMergeBackend", "Failed to list packages for user $userId", e)
                 continue
             }
 

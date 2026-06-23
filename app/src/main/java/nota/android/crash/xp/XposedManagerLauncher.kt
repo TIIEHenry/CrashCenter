@@ -2,6 +2,7 @@ package nota.android.crash.xp
 
 import android.content.Context
 import android.content.Intent
+import android.util.Log
 
 object XposedManagerLauncher {
 
@@ -22,8 +23,8 @@ object XposedManagerLauncher {
                 }
                 context.startActivity(intent)
                 return true
-            } catch (_: Exception) {
-                // try next manager
+            } catch (e: Exception) {
+                Log.w("XposedManagerLauncher", "Failed to launch manager: $packageName", e)
             }
         }
         return false

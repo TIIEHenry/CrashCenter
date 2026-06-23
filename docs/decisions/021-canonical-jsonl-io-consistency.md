@@ -1,9 +1,9 @@
 ---
 title: "ADR-021: Canonical JSONL I/O 一致性"
 type: decision
-status: proposed
+status: accepted
 phase: 4
-updated: 2026-06-22
+updated: 2026-06-23
 summary: "events.jsonl 变异统一 FileLock；Repository 读口 timestampMs 降序；删改经 CanonicalJsonlStore"
 ---
 
@@ -11,7 +11,7 @@ summary: "events.jsonl 变异统一 FileLock；Repository 读口 timestampMs 降
 
 ## 状态
 
-**Proposed** — 配套 [crash-log-filesystem.md](../architecture/crash-log-filesystem.md)；**4B-γ** 编码前 accepted。与 [ADR-017](017-root-ingest-and-dedupe.md)（dedupe / ingest）正交：本 ADR 管 **单文件 I/O 契约**，ADR-017 管 **多后端语义与 merge**。
+**Accepted** (2026-06-23) — CanonicalJsonlStore FileLock 统一已落地（`deleteById`/`clear` 委托 `CanonicalJsonlStore`）。配套 [crash-log-filesystem.md](../architecture/crash-log-filesystem.md)。与 [ADR-017](017-root-ingest-and-dedupe.md)（dedupe / ingest）正交：本 ADR 管 **单文件 I/O 契约**，ADR-017 管 **多后端语义与 merge**。
 
 ## 背景
 

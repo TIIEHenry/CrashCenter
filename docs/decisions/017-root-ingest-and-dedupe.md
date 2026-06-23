@@ -1,9 +1,9 @@
 ---
 title: "ADR-017: 4B-β Root Ingest 与 JSONL Dedupe"
 type: decision
-status: proposed
+status: accepted
 phase: 4
-updated: 2026-06-20
+updated: 2026-06-23
 summary: "落实 ADR-008 Phase 1 RootSu + 模块 ingest merge；canonical 按 crash_id 去重；读路径可选防御性 dedupe"
 ---
 
@@ -11,7 +11,7 @@ summary: "落实 ADR-008 Phase 1 RootSu + 模块 ingest merge；canonical 按 cr
 
 ## 状态
 
-**Proposed** — 待 IS-1~IS-6 / IS-R1~IS-R5 真机矩阵验证后 **accepted**。不修改 [ADR-008](008-multi-backend-crash-log-storage.md) 已 accepted 原则，仅 operationalize 4B-β 实现细节。
+**Accepted** (2026-06-23) — RelayMergeBackend ingest + id dedupe 已落地。不修改 [ADR-008](008-multi-backend-crash-log-storage.md) 已 accepted 原则，仅 operationalize 4B-β 实现细节。
 
 ## 背景
 
@@ -30,7 +30,7 @@ summary: "落实 ADR-008 Phase 1 RootSu + 模块 ingest merge；canonical 按 cr
 
 本 ADR 在 4B-β 编码前锁定 **dedupe 位置与 merge 算法**，避免 UI 与 ingest 各写一套逻辑。
 
-## 决策（proposed）
+## 决策（accepted）
 
 ### 1. 4B-β 范围：完整落实 ADR-008 两阶段
 

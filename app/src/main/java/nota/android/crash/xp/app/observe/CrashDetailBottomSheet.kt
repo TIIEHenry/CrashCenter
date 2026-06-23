@@ -13,6 +13,7 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import android.util.Log
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.google.android.material.chip.Chip
 import kotlinx.coroutines.launch
@@ -151,7 +152,8 @@ class CrashDetailBottomSheet : BottomSheetDialogFragment() {
     private fun initRuleEngine() {
         ruleEngine = try {
             RuleEngine.fromAssets(requireContext())
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            Log.w("CrashDetailBottomSheet", "Failed to load rule engine from assets", e)
             null
         }
     }
