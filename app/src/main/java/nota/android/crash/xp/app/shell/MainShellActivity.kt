@@ -19,11 +19,14 @@ import nota.android.crash.xp.app.R
 import nota.android.crash.xp.app.SystemBars
 import nota.android.crash.xp.app.common.ui.StatusBanner
 import nota.android.crash.xp.app.databinding.ActivityMainShellBinding
+import nota.android.crash.xp.app.di.shellViewModelFactory
 
 class MainShellActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainShellBinding
-    private val shellViewModel: ShellViewModel by viewModels()
+    private val shellViewModel: ShellViewModel by viewModels {
+        ServiceLocator.shellViewModelFactory(this)
+    }
     private lateinit var navigator: ShellNavigator
     private lateinit var tabController: ShellTabController
 

@@ -14,6 +14,7 @@ import nota.android.crash.xp.app.observe.CrashDetailViewModel
 import nota.android.crash.xp.app.observe.CrashHistoryViewModel
 import nota.android.crash.xp.app.observe.CrashStatsViewModel
 import nota.android.crash.xp.app.observe.PerAppCrashViewModel
+import nota.android.crash.xp.app.shell.ShellViewModel
 
 /**
  * Generic ViewModel factory that delegates creation to a lambda.
@@ -32,6 +33,20 @@ class ViewModelFactory<VM : ViewModel>(
  * Pre-configured ViewModel factories exposed from ServiceLocator.
  * Eliminates duplicated lambda boilerplate in Fragments/Activities.
  */
+fun ServiceLocator.shellViewModelFactory(
+    owner: SavedStateRegistryOwner,
+): ViewModelProvider.Factory =
+    object : AbstractSavedStateViewModelFactory(owner, null) {
+        @Suppress("UNCHECKED_CAST")
+        override fun <T : ViewModel> create(
+            key: String,
+            modelClass: Class<T>,
+            handle: SavedStateHandle,
+        ): T {
+            return ShellViewModel(handle) as T
+        }
+    }
+
 fun ServiceLocator.configViewModelFactory(context: Context): ViewModelProvider.Factory =
     ViewModelFactory {
         ConfigViewModel(
