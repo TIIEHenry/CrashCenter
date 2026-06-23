@@ -34,6 +34,7 @@ import nota.android.crash.xp.app.di.ServiceLocator
 import nota.android.crash.xp.app.common.ui.showErrorToast
 import nota.android.crash.xp.app.common.ui.LoadingState
 import nota.android.crash.xp.app.data.CrashFilter
+import nota.android.crash.xp.app.data.CrashSortMode
 import nota.android.crash.xp.app.di.crashHistoryViewModelFactory
 import nota.android.crash.xp.app.databinding.FragmentCrashHistoryBinding
 import java.io.File
@@ -163,6 +164,14 @@ class CrashHistoryFragment : Fragment() {
             if (hasFilter) R.string.observe_menu_filter_clear
             else R.string.observe_menu_filter
         )
+
+        val pkgFilterItem = menu.findItem(R.id.item_observe_package_filter)
+        val activePkg = viewModel.uiState.value.activePackageFilter
+        pkgFilterItem?.title = if (activePkg != null) {
+            getString(R.string.observe_menu_package_filter_clear, activePkg)
+        } else {
+            getString(R.string.observe_menu_package_filter)
+        }
     }
 
     fun handleOptionsItem(item: MenuItem): Boolean {
@@ -174,6 +183,34 @@ class CrashHistoryFragment : Fragment() {
                 } else {
                     showFilterDialog()
                 }
+                true
+            }
+            R.id.item_observe_package_filter -> {
+                showPackageFilterDialog()
+                true
+            }
+            R.id.item_sort_time_newest -> {
+                viewModel.setSortMode(CrashSortMode.TIME_NEWEST)
+                true
+            }
+            R.id.item_sort_time_oldest -> {
+                viewModel.setSortMode(CrashSortMode.TIME_OLDEST)
+                true
+            }
+            R.id.item_sort_package_asc -> {
+                viewModel.setSortMode(CrashSortMode.PACKAGE_ASC)
+                true
+            }
+            R.id.item_sort_package_desc -> {
+                viewModel.setSortMode(CrashSortMode.PACKAGE_DESC)
+                true
+            }
+            R.id.item_sort_exception_asc -> {
+                viewModel.setSortMode(CrashSortMode.EXCEPTION_ASC)
+                true
+            }
+            R.id.item_sort_exception_desc -> {
+                viewModel.setSortMode(CrashSortMode.EXCEPTION_DESC)
                 true
             }
             R.id.item_observe_export -> {
@@ -239,6 +276,35 @@ class CrashHistoryFragment : Fragment() {
             }
             .setNegativeButton(android.R.string.cancel, null)
             .show()
+    }
+
+    private fun showPackageFilterDialog() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            val packageCounts = viewModel.getPackageCounts()
+            if (packageCounts.isEmpty()) {
+                Toast.makeText(requireContext(), R.string.observe_export_no_events, Toast.LENGTH_SHORT).show()
+                return@launch
+            }
+
+            val items = packageCounts.map { (pkg, count) -> "$pkg ($count)" }.toTypedArray()
+            val activePkg = viewModel.uiState.value.activePackageFilter
+
+            MaterialAlertDialogBuilder(requireContext())
+                .setTitle(R.string.observe_menu_package_filter)
+                .setItems(items) { _, which ->
+                    val selectedPkg = packageCounts[which].first
+                    viewModel.setPackageFilter(selectedPkg)
+                }
+                .setNeutralButton(android.R.string.cancel, null)
+                .apply {
+                    if (activePkg != null) {
+                        setNegativeButton(R.string.observe_package_filter_clear) { _, _ ->
+                            viewModel.setPackageFilter(null)
+                        }
+                    }
+                }
+                .show()
+        }
     }
 
     private fun exportLogs() {

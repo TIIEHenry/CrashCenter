@@ -32,6 +32,15 @@ class FakeCrashLogRepository : CrashLogRepository {
         return filteredEvents(filter).size
     }
 
+    override fun getPackageCounts(): List<Pair<String, Int>> {
+        return events
+            .groupingBy { it.packageName }
+            .eachCount()
+            .entries
+            .sortedByDescending { it.value }
+            .map { it.key to it.value }
+    }
+
     private fun filteredEvents(filter: CrashFilter): List<CrashEvent> {
         var result = events
         filter.packageName?.takeIf { it.isNotEmpty() }?.let { pkg ->

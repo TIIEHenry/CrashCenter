@@ -17,6 +17,7 @@ import nota.android.crash.xp.app.common.BaseFlowViewModel
 import nota.android.crash.xp.app.common.safeLog
 import nota.android.crash.xp.app.data.CrashFilter
 import nota.android.crash.xp.app.data.CrashLogRepository
+import nota.android.crash.xp.app.data.CrashSortMode
 import java.io.ByteArrayOutputStream
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -45,10 +46,33 @@ class CrashHistoryViewModel(
         .cachedIn(viewModelScope)
 
     fun setFilter(filter: CrashFilter) {
-        currentFilter.value = filter
-        val active = filter.takeIf { it != CrashFilter() }
-        emitState { copy(activeFilter = active) }
+        // Preserve current sort mode when updating filter
+        val currentSort = currentFilter.value.sortMode
+        val merged = filter.copy(sortMode = currentSort)
+        currentFilter.value = merged
+        val active = merged.takeIf { it != CrashFilter() }
+        emitState { copy(activeFilter = active, activePackageFilter = merged.packageName) }
         loadEvents()
+    }
+
+    fun setSortMode(mode: CrashSortMode) {
+        val current = currentFilter.value
+        val updated = current.copy(sortMode = mode)
+        currentFilter.value = updated
+        emitState { copy(sortMode = mode) }
+    }
+
+    fun setPackageFilter(packageName: String?) {
+        val current = currentFilter.value
+        val updated = current.copy(packageName = packageName)
+        currentFilter.value = updated
+        val active = updated.takeIf { it.packageName != null }
+        emitState { copy(activeFilter = active, activePackageFilter = packageName) }
+        loadEvents()
+    }
+
+    suspend fun getPackageCounts(): List<Pair<String, Int>> = withContext(ioDispatcher) {
+        repository.getPackageCounts()
     }
 
     fun loadEvents() {

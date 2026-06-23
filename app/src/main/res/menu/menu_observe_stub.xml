@@ -9,6 +9,35 @@
         app:showAsAction="ifRoom" />
 
     <item
+        android:id="@+id/item_observe_package_filter"
+        android:title="@string/observe_menu_package_filter" />
+
+    <item
+        android:id="@+id/item_observe_sort"
+        android:title="@string/observe_menu_sort">
+        <menu>
+            <item
+                android:id="@+id/item_sort_time_newest"
+                android:title="@string/observe_sort_time_newest" />
+            <item
+                android:id="@+id/item_sort_time_oldest"
+                android:title="@string/observe_sort_time_oldest" />
+            <item
+                android:id="@+id/item_sort_package_asc"
+                android:title="@string/observe_sort_package_asc" />
+            <item
+                android:id="@+id/item_sort_package_desc"
+                android:title="@string/observe_sort_package_desc" />
+            <item
+                android:id="@+id/item_sort_exception_asc"
+                android:title="@string/observe_sort_exception_asc" />
+            <item
+                android:id="@+id/item_sort_exception_desc"
+                android:title="@string/observe_sort_exception_desc" />
+        </menu>
+    </item>
+
+    <item
         android:id="@+id/item_observe_export"
         android:title="@string/observe_menu_export" />
 

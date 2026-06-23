@@ -21,6 +21,7 @@ interface CrashLogRepository {
     fun getAll(filter: CrashFilter, limit: Int, offset: Int): List<CrashEvent>
     fun getById(id: String): CrashEvent?
     fun getCount(filter: CrashFilter): Int
+    fun getPackageCounts(): List<Pair<String, Int>>
     fun deleteById(id: String): Boolean
     fun clear()
     fun applyRetention()
@@ -108,6 +109,19 @@ class FileCrashLogRepository(
                 true // always continue for count
             }
             count
+        }
+    }
+
+    override fun getPackageCounts(): List<Pair<String, Int>> {
+        return lock.read {
+            val counts = mutableMapOf<String, Int>()
+            streamEvents { event ->
+                counts[event.packageName] = (counts[event.packageName] ?: 0) + 1
+                true
+            }
+            counts.entries
+                .sortedByDescending { it.value }
+                .map { it.key to it.value }
         }
     }
 
@@ -223,8 +237,16 @@ class FileCrashLogRepository(
             }
         }
 
-        // Sort newest-first by timestamp (descending)
-        val sorted = allEvents.sortedByDescending { it.timestampMs }
+        // Sort according to the sort mode in the filter (default: newest first)
+        val sortMode = filter?.sortMode ?: CrashSortMode.TIME_NEWEST
+        val sorted = when (sortMode) {
+            CrashSortMode.TIME_NEWEST -> allEvents.sortedByDescending { it.timestampMs }
+            CrashSortMode.TIME_OLDEST -> allEvents.sortedBy { it.timestampMs }
+            CrashSortMode.PACKAGE_ASC -> allEvents.sortedBy { it.packageName }
+            CrashSortMode.PACKAGE_DESC -> allEvents.sortedByDescending { it.packageName }
+            CrashSortMode.EXCEPTION_ASC -> allEvents.sortedBy { it.exceptionClass }
+            CrashSortMode.EXCEPTION_DESC -> allEvents.sortedByDescending { it.exceptionClass }
+        }
 
         // Filter and invoke action on sorted events
         val matchingEvents = if (filter != null) mutableListOf<CrashEvent>() else null

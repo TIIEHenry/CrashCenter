@@ -6,4 +6,5 @@ data class CrashFilter(
     val sinceMs: Long? = null,
     val untilMs: Long? = null,
     val source: String? = null,
+    val sortMode: CrashSortMode = CrashSortMode.TIME_NEWEST,
 )

@@ -90,6 +90,8 @@
     <string name="observe_package_filter_title">Filter by app</string>
     <string name="observe_package_filter_all">All apps</string>
     <string name="observe_package_filter_count">%1$d crashes</string>
+    <string name="observe_package_filter_clear">Clear filter</string>
+    <string name="observe_menu_package_filter_clear">Filter: %1$s</string>
     <string name="observe_clear_history_confirm_title">Clear crash history?</string>
     <string name="observe_clear_history_confirm_message">All crash records will be permanently deleted.</string>
     <string name="observe_clear_history_success">Crash history cleared</string>

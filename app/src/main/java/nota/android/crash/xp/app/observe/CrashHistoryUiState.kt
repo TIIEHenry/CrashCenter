@@ -3,11 +3,14 @@ package nota.android.crash.xp.app.observe
 import nota.android.crash.xp.app.common.HasErrorMessage
 import nota.android.crash.xp.app.common.LoadableState
 import nota.android.crash.xp.app.data.CrashFilter
+import nota.android.crash.xp.app.data.CrashSortMode
 
 data class CrashHistoryUiState(
     override val isLoading: Boolean = false,
     val eventCount: Int = 0,
     val activeFilter: CrashFilter? = null,
+    val activePackageFilter: String? = null,
+    val sortMode: CrashSortMode = CrashSortMode.TIME_NEWEST,
     val historyCleared: Int = 0,
     override val errorMessage: String? = null,
 ) : LoadableState, HasErrorMessage {

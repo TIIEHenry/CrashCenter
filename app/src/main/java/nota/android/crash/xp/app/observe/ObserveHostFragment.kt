@@ -98,6 +98,8 @@ class ObserveHostFragment : Fragment() {
     fun prepareOptionsMenu(menu: Menu) {
         val historyItems = intArrayOf(
             R.id.item_observe_filter,
+            R.id.item_observe_package_filter,
+            R.id.item_observe_sort,
             R.id.item_observe_export,
             R.id.item_observe_stats,
             R.id.item_observe_retention,
