@@ -31,7 +31,7 @@ class ShellViewModel(
      * Called from [MainShellActivity] on every resume so status stays fresh.
      */
     fun refreshRootStatus(context: Context, rootAccessClient: RootAccessClient) {
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch(ioDispatcher) {
             try {
                 val root = rootAccessClient.probe()
                 val backends = CrashLogBackendRegistry.enabledHookPhase2Backends(context)
