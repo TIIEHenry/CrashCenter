@@ -4,7 +4,7 @@ type: guide
 status: active
 phase: N/A
 updated: 2026-06-24
-summary: "双渠道发布：主仓库 GitHub Release（v* tag + CI）与 LSPosed 模块仓（{versionCode}-{versionName} + 手动 Release）"
+summary: "双渠道发布：主仓库 GitHub Release（v* tag + CI）与 LSPosed 模块仓（{versionCode}-{versionName} + XPOSED_REPO_TOKEN）"
 ---
 
 # 发布指南

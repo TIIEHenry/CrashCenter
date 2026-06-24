@@ -17,7 +17,7 @@ summary: "ADR-024 分布式 cache 存储 as-built；Phase 5 监测/拦截"
 | 并行 Phase | [Phase 4](../roadmap/active/phase4_crash_observability.md) 🔄 **IS 矩阵待验**；[Phase 5](../roadmap/active/phase5_observe_intercept_split.md) 🔄 **5.1–5.3 as-built** |
 | 阻塞 | LSPosed 手动 smoke（observe + intercept）；4B IS-D1~IS-D5 真机矩阵 |
 | 验证基线 | `461QYGDD2226C` **2026-06-19**：consolidated smoke **PASS**；dark mode Meizu **PASS** |
-| 文档 | 2026-06-24 ADR-024 as-built + 4F-ANR + logcat Paging3 |
+| 文档 | 2026-06-24 双渠道发布 CI、中文更名稳定性中心、LSPosed 模块仓双语 README |
 
 ### 已完成
 
@@ -44,6 +44,13 @@ summary: "ADR-024 分布式 cache 存储 as-built；Phase 5 监测/拦截"
 ---
 
 ## Recent Sessions
+
+### 2026-06-24 — 发布与品牌
+
+- **CI**：`release.yml` 自动发 LSPosed 模块仓；`xposed-module-release.yml` 手动补发；PAT 预检 `permissions.push`
+- **文档**：`guides/release.md` 双渠道 SSOT + Classic PAT（`repo` + SSO）排错
+- **品牌**：中文显示名 **稳定性中心**（`values-zh`、文档、模块仓 README/SUMMARY）
+- **阻塞**：模块仓 Release `1-1.0.0` 待 `XPOSED_REPO_TOKEN` 写权限（`push: true`）
 
 ### 2026-06-24 — 双渠道发布文档 SSOT
 
