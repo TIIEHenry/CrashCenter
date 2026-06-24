@@ -108,7 +108,7 @@ CrashLogger / 历史统计 (Phase 4 backlog)
 | Xposed API | 82 |
 | Gradle | 9.2.1 / AGP 9.0.0 |
 | applicationId | `nota.android.crash.xp.app` |
-| 显示名 | CrashCenter（英文）/ 崩溃中心（中文） |
+| 显示名 | CrashCenter（英文）/ 稳定性中心（中文） |
 
 ---
 

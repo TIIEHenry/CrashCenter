@@ -1,6 +1,6 @@
 # Changelog
 
-本文件记录 CrashCenter（崩溃中心）各版本的面向用户变更。格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
+本文件记录 CrashCenter（稳定性中心）各版本的面向用户变更。格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
 ## [Unreleased]
 
@@ -22,7 +22,7 @@
 
 ### Changed
 
-- 应用名 CrashCenter / 崩溃中心；包名 `nota.android.crash.xp.app`
+- 应用名 CrashCenter / 稳定性中心；包名 `nota.android.crash.xp.app`
 - 崩溃详情由 TextView 升级为 CodeEditor（可滚动、可选中文本）
 - 崩溃日志存储为各应用 `cache` 分布式 JSONL（root 聚合读取）
 

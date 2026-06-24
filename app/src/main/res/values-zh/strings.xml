@@ -62,7 +62,7 @@
     <string name="stats_section_top_exceptions">最常见异常类</string>
     <string name="stats_none">—</string>
     <string name="crash_history_empty">暂无崩溃记录。监测到的崩溃将显示在此处。</string>
-    <string name="crash_history_root_required">需要 Root 权限才能读取已 Hook 应用的崩溃日志。请在 Root 管理器中为崩溃中心开启 Root 后返回此页。</string>
+    <string name="crash_history_root_required">需要 Root 权限才能读取已 Hook 应用的崩溃日志。请在 Root 管理器中为稳定性中心开启 Root 后返回此页。</string>
     <string name="crash_history_loading">正在加载崩溃历史…</string>
     <string name="crash_event_subtitle_format">%1$s · %2$s</string>
     <string name="crash_source_ueh">未捕获</string>

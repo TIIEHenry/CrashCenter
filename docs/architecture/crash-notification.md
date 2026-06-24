@@ -120,7 +120,7 @@ getCrashTip(packageName) + appLabel + " " + throwable.getLocalizedMessage()
 ```
 
 - `getCrashTip`：`createPackageContext(packageName, CONTEXT_IGNORE_SECURITY)` 后取 `R.string.crash_tip`（模块资源 ID）
-- 文案：`CrashCenter [Xposed]` / `崩溃中心 [Xposed]`（随系统语言，见 `values` / `values-zh`）
+- 文案：`CrashCenter [Xposed]` / `稳定性中心 [Xposed]`（随系统语言，见 `values` / `values-zh`）
 
 ---
 

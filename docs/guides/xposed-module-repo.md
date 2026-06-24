@@ -78,7 +78,7 @@ https://github.com/TIIEHenry/CrashCenter
 ### `README.md`
 
 ```markdown
-# CrashCenter / 崩溃中心
+# CrashCenter / 稳定性中心
 
 Xposed module that intercepts **uncaught Java exceptions** in hooked apps so the process does not exit.
 

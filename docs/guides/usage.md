@@ -3,7 +3,7 @@ title: "用户使用指南"
 type: guide
 status: accepted
 phase: N/A
-updated: 2026-06-23
+updated: 2026-06-24
 summary: "模块安装、界面说明、scope 与 LSPosed 作用域、观测 tab、崩溃分析 FAQ"
 ---
 
@@ -11,7 +11,7 @@ summary: "模块安装、界面说明、scope 与 LSPosed 作用域、观测 tab
 
 ## 模块用途
 
-CrashCenter（崩溃中心）是一个 Xposed 模块，**拦截目标 app 的 Java 异常使其不崩溃**。它**不修复错误**，只是让 app 继续运行。
+CrashCenter（稳定性中心）是一个 Xposed 模块，**拦截目标 app 的 Java 异常使其不崩溃**。它**不修复错误**，只是让 app 继续运行。
 
 > ⚠️ 忽略异常可能导致不可预期的行为。建议仅对频繁崩溃的 app 使用，系统 app 请谨慎。
 
@@ -19,7 +19,7 @@ CrashCenter（崩溃中心）是一个 Xposed 模块，**拦截目标 app 的 Ja
 
 1. 安装 APK（见 [build-and-install.md](build-and-install.md) 或 [getting-started/INDEX.md](getting-started/INDEX.md)）
 2. 在 Xposed 管理器（LSPosed 推荐）中启用模块
-3. 打开 CrashCenter，确认顶部**状态条**显示「模块已激活」（绿色）
+3. 打开稳定性中心，确认顶部**状态条**显示「模块已激活」（绿色）
 4. 在应用列表中配置要 hook 的应用（**当前版本**：全量列表 + Switch；**Phase 3G 起**：受管列表 + 添加应用，见 [受管应用配置](#受管应用配置phase-3g-起)）
 
 若状态条为橙色「模块未激活」，请点击状态条或到 Xposed 管理器启用本模块并重启。
@@ -31,8 +31,8 @@ CrashCenter（崩溃中心）是一个 Xposed 模块，**拦截目标 app 的 Ja
 | 机制 | 在哪里设置 | 控制什么 |
 |------|------------|----------|
 | **LSPosed 作用域** | Xposed / LSPosed 管理器 | 模块代码是否加载进目标 app 进程（**外层门控**） |
-| **应用内 Switch** | CrashCenter 受管列表 | 是否**拦截**崩溃（续命）；关闭时**仅观测**，进程可正常退出 |
-| **Scope Mode Chip** | CrashCenter 全局 Chip | 是否对**系统应用**安装捕获（见 [scope-and-prefs.md](../architecture/scope-and-prefs.md)） |
+| **应用内 Switch** | 稳定性中心受管列表 | 是否**拦截**崩溃（续命）；关闭时**仅观测**，进程可正常退出 |
+| **Scope Mode Chip** | 稳定性中心全局 Chip | 是否对**系统应用**安装捕获（见 [scope-and-prefs.md](../architecture/scope-and-prefs.md)） |
 
 管理器未勾选目标 app → 模块**不会**进入该进程，无观测也无拦截。管理器已勾选、Switch 关闭 → **仍记录崩溃**到 `events.jsonl`，但不阻止 app 退出。
 
@@ -79,9 +79,9 @@ CrashCenter（崩溃中心）是一个 Xposed 模块，**拦截目标 app 的 Ja
 应用列表依赖 **查询所有软件包**（`QUERY_ALL_PACKAGES`）权限。该权限不能在应用内一键弹窗授予，需要您手动在系统设置中开启：
 
 1. 若主界面出现蓝色 **包可见性** 提示条，点击 **去授权** 或提示条本身
-2. 阅读说明后 tap **打开设置**，进入 CrashCenter 的 App 信息
+2. 阅读说明后 tap **打开设置**，进入稳定性中心的 App 信息
 3. 打开 **权限**，允许 **查询所有软件包**（各厂商文案可能略有不同）
-4. 返回 CrashCenter，列表会自动刷新为完整应用列表
+4. 返回稳定性中心，列表会自动刷新为完整应用列表
 
 未授权时列表可能不完整，且不会有额外 toast；请根据提示条操作。
 

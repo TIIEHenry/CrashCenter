@@ -15,7 +15,7 @@
 
 ### Changed
 
-- 应用名 CrashCenter / 崩溃中心；包名 `nota.android.crash.xp.app`
+- 应用名 CrashCenter / 稳定性中心；包名 `nota.android.crash.xp.app`
 - 崩溃详情由 TextView 升级为 CodeEditor（可滚动、可选中文本）
 - 崩溃日志存储为各应用 `cache` 分布式 JSONL（root 聚合读取）
 

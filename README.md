@@ -4,7 +4,7 @@
 
 | | English | 中文 |
 |---|---------|------|
-| 应用名 | CrashCenter | 崩溃中心 |
+| 应用名 | CrashCenter | 稳定性中心 |
 | 包名 | `nota.android.crash.xp.app` | 同左 |
 
 ## 文档

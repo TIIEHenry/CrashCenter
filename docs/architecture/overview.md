@@ -11,11 +11,11 @@ summary: "Xposed 异常拦截模块的整体架构与数据流；4B-α 观测 + 
 
 > 适用模块：`:app`
 > 源码包：`nota.android.crash` / `nota.android.crash.xp` / `nota.android.crash.xp.app`
-> 显示名：CrashCenter（英文）/ 崩溃中心（中文）
+> 显示名：CrashCenter（英文）/ 稳定性中心（中文）
 
 ## 概述
 
-CrashCenter（崩溃中心）是一个 **Xposed 模块**，在目标 Android 应用的 Java 层拦截未捕获异常，使进程不因崩溃而退出。模块**不修复错误**，而是**吞掉异常**并可选展示 Toast / 系统通知。
+CrashCenter（稳定性中心）是一个 **Xposed 模块**，在目标 Android 应用的 Java 层拦截未捕获异常，使进程不因崩溃而退出。模块**不修复错误**，而是**吞掉异常**并可选展示 Toast / 系统通知。
 
 ## 架构
 

@@ -13,7 +13,7 @@ summary: "CrashCenter 项目术语单一事实源（含 ANR 观测与分布式 c
 
 | 术语 | 定义 |
 |------|------|
-| **CrashCenter** | 本 Xposed 模块项目，应用 ID `nota.android.crash.xp.app`，显示名 CrashCenter / 崩溃中心 |
+| **CrashCenter** | 本 Xposed 模块项目，应用 ID `nota.android.crash.xp.app`，显示名 CrashCenter / 稳定性中心 |
 | **Scope Mode** | （已移除 `scope_mode` 键）系统 app 是否安装捕获由 `handle_system` 控制 |
 | **Intercept enabled** | 包名在 `managed_packages` 中 → `shouldIntercept=true` |
 | **Managed App（受管应用）** | 历史术语（ADR-015）；现 UI 为全量已安装列表，Switch 写 `managed_packages` |
