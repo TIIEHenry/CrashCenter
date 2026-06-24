@@ -1,7 +1,7 @@
 name: LSPosed Module Release (manual)
 
 # Backfill or re-publish a version to Xposed-Modules-Repo without re-tagging main repo.
-# Requires repository secret: XPOSED_REPO_TOKEN
+# Requires repository secret: XPOSED_REPO_TOKEN (classic PAT, repo scope, SSO authorized)
 
 on:
   workflow_dispatch:
@@ -20,6 +20,40 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: refs/tags/v${{ inputs.version_name }}
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Build release APK
+        run: ./gradlew :app:assembleRelease
+
+      - name: Verify PAT can access module repository
+        env:
+          XPOSED_REPO_TOKEN: ${{ secrets.XPOSED_REPO_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ -z "${XPOSED_REPO_TOKEN}" ]; then
+            echo "::error::XPOSED_REPO_TOKEN secret is not configured"
+            exit 1
+          fi
+          export GH_TOKEN="${XPOSED_REPO_TOKEN}"
+          REPO="Xposed-Modules-Repo/nota.android.crash.xp.app"
+          if ! gh api "repos/${REPO}" --jq .full_name >/dev/null 2>&1; then
+            echo "::error::PAT cannot access ${REPO} (HTTP 403?)"
+            echo "Use a **classic** PAT with **repo** scope."
+            echo "Then open https://github.com/settings/tokens → Configure SSO → Authorize **Xposed-Modules-Repo**."
+            echo "Update secret XPOSED_REPO_TOKEN and re-run this workflow."
+            exit 1
+          fi
+          echo "PAT access OK: ${REPO}"
 
       - name: Publish to LSPosed module repository
         env:
@@ -28,20 +62,17 @@ jobs:
           VERSION_CODE: ${{ inputs.version_code }}
         run: |
           set -euo pipefail
-          if [ -z "${XPOSED_REPO_TOKEN}" ]; then
-            echo "::error::XPOSED_REPO_TOKEN secret is not configured"
-            exit 1
-          fi
-
           XPOSED_TAG="${VERSION_CODE}-${VERSION}"
           REPO="Xposed-Modules-Repo/nota.android.crash.xp.app"
-          MAIN_TAG="v${VERSION}"
-          APK_NAME="CrashCenter_v${VERSION}_release.apk"
-          APK_URL="https://github.com/TIIEHenry/CrashCenter/releases/download/${MAIN_TAG}/${APK_NAME}"
+          APK_PATH="app/build/outputs/apk/release/CrashCenter_v${VERSION}_release.apk"
 
           scripts/extract-changelog.sh "$VERSION" > release-notes.md
           if [[ ! -s release-notes.md ]]; then
             echo "::error::CHANGELOG.md 中未找到 ## [${VERSION}] 段落"
+            exit 1
+          fi
+          if [[ ! -f "$APK_PATH" ]]; then
+            echo "::error::APK not found: $APK_PATH"
             exit 1
           fi
 
@@ -52,13 +83,11 @@ jobs:
             exit 1
           fi
 
-          echo "Downloading APK from ${APK_URL}"
-          curl -fsSL -o "$APK_NAME" "$APK_URL"
-
+          echo "Creating LSPosed module release $XPOSED_TAG"
           gh release create "$XPOSED_TAG" \
             --repo "$REPO" \
             --title "$VERSION" \
             --notes-file release-notes.md \
-            "$APK_NAME"
+            "$APK_PATH"
 
           echo "Done: https://github.com/${REPO}/releases/tag/${XPOSED_TAG}"

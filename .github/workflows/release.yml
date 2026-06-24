@@ -69,15 +69,30 @@ jobs:
           name: release-apk
           path: apk/
 
-      - name: Publish to LSPosed module repository
+      - name: Verify PAT can access module repository
         env:
           XPOSED_REPO_TOKEN: ${{ secrets.XPOSED_REPO_TOKEN }}
         run: |
           set -euo pipefail
           if [ -z "${XPOSED_REPO_TOKEN}" ]; then
             echo "::warning::Secret XPOSED_REPO_TOKEN is not set — skipping LSPosed module repo release."
-            echo "Configure a PAT with write access to Xposed-Modules-Repo/nota.android.crash.xp.app"
             echo "See docs/guides/release.md#lsposed-模块仓库自动发布"
+            exit 0
+          fi
+          export GH_TOKEN="${XPOSED_REPO_TOKEN}"
+          REPO="Xposed-Modules-Repo/nota.android.crash.xp.app"
+          if ! gh api "repos/${REPO}" --jq .full_name >/dev/null 2>&1; then
+            echo "::error::PAT cannot access ${REPO}. Use classic PAT (repo) + SSO Authorize for Xposed-Modules-Repo."
+            echo "https://github.com/settings/tokens"
+            exit 1
+          fi
+
+      - name: Publish to LSPosed module repository
+        env:
+          XPOSED_REPO_TOKEN: ${{ secrets.XPOSED_REPO_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ -z "${XPOSED_REPO_TOKEN}" ]; then
             exit 0
           fi
 
