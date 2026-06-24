@@ -3,7 +3,7 @@ title: "LSPosed 模块仓库发布指南"
 type: guide
 status: active
 phase: N/A
-updated: 2026-06-23
+updated: 2026-06-24
 summary: "向 Xposed-Modules-Repo 上架 CrashCenter：仓库元数据、README/SUMMARY、Release 标签约定与主仓库 GitHub Release 的差异"
 ---
 
@@ -11,9 +11,7 @@ summary: "向 Xposed-Modules-Repo 上架 CrashCenter：仓库元数据、README/
 
 本文说明如何将 CrashCenter 上架 [LSPosed 模块仓库](https://modules.lsposed.org)（Xposed Module Repository），与主仓库 [GitHub Release](release.md) **相互独立**。
 
-> **当前状态**：提交已通过，模块仓库已创建  
-> https://github.com/Xposed-Modules-Repo/nota.android.crash.xp.app  
-> 尚未完成首次 Release，**未**在 modules.lsposed.org 展示。
+> **当前状态**：模块仓库已创建；`README` / `SUMMARY` / `SOURCE_URL` 已写入本地克隆（`../nota.android.crash.xp.app`），待 push。首次 Release 计划：**tag `1-1.0.0`**，APK `CrashCenter_v1.0.0_release.apk`。执行清单见 [release-v1.0.0.md](../../dev/plans/release-v1.0.0.md)。
 
 ## 两套发布渠道对比
 
@@ -22,8 +20,8 @@ summary: "向 Xposed-Modules-Repo 上架 CrashCenter：仓库元数据、README/
 | 仓库 | [TIIEHenry/CrashCenter](https://github.com/TIIEHenry/CrashCenter) | [Xposed-Modules-Repo/nota.android.crash.xp.app](https://github.com/Xposed-Modules-Repo/nota.android.crash.xp.app) |
 | 用户入口 | Releases 页、手动下载 | LSPosed 管理器内搜索安装、[modules.lsposed.org](https://modules.lsposed.org) |
 | 触发方式 | 推送 `v*` tag → CI | 在模块仓库手动创建 GitHub Release |
-| Release **Tag** | `v0.1.0` | `1-0.1.0`（`{versionCode}-{versionName}`） |
-| Release **Title** | 同 tag（`v0.1.0`） | `0.1.0`（仅 versionName） |
+| Release **Tag** | `v1.0.0` | `1-1.0.0`（`{versionCode}-{versionName}`） |
+| Release **Title** | 同 tag（`v1.0.0`） | `1.0.0`（仅 versionName） |
 | Release 正文 | CI 从 `CHANGELOG.md` 提取 | 手写或从 CHANGELOG 复制 |
 | APK 来源 | CI 构建 `CrashCenter_v*_release.apk` | 从主仓库构建产物上传，或本地 `./gradlew :app:assembleRelease` |
 | 源码 | 本仓库 | 仅分发 APK + 说明文件；源码链到主仓库 |

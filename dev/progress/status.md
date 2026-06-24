@@ -45,6 +45,13 @@ summary: "ADR-024 分布式 cache 存储 as-built；Phase 5 监测/拦截"
 
 ## Recent Sessions
 
+### 2026-06-24 — v1.0.0 发布准备执行
+
+- **版本**：`versionCode 1` / `versionName 1.0.0`；`CHANGELOG.md` 首个公开发布段落
+- **产物**：`CrashCenter_v1.0.0_release.apk`；`release/xposed-release-notes-1.0.0.md`
+- **模块仓**：`nota.android.crash.xp.app` 元数据 push；Release tag `1-1.0.0`
+- **主仓**：push `v1.0.0` tag → GitHub Actions Release
+
 ### 2026-06-24 — 文档 as-built 同步 + 提交
 
 - **架构**：`crash-log-backends.md` 4B-δ 全文；`crash-log-distributed-storage.md` 实施勾选；`code-editor-porting` 移除 CodeEditorAntlr
