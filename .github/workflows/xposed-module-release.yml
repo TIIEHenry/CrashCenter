@@ -35,7 +35,7 @@ jobs:
       - name: Build release APK
         run: ./gradlew :app:assembleRelease
 
-      - name: Verify PAT can access module repository
+      - name: Verify PAT can write releases
         env:
           XPOSED_REPO_TOKEN: ${{ secrets.XPOSED_REPO_TOKEN }}
         run: |
@@ -46,14 +46,23 @@ jobs:
           fi
           export GH_TOKEN="${XPOSED_REPO_TOKEN}"
           REPO="Xposed-Modules-Repo/nota.android.crash.xp.app"
-          if ! gh api "repos/${REPO}" --jq .full_name >/dev/null 2>&1; then
-            echo "::error::PAT cannot access ${REPO} (HTTP 403?)"
-            echo "Use a **classic** PAT with **repo** scope."
-            echo "Then open https://github.com/settings/tokens → Configure SSO → Authorize **Xposed-Modules-Repo**."
-            echo "Update secret XPOSED_REPO_TOKEN and re-run this workflow."
+
+          echo "=== Token scopes (classic PAT) ==="
+          curl -sI -H "Authorization: Bearer ${GH_TOKEN}" https://api.github.com/user \
+            | grep -i '^x-oauth-scopes:' || true
+
+          echo "=== Repo permissions for this token ==="
+          gh api "repos/${REPO}" --jq '.permissions'
+
+          PUSH="$(gh api "repos/${REPO}" --jq '.permissions.push')"
+          if [ "${PUSH}" != "true" ]; then
+            echo "::error::PAT can read ${REPO} but push=false — cannot create Releases."
+            echo "Fix: Classic PAT with full **repo** scope (NOT public_repo only)."
+            echo "Then SSO Authorize Xposed-Modules-Repo: https://github.com/settings/tokens"
+            echo "Ensure CrashCenter secret XPOSED_REPO_TOKEN matches the token you tested locally."
             exit 1
           fi
-          echo "PAT access OK: ${REPO}"
+          echo "PAT write access OK"
 
       - name: Publish to LSPosed module repository
         env:

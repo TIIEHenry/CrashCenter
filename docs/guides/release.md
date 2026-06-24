@@ -175,9 +175,29 @@ cd nota.android.crash.xp.app
 
 | Secret | 说明 |
 |--------|------|
-| `XPOSED_REPO_TOKEN` | **Classic** PAT，勾选 **`repo`**。Fine-grained 在 `Xposed-Modules-Repo` 组织下常无法选仓库，不推荐。 |
+| `XPOSED_REPO_TOKEN` | **Classic** PAT，勾选完整 **`repo`**（不要只勾 `public_repo`）。Fine-grained 不推荐。 |
 
-**403 `Resource not accessible by personal access token` 时**（组织仓库最常见）：
+**能读仓库但 Release 仍 403**（`gh api repos/...` 成功，`gh release create` 失败）：
+
+说明 token **只有读权限**（`permissions.push` 为 `false`）。按下面检查：
+
+1. **Classic PAT** 必须勾 **`repo`**（完整私有/组织仓库读写），**不要**只勾 `public_repo`
+2. **SSO**：https://github.com/settings/tokens → **Configure SSO** → Authorize **`Xposed-Modules-Repo`**
+3. **Secret 与本地一致**：Actions 里的 `XPOSED_REPO_TOKEN` 必须是你本地测试用的**同一条** token（重新粘贴后保存）
+
+本地验证写权限：
+
+```bash
+export GH_TOKEN="<classic PAT>"
+gh api repos/Xposed-Modules-Repo/nota.android.crash.xp.app --jq '.permissions'
+# 需要 "push": true
+
+# 可选：真发一次（会创建 Release）
+gh release create 1-1.0.0 --repo Xposed-Modules-Repo/nota.android.crash.xp.app \
+  --title 1.0.0 --notes "test" /path/to/CrashCenter_v1.0.0_release.apk
+```
+
+**403 其他情况**（连 `gh api repos/...` 都失败）：
 
 1. 打开 https://github.com/settings/tokens  
 2. 找到该 classic token → **Configure SSO** → **Authorize** 组织 **`Xposed-Modules-Repo`**  

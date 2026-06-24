@@ -69,7 +69,7 @@ jobs:
           name: release-apk
           path: apk/
 
-      - name: Verify PAT can access module repository
+      - name: Verify PAT can write releases
         env:
           XPOSED_REPO_TOKEN: ${{ secrets.XPOSED_REPO_TOKEN }}
         run: |
@@ -81,9 +81,9 @@ jobs:
           fi
           export GH_TOKEN="${XPOSED_REPO_TOKEN}"
           REPO="Xposed-Modules-Repo/nota.android.crash.xp.app"
-          if ! gh api "repos/${REPO}" --jq .full_name >/dev/null 2>&1; then
-            echo "::error::PAT cannot access ${REPO}. Use classic PAT (repo) + SSO Authorize for Xposed-Modules-Repo."
-            echo "https://github.com/settings/tokens"
+          PUSH="$(gh api "repos/${REPO}" --jq '.permissions.push' 2>/dev/null || echo false)"
+          if [ "${PUSH}" != "true" ]; then
+            echo "::error::PAT cannot create Releases on ${REPO} (push=false). Use classic **repo** scope + SSO Authorize."
             exit 1
           fi
 
