@@ -44,9 +44,61 @@ jobs:
           echo "=== Release notes ==="
           cat release-notes.md
 
+      - name: Upload release APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-apk
+          path: app/build/outputs/apk/release/*.apk
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           name: ${{ github.ref_name }}
           body_path: release-notes.md
           files: app/build/outputs/apk/release/*.apk
+
+  xposed-module-release:
+    needs: release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download release APK
+        uses: actions/download-artifact@v4
+        with:
+          name: release-apk
+          path: apk/
+
+      - name: Publish to LSPosed module repository
+        env:
+          XPOSED_REPO_TOKEN: ${{ secrets.XPOSED_REPO_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ -z "${XPOSED_REPO_TOKEN}" ]; then
+            echo "::warning::Secret XPOSED_REPO_TOKEN is not set — skipping LSPosed module repo release."
+            echo "Configure a PAT with write access to Xposed-Modules-Repo/nota.android.crash.xp.app"
+            echo "See docs/guides/release.md#lsposed-模块仓库自动发布"
+            exit 0
+          fi
+
+          VERSION="${GITHUB_REF_NAME#v}"
+          VERSION_CODE="$(awk '/versionCode/{print $2; exit}' app/build.gradle)"
+          XPOSED_TAG="${VERSION_CODE}-${VERSION}"
+          REPO="Xposed-Modules-Repo/nota.android.crash.xp.app"
+
+          scripts/extract-changelog.sh "$VERSION" > release-notes.md
+          export GH_TOKEN="${XPOSED_REPO_TOKEN}"
+
+          if gh release view "$XPOSED_TAG" --repo "$REPO" >/dev/null 2>&1; then
+            echo "LSPosed module release $XPOSED_TAG already exists — skipping"
+            exit 0
+          fi
+
+          echo "Creating LSPosed module release $XPOSED_TAG"
+          gh release create "$XPOSED_TAG" \
+            --repo "$REPO" \
+            --title "$VERSION" \
+            --notes-file release-notes.md \
+            apk/*.apk
+
+          echo "Done: https://github.com/${REPO}/releases/tag/${XPOSED_TAG}"

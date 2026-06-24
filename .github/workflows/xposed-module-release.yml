@@ -1,0 +1,64 @@
+name: LSPosed Module Release (manual)
+
+# Backfill or re-publish a version to Xposed-Modules-Repo without re-tagging main repo.
+# Requires repository secret: XPOSED_REPO_TOKEN
+
+on:
+  workflow_dispatch:
+    inputs:
+      version_name:
+        description: versionName (e.g. 1.0.0)
+        required: true
+        default: '1.0.0'
+      version_code:
+        description: versionCode (e.g. 1)
+        required: true
+        default: '1'
+
+jobs:
+  xposed-module-release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Publish to LSPosed module repository
+        env:
+          XPOSED_REPO_TOKEN: ${{ secrets.XPOSED_REPO_TOKEN }}
+          VERSION: ${{ inputs.version_name }}
+          VERSION_CODE: ${{ inputs.version_code }}
+        run: |
+          set -euo pipefail
+          if [ -z "${XPOSED_REPO_TOKEN}" ]; then
+            echo "::error::XPOSED_REPO_TOKEN secret is not configured"
+            exit 1
+          fi
+
+          XPOSED_TAG="${VERSION_CODE}-${VERSION}"
+          REPO="Xposed-Modules-Repo/nota.android.crash.xp.app"
+          MAIN_TAG="v${VERSION}"
+          APK_NAME="CrashCenter_v${VERSION}_release.apk"
+          APK_URL="https://github.com/TIIEHenry/CrashCenter/releases/download/${MAIN_TAG}/${APK_NAME}"
+
+          scripts/extract-changelog.sh "$VERSION" > release-notes.md
+          if [[ ! -s release-notes.md ]]; then
+            echo "::error::CHANGELOG.md 中未找到 ## [${VERSION}] 段落"
+            exit 1
+          fi
+
+          export GH_TOKEN="${XPOSED_REPO_TOKEN}"
+
+          if gh release view "$XPOSED_TAG" --repo "$REPO" >/dev/null 2>&1; then
+            echo "Release $XPOSED_TAG already exists — delete it first to re-upload"
+            exit 1
+          fi
+
+          echo "Downloading APK from ${APK_URL}"
+          curl -fsSL -o "$APK_NAME" "$APK_URL"
+
+          gh release create "$XPOSED_TAG" \
+            --repo "$REPO" \
+            --title "$VERSION" \
+            --notes-file release-notes.md \
+            "$APK_NAME"
+
+          echo "Done: https://github.com/${REPO}/releases/tag/${XPOSED_TAG}"

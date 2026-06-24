@@ -24,7 +24,7 @@ summary: "日常开发速查：模块地图、常用命令、工作流；Phase 3
 | 依赖版本 | `gradle/libs.versions.toml` |
 | Xposed API | 82 (compileOnly) |
 | 活跃 Phase | Phase 3 — 配置 UI 重设计（Phase 4 崩溃观测 backlog） |
-| CI | `.github/workflows/build.yml`（main/PR debug）、`release.yml`（`v*` tag） |
+| CI | `build.yml`（main/PR debug）、`release.yml`（`v*` tag + 可选 LSPosed 模块仓）、`xposed-module-release.yml`（手动补发） |
 
 ---
 
