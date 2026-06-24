@@ -1,86 +1,56 @@
 # CrashCenter 发布 Prompt
 
-人类可读的完整说明见 [docs/guides/release.md](../../docs/guides/release.md)。
+人类可读的完整说明见 [docs/guides/release.md](../../docs/guides/release.md)（双渠道：GitHub + LSPosed 模块仓）。模块仓元数据见 [xposed-module-repo.md](../../docs/guides/xposed-module-repo.md)。
 
-将下方「任务 Prompt」整段复制给 AI，或在 Cursor 中 `@.github/prompts/release.md` 引用后说明目标版本（例如「发布 v0.1.0」）。
+将下方「任务 Prompt」整段复制给 AI，或在 Cursor 中 `@.github/prompts/release.md` 引用后说明目标版本（例如「发布 v1.1.0，含 LSPosed」）。
 
 ---
 
 ## 任务 Prompt
 
-你是 CrashCenter 仓库的发布助手。请根据自上一个 Git tag 以来的变更，撰写更新日志并完成发布准备。
+你是 CrashCenter 仓库的发布助手。请根据自上一个 Git tag 以来的变更，撰写更新日志并完成**双渠道**发布准备。
 
 ### 仓库约定
 
-- 更新日志文件：`CHANGELOG.md`（[Keep a Changelog](https://keepachangelog.com/zh-CN/) 格式，中文、面向用户）
-- 版本号：`app/build.gradle` 中的 `versionCode`（递增整数）与 `versionName`（与 tag 一致，不含 `v` 前缀）
-- 发布触发：向 GitHub 推送 `v*` 格式 tag 后，`.github/workflows/release.yml` 自动构建 Release APK 并创建 GitHub Release
-- Release 正文：CI 从 `CHANGELOG.md` 提取对应 `## [版本号]` 段落（脚本 `scripts/extract-changelog.sh`）
-- APK 文件名：`CrashCenter_v{versionName}_release.apk`（见 `app/build.gradle` `androidComponents`）
+- 更新日志：`CHANGELOG.md`（[Keep a Changelog](https://keepachangelog.com/zh-CN/)，中文、面向用户）
+- 版本号：`app/build.gradle` 的 `versionCode`（递增）与 `versionName`（不含 `v`）
+- **主仓库 GitHub Release**：推送 `v*` tag → `.github/workflows/release.yml` 构建并发布
+- **LSPosed 模块仓**：`Xposed-Modules-Repo/nota.android.crash.xp.app`，Release tag `{versionCode}-{versionName}`（如 `2-1.1.0`），手动附 APK
+- Release 正文：`scripts/extract-changelog.sh <versionName>`；可写入 `release/xposed-release-notes-<versionName>.md`
+- APK：`CrashCenter_v{versionName}_release.apk`
 
 ### 你必须执行的步骤
 
-1. **确定版本号**
-   - 列出已有 tag：`git tag -l 'v*' --sort=-v:refname`
-   - 若用户未指定版本，根据变更类型建议 semver（`MAJOR.MINOR.PATCH`），并说明理由
-
-2. **收集变更**
-   - 找到最新 tag，执行：`git log <最新tag>..HEAD --pretty=format:'%h %s'`
-   - 阅读相关 commit diff，区分用户可见功能、修复、内部重构与纯文档/CI 变更
-
-3. **更新 CHANGELOG.md**
-   - 将 `## [Unreleased]` 下内容整理后移动到新版本段落，例如 `## [0.1.0] - YYYY-MM-DD`
-   - 分类使用：`Added` / `Changed` / `Fixed` / `Removed` / `Deprecated` / `Security`
-   - 每条用用户能理解的中文，不写 commit hash；合并同类项，省略仅开发者关心的 refactor/chore/docs（除非影响构建或发布）
-   - 在文件顶部保留空的 `## [Unreleased]` 段落供下次累积
-
-4. ** bump 版本**
-   - 编辑 `app/build.gradle`：`versionName` = 新版本（无 `v`），`versionCode` 比上一版 +1
-
-5. **本地校验**
-   - 运行：`scripts/extract-changelog.sh <版本号>`（不含 `v`），确认能输出非空 Release 正文
-   - 可选：`./gradlew :app:assembleRelease` 确认能编译
-
-6. **提交**
-   - 仅提交 `CHANGELOG.md` 与 `app/build.gradle`（除非用户要求包含其他文件）
-   - commit message 示例：`chore(release): prepare v0.1.0`
-
-7. **打 tag 并推送（需用户明确同意后才执行 push）**
-   - `git tag -a v<版本号> -m "Release v<版本号>"`
-   - `git push origin main`（或当前发布分支）
-   - `git push origin v<版本号>`
-   - 推送 tag 后告知用户在 GitHub Actions → Release workflow 查看构建进度，Release 页：https://github.com/TIIEHenry/CrashCenter/releases
-
-### CHANGELOG 写作要求
-
-- 面向安装 APK 的用户，不是给开发者看 commit 列表
-- 新功能写「能做什么」；修复写「解决了什么问题」
-- 同一功能的多条 commit 合并为一条
-- 不要编造未实现的变更
+1. **确定版本号** — `git tag -l 'v*' --sort=-v:refname`；未指定时建议 semver 并说明理由
+2. **收集变更** — `git log <最新tag>..HEAD`；区分用户可见 vs 内部变更
+3. **更新 CHANGELOG.md** — 新版本 `## [X.Y.Z] - 日期`；保留空 `## [Unreleased]`
+4. **bump 版本** — `versionName` + `versionCode + 1`
+5. **本地校验** — `extract-changelog.sh` 非空；可选 `assembleRelease`
+6. **生成模块仓正文** — `release/xposed-release-notes-X.Y.Z.md`（可选提交）
+7. **提交** — `chore(release): prepare vX.Y.Z`
+8. **主仓发布（需用户同意才 push）** — `git push origin main`；`git tag -a vX.Y.Z`；`git push origin vX.Y.Z`
+9. **模块仓（若用户要求 LSPosed 渠道）** — 提醒更新 `../nota.android.crash.xp.app` 的 README/SUMMARY（若需要）；网页创建 Release tag `{code}-{name}` 并附 APK；Description = `CrashCenter`
 
 ### 禁止事项
 
-- 不要 force push
-- 不要未经用户确认就 push 或创建 tag
-- 不要跳过 CHANGELOG 对应版本段落（否则 CI 会因找不到 Release 正文而失败）
-- `versionName`、CHANGELOG 标题、`v*` tag 三者版本号必须一致
+- 不要 force push；不要未经确认 push/tag
+- `versionName`、CHANGELOG、`v*` tag 必须一致
+- 模块仓 tag 必须是 `{versionCode}-{versionName}`，不是 `v*`
 
 ### 输出给用户
 
-完成后简要汇报：
-
-- 版本号与 `versionCode`
-- CHANGELOG 摘要（3–5 条要点）
-- 是否已 push / 打 tag；若未 push，给出用户可自行执行的命令
+- 版本号与 `versionCode`、CHANGELOG 摘要
+- 主仓 / 模块仓各自待执行命令
+- GitHub Release 与 modules.lsposed.org 验证链接
 
 ---
 
 ## 快速触发示例
 
 ```
-@.github/prompts/release.md 请发布 v0.1.0
+@.github/prompts/release.md 请发布 v1.1.0（GitHub + LSPosed 双渠道）
 ```
 
 ```
-@.github/prompts/release.md 根据 main 上自 v0.1.0 以来的变更建议版本号，写好 CHANGELOG，准备好发布但不要 push
+@.github/prompts/release.md 写好 CHANGELOG，准备好发布但不要 push
 ```

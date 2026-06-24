@@ -45,7 +45,13 @@ summary: "ADR-024 分布式 cache 存储 as-built；Phase 5 监测/拦截"
 
 ## Recent Sessions
 
-### 2026-06-24 — v1.0.0 发布准备执行
+### 2026-06-24 — 双渠道发布文档 SSOT
+
+- **guides/release.md**：GitHub + LSPosed 完整流程、版本约定、故障排除
+- **guides/xposed-module-repo.md**：精简为模块仓元数据与文案
+- **dev/archive/release-v1.0.0.md**：v1.0.0 一次性清单归档
+
+### 2026-06-24 — v1.0.0 发布执行
 
 - **版本**：`versionCode 1` / `versionName 1.0.0`；`CHANGELOG.md` 首个公开发布段落
 - **产物**：`CrashCenter_v1.0.0_release.apk`；`release/xposed-release-notes-1.0.0.md`

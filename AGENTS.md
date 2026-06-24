@@ -122,7 +122,7 @@ python3 scripts/check-docs-health.py
 ./scripts/adb-smoke-verification.sh --help
 ```
 
-GitHub Release：推送 `v*` tag 触发 [`.github/workflows/release.yml`](.github/workflows/release.yml)；见 [`docs/guides/release.md`](docs/guides/release.md)。
+GitHub Release：推送 `v*` tag 触发 [`.github/workflows/release.yml`](.github/workflows/release.yml)。LSPosed 模块仓见 [`docs/guides/release.md`](docs/guides/release.md)（双渠道）与 [`docs/guides/xposed-module-repo.md`](docs/guides/xposed-module-repo.md)。
 
 详见 [`dev/DEV_GUIDE.md`](dev/DEV_GUIDE.md)。
 
@@ -136,7 +136,7 @@ GitHub Release：推送 `v*` tag 触发 [`.github/workflows/release.yml`](.githu
 | 架构 | [docs/INDEX.md](docs/INDEX.md) |
 | 人类开发者 | [docs/README.md](docs/README.md) → [guides/getting-started/INDEX.md](docs/guides/getting-started/INDEX.md) → [dev/DEV_GUIDE.md](dev/DEV_GUIDE.md) |
 | 用户使用 | [docs/guides/usage.md](docs/guides/usage.md) |
-| 构建 / 发布 | [build-and-install.md](docs/guides/build-and-install.md) · [release.md](docs/guides/release.md) |
+| 构建 / 发布 | [build-and-install.md](docs/guides/build-and-install.md) · [release.md](docs/guides/release.md) · [xposed-module-repo.md](docs/guides/xposed-module-repo.md) |
 | Root 参考（Phase 4） | [root-service-patterns.md](docs/reference/root-service-patterns.md) |
 | 设备验收 | [dev/verification/README.md](dev/verification/README.md) |
 | Roadmap | [dev/roadmap/INDEX.md](dev/roadmap/INDEX.md) |

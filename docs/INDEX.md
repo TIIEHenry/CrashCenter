@@ -109,9 +109,9 @@ summary: "docs/ + dev/ 完整导航索引（自动生成）"
 | 文档 | 内容 |
 |------|------|
 | [build-and-install.md](guides/build-and-install.md) | Gradle 9.2.1 构建、version catalog、签名与 APK 安装 |
-| [release.md](guides/release.md) | GitHub Release 发布流程、CHANGELOG 维护与 AI 辅助发布（移植自 AppSnapShotor） |
+| [release.md](guides/release.md) | 双渠道发布：主仓库 GitHub Release（v* tag + CI）与 LSPosed 模块仓（{versionCode}-{versionName} + 手动 Release） |
 | [usage.md](guides/usage.md) | 模块安装、界面说明、scope 与 LSPosed 作用域、观测 tab、崩溃分析 FAQ |
-| [xposed-module-repo.md](guides/xposed-module-repo.md) | 向 Xposed-Modules-Repo 上架 CrashCenter：仓库元数据、README/SUMMARY、Release 标签约定与主仓库 GitHub Release 的差异 |
+| [xposed-module-repo.md](guides/xposed-module-repo.md) | Xposed-Modules-Repo 上架条件、元数据文件格式与 listing 文案；操作流程见 release.md |
 
 ---
 
