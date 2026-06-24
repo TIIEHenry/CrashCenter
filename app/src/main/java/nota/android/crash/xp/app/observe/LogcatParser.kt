@@ -69,12 +69,35 @@ object LogcatParser {
      * - Hook markers (`catch package`, `selfCheck`)
      * - Native crash hints (`Fatal signal`, `backtrace:`)
      * - Process death (`Process ... has died`)
+     * - ANR hints (`ANR in`, `am_anr`, ActivityManager ANR / not responding) — [ADR-025]
      */
     fun filterCrashRelated(entries: List<LogcatEntry>): List<LogcatEntry> {
         return entries.filter { isCrashRelated(it) }
     }
 
-    private fun isCrashRelated(entry: LogcatEntry): Boolean {
+    /**
+     * Whether [entry] is an ANR diagnostic hint (`ANR_HINT` in adb-logcat-analysis.md).
+     *
+     * Generic `Process ... has died` alone is **not** an ANR hint (still [isCrashRelated]).
+     */
+    fun isAnrHint(entry: LogcatEntry): Boolean {
+        val msg = entry.message
+        val msgUpper = msg.uppercase()
+        if ("ANR IN" in msgUpper) return true
+        if ("AM_ANR" in msgUpper) return true
+        if (entry.tag == "ActivityManager") {
+            if (msg.contains("ANR", ignoreCase = true)) return true
+            if (msg.contains("not responding", ignoreCase = true)) return true
+            if (msg.contains("Input dispatching timed out", ignoreCase = true)) return true
+        }
+        return false
+    }
+
+    fun isCrashRelated(entry: LogcatEntry): Boolean {
+        return isAnrHint(entry) || isOtherCrashRelated(entry)
+    }
+
+    private fun isOtherCrashRelated(entry: LogcatEntry): Boolean {
         val msg = entry.message
         val tag = entry.tag
         return entry.level == LogcatLevel.FATAL

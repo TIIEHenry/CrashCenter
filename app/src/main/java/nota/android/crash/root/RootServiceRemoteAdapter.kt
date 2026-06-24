@@ -4,7 +4,9 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.ServiceConnection
+import android.os.Handler
 import android.os.IBinder
+import android.os.Looper
 import android.os.Parcel
 import android.util.Log
 import com.topjohnwu.superuser.Shell
@@ -25,13 +27,13 @@ class RootServiceRemoteAdapter(private val context: Context) : RootAccessClient 
     @Volatile
     private var fsManager: FileSystemManager? = null
 
-    private val bindLatch = CountDownLatch(1)
-    private val bindLock = Any()
+    private val mainHandler = Handler(Looper.getMainLooper())
+    private val fsManagerLock = Any()
 
     private val serviceConnection = object : ServiceConnection {
         override fun onServiceConnected(name: ComponentName, service: IBinder) {
             broker = service
-            bindLatch.countDown()
+            connectLatch?.countDown()
         }
 
         override fun onServiceDisconnected(name: ComponentName) {
@@ -40,32 +42,63 @@ class RootServiceRemoteAdapter(private val context: Context) : RootAccessClient 
         }
     }
 
+    @Volatile
+    private var connectLatch: CountDownLatch? = null
+
     private fun ensureBound(): IBinder? {
-        if (broker == null) {
+        broker?.let { return it }
+        if (Looper.myLooper() == Looper.getMainLooper()) {
             try {
-                RootService.bind(
-                    Intent(context, CrashCenterRootService::class.java),
-                    serviceConnection
-                )
-                bindLatch.await(15, TimeUnit.SECONDS)
+                if (broker == null) {
+                    RootService.bind(
+                        Intent(context, CrashCenterRootService::class.java),
+                        serviceConnection,
+                    )
+                }
             } catch (e: Exception) {
-                Log.w(TAG, "ensureBound failed", e)
+                Log.w(TAG, "RootService.bind on main thread failed", e)
             }
+            return broker
         }
-        return broker
+        return try {
+            val latch = CountDownLatch(1)
+            connectLatch = latch
+            mainHandler.post {
+                try {
+                    if (broker == null) {
+                        RootService.bind(
+                            Intent(context, CrashCenterRootService::class.java),
+                            serviceConnection,
+                        )
+                    } else {
+                        latch.countDown()
+                    }
+                } catch (e: Exception) {
+                    Log.w(TAG, "RootService.bind failed", e)
+                    latch.countDown()
+                }
+            }
+            latch.await(15, TimeUnit.SECONDS)
+            connectLatch = null
+            broker
+        } catch (e: Exception) {
+            Log.w(TAG, "ensureBound failed", e)
+            connectLatch = null
+            null
+        }
     }
 
     private fun getFsManager(): FileSystemManager? {
         fsManager?.let { return it }
-        synchronized(bindLock) {
+        val boundBroker = ensureBound() ?: return null
+        synchronized(fsManagerLock) {
             fsManager?.let { return it }
-            val b = ensureBound() ?: return null
             return try {
                 val data = Parcel.obtain()
                 val reply = Parcel.obtain()
                 try {
                     data.writeInterfaceToken(RootBroker.DESCRIPTOR)
-                    b.transact(RootBroker.TRANSACTION_GET_FILE_SYSTEM_MANAGER, data, reply, 0)
+                    boundBroker.transact(RootBroker.TRANSACTION_GET_FILE_SYSTEM_MANAGER, data, reply, 0)
                     reply.readException()
                     val fsBinder = reply.readStrongBinder()
                     FileSystemManager.getRemote(fsBinder).also { fsManager = it }
@@ -90,6 +123,18 @@ class RootServiceRemoteAdapter(private val context: Context) : RootAccessClient 
         } catch (e: Exception) {
             Log.w(TAG, "probe failed", e)
             RootAvailability.UNAVAILABLE
+        }
+    }
+
+    override suspend fun fileStat(path: String): RootFileStat? {
+        val fsm = getFsManager() ?: return null
+        return try {
+            val file = fsm.getFile(path)
+            if (!file.exists()) return null
+            RootFileStat(mtimeMs = file.lastModified(), length = file.length())
+        } catch (e: Exception) {
+            Log.w(TAG, "fileStat failed", e)
+            null
         }
     }
 
@@ -127,6 +172,22 @@ class RootServiceRemoteAdapter(private val context: Context) : RootAccessClient 
             true
         } catch (e: Exception) {
             Log.w(TAG, "appendBytes failed", e)
+            false
+        }
+    }
+
+    override suspend fun writeText(path: String, content: String): Boolean {
+        val fsm = getFsManager() ?: return false
+        return try {
+            val file = fsm.getFile(path)
+            file.parentFile?.mkdirs()
+            if (file.exists()) file.delete()
+            Channels.newOutputStream(
+                fsm.openChannel(path, FileSystemManager.MODE_WRITE_ONLY or FileSystemManager.MODE_CREATE),
+            ).use { it.write(content.toByteArray(Charsets.UTF_8)) }
+            true
+        } catch (e: Exception) {
+            Log.w(TAG, "writeText failed", e)
             false
         }
     }

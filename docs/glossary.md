@@ -4,7 +4,7 @@ type: concept
 status: accepted
 phase: N/A
 updated: 2026-06-24
-summary: "CrashCenter 项目术语单一事实源（含受管应用、观测/拦截分离）"
+summary: "CrashCenter 项目术语单一事实源（含 ANR 观测与分布式 cache 存储）"
 ---
 
 # 术语表
@@ -17,7 +17,8 @@ summary: "CrashCenter 项目术语单一事实源（含受管应用、观测/拦
 | **Scope Mode** | （已移除 `scope_mode` 键）系统 app 是否安装捕获由 `handle_system` 控制 |
 | **Intercept enabled** | 包名在 `managed_packages` 中 → `shouldIntercept=true` |
 | **Managed App（受管应用）** | 历史术语（ADR-015）；现 UI 为全量已安装列表，Switch 写 `managed_packages` |
-| **仅观测** | Switch OFF / 不在 `managed_packages`：`shouldInstall=true`，`shouldIntercept=false` |
+| **仅监测** | Switch OFF / 不在 `managed_packages`：`shouldInstall=true`，`shouldIntercept=false`；记录崩溃但不续命 |
+| **监测** | 捕获并记录 Java 崩溃（含仅监测与已拦截）；观测 tab / 历史统计的 umbrella 用语 |
 | **shouldInstall** | hook 侧是否安装 `Application.onCreate` 捕获（ADR-023）；取代原 `shouldHook` 的注入语义 |
 | **shouldIntercept** | hook 侧是否启用 Looper 续命 + 吞异常；行内 Switch ↔ `managed_packages` |
 | **Observe-only（纯观测）** | `shouldInstall=true` 且 `shouldIntercept=false`：记录崩溃后转发系统默认处理，进程可退出 |
@@ -26,19 +27,23 @@ summary: "CrashCenter 项目术语单一事实源（含受管应用、观测/拦
 | **Analysis Layer** | 分析层：对 CrashEvent 做分类、聚类与诊断建议，**不修复**目标 app；见 [crash-intelligent-analysis.md](architecture/crash-intelligent-analysis.md) |
 | **RuleEngine** | Phase 4G 组件：基于 exceptionClass / stack 规则输出 `exceptionType`、`rootCauseTags` 与模板建议 |
 | **signatureHash** | 规范化 stack 指纹，用于重复崩溃聚类与 `clusterId` |
-| **CrashLogger** | Phase 4 组件族：hook 侧 `CrashLogCoordinator` + 各 `CrashLogBackend`；模块侧 `CrashLogIngestCoordinator` |
+| **CrashLogger** | Phase 4 组件族：hook 侧 `CrashLogCoordinator` + `LocalCacheBackend`；模块侧 `DistributedCrashLogRepository` + root 读（ADR-024） |
 | **CrashLogBackend** | 崩溃日志写入/合并后端抽象（root_su、provider_insert、target_relay 等）；见 [crash-log-backends.md](architecture/crash-log-backends.md) |
 | **CrashCapturePipeline** | hook 侧单入口：构建 CrashEvent → 并行投递 CrashLogCoordinator 与 CrashFeedbackFacade；见 [architecture-optimization.md](architecture/architecture-optimization.md) |
 | **CrashFeedbackFacade** | hook 侧反馈门面：Toast、Notification、PendingIntent；与日志路径失败域隔离 |
 | **CrashLogCoordinator** | hook 侧写入协调器：Phase1 root 优先 → Phase2 多 IPC 并行 |
 | **MainShellActivity** | Phase 4C+ UI 壳层：Toolbar + 状态条 + 2-tab BottomNav + NavHost；见 [ui-routing.md](architecture/ui-routing.md) |
 | **ScopePolicy** | hook 侧纯函数/对象：根据 XSharedPreferences 与 LoadPackageParam 输出是否 hook 及 showNotify（替代 static showNotify） |
-| **CrashLogIngestCoordinator** | 模块侧 ingest：root 读各 app 私有 relay → merge canonical JSONL |
+| **LocalCacheBackend** | hook 侧写后端（ADR-024）：`BackendId.LOCAL_CACHE` / `local_cache`；append 本 app `CrashLogPaths.eventsFile` |
+| **CrashLogPaths** | 路径 SSOT：`cache/crash_logs/events.jsonl` + legacy 迁移路径；见 [crash-log-distributed-storage.md](architecture/crash-log-distributed-storage.md) |
+| **CrashLogIngestCoordinator** | （**移除**，ADR-024）原 relay → canonical merge |
 | **RootFsBackend** | Phase 4 模块侧 libsu root 读 relay；模式见 [root-service-patterns.md](reference/root-service-patterns.md) |
-| **crashcenter_relay** | 目标 app 私有目录 `files/crashcenter_relay/` 下单条 JSON；同 UID 写入兜底（原 `crashcenter_relay`） |
-| **CrashEvent** | 单条崩溃记录（JSON）：时间戳、包名、异常类、stack trace、`source` 等，见 [crash-logging.md](architecture/crash-logging.md) |
+| **crashcenter_relay** | （**deprecated**，ADR-024）原 `files/crashcenter_relay/` per-file 副本；由 **Per-app JSONL** 取代 |
+| **Distributed crash log** | ADR-024：各 app 在 `cache/crash_logs/events.jsonl` 自持；hook 写无需 root；模块 UI **须 root** 扫描聚合，无无 root 读路径 |
+| **Per-app JSONL** | `/data/user/{userId}/{packageName}/cache/crash_logs/events.jsonl`；hook 同 UID 写入；见 [crash-log-distributed-storage.md](architecture/crash-log-distributed-storage.md) |
+| **CrashEvent** | 单条崩溃记录（JSON）：时间戳、包名、异常类、stack trace、`source`、`intercepted` 等，见 [crash-logging.md](architecture/crash-logging.md) |
 | **CrashLogProvider** | Phase 4 Fallback：exported ContentProvider，`insert` 在模块 UID 下 append JSONL；**不得**使用 signature permission（hook 异签名调用） |
-| **events.jsonl** | 模块私有目录 `files/crash_logs/` 下的 append-only 崩溃日志文件；Primary A 直写或 Provider 写入 |
+| **events.jsonl** | append-only 崩溃日志文件；**as-built** 在模块 `files/crash_logs/`；**ADR-024 提案** 在各 app `cache/crash_logs/` |
 | **QUERY_ALL_PACKAGES** | Android 11+ 正常权限，供**模块 UI 进程**枚举已安装包；侧载安装时通常自动授予；与 hook 侧包可见性无直接替代关系 |
 | **XSharedPreferences** | Xposed 跨进程**读取**模块 SharedPreferences（UI 写 → hook `reload()`）；**不用于**崩溃事件体写入，见 [crash-log-ipc FAQ](architecture/crash-log-ipc.md#为何不用-xsharedpreferences-存崩溃日志) |
 | **Self Hook** | 模块 hook 自身 `ActivityMain.isModuleActived()` 返回 true，用于检测 Xposed 激活状态 |
@@ -54,5 +59,6 @@ summary: "CrashCenter 项目术语单一事实源（含受管应用、观测/拦
 | **Press-Drag-Release** | 按住锚点/菜单行滑动跟选、松手触发落点项、落点外关闭；见 [interaction-language §按住滑动选单](design/interaction-language.md#按住滑动选单-press-drag-release) |
 | **Draggable Half Sheet** | Clarence TouchPrimary 半屏 BottomSheet：顶栏 chrome 内必填 **DragHandle**、默认 50% 高度、把手拖曳 expand/collapse/dismiss；见 [draggable-half-sheet.md](design/components/draggable-half-sheet.md) |
 | **ScrollLinkedEdgeScrim** | 顶/底边缘 blur 或渐变；**仅**内容滚入对应区时显示，滚出消失；前景色随亮度自适应；见 [floating-chrome.md §ScrollLinkedEdgeScrim](design/components/floating-chrome.md#滚动联动边缘-scrimscrolllinkededgescrim) |
-| **Framework injection** | 在 LSPosed 中勾选 **System Framework**（`android` 包），使模块 hook 代码加载进 `system_server` 进程；CrashCenter **不采用**为主架构，见 [framework-injection-feasibility.md](architecture/framework-injection-feasibility.md) |
+| **Framework injection** | 在 LSPosed 中勾选 **System Framework**（`android` 包），使模块 hook 代码加载进 `system_server` 进程；CrashCenter **不采用**为主架构（含 AMS ANR hook），见 [framework-injection-feasibility.md](architecture/framework-injection-feasibility.md)、[ADR-025](decisions/025-anr-observation-no-framework-hook.md) |
+| **ANR 观测** | 系统判定主线程/组件超时；**不** hook `system_server`；**路径 A** logcat `system`/`events`、**路径 B** 可选 `ApplicationExitInfo`；规格 [anr-observation.md](architecture/anr-observation.md)、[ADR-025](decisions/025-anr-observation-no-framework-hook.md)；不入 `events.jsonl` SSOT |
 | **System Framework scope** | LSPosed 作用域选项，对应 `handleLoadPackage` 中 `packageName == "android"`；启用后 hook 运行于 system 进程，稳定性风险高于 app 级 hook |

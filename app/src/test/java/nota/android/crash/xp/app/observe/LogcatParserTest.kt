@@ -132,6 +132,49 @@ class LogcatParserTest {
 
         val crash = LogcatParser.filterCrashRelated(entries)
         assertEquals(1, crash.size)
+        assertTrue(!LogcatParser.isAnrHint(crash[0]))
+    }
+
+    @Test
+    fun `filterCrashRelated finds ANR in message case insensitively`() {
+        val entries = listOf(
+            entry(LogcatLevel.ERROR, "ActivityManager", "ANR in com.example.app (com.example.app/.MainActivity)"),
+            entry(LogcatLevel.ERROR, "ActivityManager", "anr in com.example.other"),
+        )
+
+        val crash = LogcatParser.filterCrashRelated(entries)
+        assertEquals(2, crash.size)
+        assertTrue(crash.all { LogcatParser.isAnrHint(it) })
+    }
+
+    @Test
+    fun `filterCrashRelated finds am_anr in events buffer text`() {
+        val entries = listOf(
+            entry(LogcatLevel.INFO, "eventlog", "am_anr: [0,12345,com.example.app,...]"),
+        )
+
+        val crash = LogcatParser.filterCrashRelated(entries)
+        assertEquals(1, crash.size)
+        assertTrue(LogcatParser.isAnrHint(crash[0]))
+    }
+
+    @Test
+    fun `filterCrashRelated finds ActivityManager ANR annotations`() {
+        val entries = listOf(
+            entry(LogcatLevel.ERROR, "ActivityManager", "Input dispatching timed out"),
+            entry(LogcatLevel.ERROR, "ActivityManager", "App is not responding. Waited 5000ms"),
+        )
+
+        val crash = LogcatParser.filterCrashRelated(entries)
+        assertEquals(2, crash.size)
+        assertTrue(crash.all { LogcatParser.isAnrHint(it) })
+    }
+
+    @Test
+    fun `isAnrHint false for unrelated ActivityManager lines`() {
+        val entry = entry(LogcatLevel.INFO, "ActivityManager", "Start proc com.example.app for activity")
+        assertTrue(!LogcatParser.isAnrHint(entry))
+        assertTrue(!LogcatParser.isCrashRelated(entry))
     }
 
     @Test

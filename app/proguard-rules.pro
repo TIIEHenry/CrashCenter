@@ -29,8 +29,5 @@
 -keep class nota.android.crash.root.service.CrashCenterRootService { *; }
 -keep class nota.android.crash.root.service.RootBroker { *; }
 
-# ContentProvider – system instantiates by class name
--keep class nota.android.crash.xp.app.CrashLogProvider { *; }
-
 # CrashHandler – methods invoked from Xposed hooks
 -keep class nota.android.crash.CrashHandler { *; }

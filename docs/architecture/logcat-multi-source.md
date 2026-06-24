@@ -1,16 +1,16 @@
 ---
 title: "Logcat 多源架构"
 type: architecture
-status: proposed
+status: accepted
 phase: 4
-updated: 2026-06-23
-summary: "Root 实时读取 + 文件导入的双模式 logcat 架构；覆盖 main/system/crash/events/radio 多缓冲区；复用现有 LogcatParser 与 LogcatViewModel"
+updated: 2026-06-24
+summary: "Root 实时读取 + 文件导入；ANR 路径 A 见 buffer P2/P3（ADR-025）；status accepted 供编码"
 ---
 
 # Logcat 多源架构
 
 > 适用模块：`:app`（`LogcatFragment`、`LogcatViewModel`、`LogcatParser`）
-> 前置文档：[adb-logcat-analysis.md](adb-logcat-analysis.md)（需求与解析规范）、[unified-root-service.md](unified-root-service.md)（Root 基础设施）
+> 前置文档：[adb-logcat-analysis.md](adb-logcat-analysis.md)（需求与解析规范）、[unified-root-service.md](unified-root-service.md)（Root 基础设施）、[ADR-025](../decisions/025-anr-observation-no-framework-hook.md)（ANR 不走 Framework hook）
 > 数据 SSOT 仍为 [crash-logging.md](crash-logging.md) `events.jsonl` — logcat 作为诊断与补充观测手段，不替代 JSONL 历史统计
 
 ## 概述
@@ -52,7 +52,7 @@ Android 的 `logd` 守护进程维护多个**独立的日志缓冲区**（log bu
 |--------|---------|--------|
 | `main` | 已有 XposedBridge / CrashCenter 日志；通用应用异常 | **P0** |
 | `crash` | 系统级崩溃记录（Android 11+ `FATAL EXCEPTION` 自动写入）；**最有价值的额外缓冲区** | **P1** |
-| `system` | `ActivityManager` 进程死亡、OOM adj、ANR 信息 | **P2** |
+| `system` | `ActivityManager` 进程死亡、OOM adj、**ANR 信息**（[ADR-025](../decisions/025-anr-observation-no-framework-hook.md) 采纳路径） | **P2** |
 | `events` | 结构化事件（`am_crash`、`am_anr`、`am_proc_died`）；需二进制解析 | **P3** |
 | `radio` | 电话相关崩溃诊断（少数场景） | P3 |
 | `kernel` | 内核 panic / watchdog；Native crash 关联 | P4 |
@@ -503,13 +503,15 @@ flowchart LR
 | ML5 | 导入 `adb logcat -b crash -d > crash.txt` | 文件模式正常解析并展示 |
 | ML6 | 切换缓冲区时已有数据 | 显示 loading 状态；新数据加载完成后替换列表 |
 | ML7 | 5MB 大日志 dump | 不 ANR；截断有 Toast 提示 |
-| ML8 | 「仅崩溃」过滤 + Root 模式 | 过滤生效，仅显示 crash-related 条目 |
+| ML8 | 「仅崩溃」过滤 + Root 模式 | Chip 默认开（`logcat_crash_filter_default`）；`filterCrashRelated` 含 ANR_HINT |
 | ML9 | 缓冲区 Chip 行 + 级别 Chip 行 | 两级过滤独立生效、互不干扰 |
 
 ---
 
 ## 相关文档
 
+- [ADR-025](../decisions/025-anr-observation-no-framework-hook.md) — ANR 观测不走 Framework hook
+- [anr-observation.md](anr-observation.md) — 路径 A/B、INTERCEPT 行为、旁路 schema
 - [adb-logcat-analysis.md](adb-logcat-analysis.md) — logcat 分析需求、解析规范、分阶段交付
 - [unified-root-service.md](unified-root-service.md) — Root 基础设施（`RootAccessClient`）
 - [crash-logging.md](crash-logging.md) — JSONL 观测层（SSOT）

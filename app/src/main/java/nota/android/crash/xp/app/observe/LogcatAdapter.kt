@@ -3,15 +3,15 @@ package nota.android.crash.xp.app.observe
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.core.content.ContextCompat
+import androidx.paging.PagingDataAdapter
 import androidx.recyclerview.widget.DiffUtil
-import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import nota.android.crash.xp.app.R
 import nota.android.crash.xp.app.databinding.ItemLogcatEntryBinding
 
 class LogcatAdapter(
     private val onItemClick: (LogcatEntry) -> Unit,
-) : ListAdapter<LogcatEntry, LogcatAdapter.ViewHolder>(DIFF_CALLBACK) {
+) : PagingDataAdapter<LogcatEntry, LogcatAdapter.ViewHolder>(DIFF_CALLBACK) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val binding = ItemLogcatEntryBinding.inflate(
@@ -19,13 +19,13 @@ class LogcatAdapter(
         )
         return ViewHolder(binding) { position ->
             if (position != RecyclerView.NO_POSITION) {
-                onItemClick(getItem(position))
+                getItem(position)?.let(onItemClick)
             }
         }
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        holder.bind(getItem(position))
+        getItem(position)?.let { holder.bind(it) }
     }
 
     class ViewHolder(
@@ -42,7 +42,12 @@ class LogcatAdapter(
             binding.tvLevel.text = entry.level.label
             binding.tvLevel.setTextColor(levelColor(entry.level))
             binding.tvTag.text = entry.tag
-            binding.tvMessage.text = entry.displaySummary
+            val summary = entry.displaySummary
+            binding.tvMessage.text = if (LogcatParser.isAnrHint(entry)) {
+                "ANR · $summary"
+            } else {
+                summary
+            }
         }
 
         private fun levelColor(level: LogcatLevel): Int {

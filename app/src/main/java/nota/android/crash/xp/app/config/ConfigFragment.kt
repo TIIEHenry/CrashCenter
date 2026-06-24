@@ -14,14 +14,13 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.DefaultItemAnimator
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import kotlinx.coroutines.launch
 import nota.android.crash.xp.app.R
 import nota.android.crash.xp.app.common.ui.CallbackSuppressor
 import nota.android.crash.xp.app.common.ui.DenseSearchField
 import nota.android.crash.xp.app.common.ui.FilterChipRow
 import nota.android.crash.xp.app.common.ui.LoadingState
+import nota.android.crash.xp.app.common.ui.RecyclerViewListSetup
 import nota.android.crash.xp.app.common.ui.showErrorToast
 import nota.android.crash.xp.app.databinding.FragmentConfigBinding
 import nota.android.crash.xp.app.di.ServiceLocator
@@ -123,8 +122,8 @@ class ConfigFragment : Fragment() {
     private fun setupRecyclerView() {
         binding.recyclerv.apply {
             itemAnimator = DefaultItemAnimator().apply { addDuration = 100 }
-            layoutManager = LinearLayoutManager(requireContext(), RecyclerView.VERTICAL, false)
             adapter = this@ConfigFragment.adapter
+            RecyclerViewListSetup.apply(this, requireContext())
         }
     }
 
@@ -222,9 +221,10 @@ class ConfigFragment : Fragment() {
                 "\tat nota.android.crash.xp.app.config.ConfigFragment.triggerTestCrash(ConfigFragment.kt)",
             timestampMs = System.currentTimeMillis(),
             source = "test",
+            intercepted = false,
         )
-        val file = nota.android.crash.xp.app.data.FileCrashLogRepository.eventsFile(requireContext())
-        nota.android.crash.log.CanonicalJsonlWriter.append(file, event)
+        val file = nota.android.crash.log.CrashLogPaths.eventsFile(requireContext())
+        nota.android.crash.log.CrashLogJsonlStore.append(file, event)
         android.widget.Toast.makeText(requireContext(), R.string.test_crash_recorded, android.widget.Toast.LENGTH_SHORT).show()
     }
 

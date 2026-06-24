@@ -48,6 +48,7 @@ class CrashEventBinderTest {
         exceptionClass: String = "java.lang.RuntimeException",
         timestampMs: Long = System.currentTimeMillis() - 60_000,
         source: String? = null,
+        intercepted: Boolean = false,
     ) = CrashEvent(
         id = "test-id",
         packageName = packageName,
@@ -56,6 +57,7 @@ class CrashEventBinderTest {
         exceptionClass = exceptionClass,
         timestampMs = timestampMs,
         source = source,
+        intercepted = intercepted,
     )
 
     // ─── Basic field binding ───
@@ -84,13 +86,14 @@ class CrashEventBinderTest {
     }
 
     @Test
-    fun `bind sets contentDescription with label and subtitle`() {
-        val e = event(appLabel = "TestApp")
+    fun `bind sets contentDescription with label subtitle and outcome`() {
+        val e = event(appLabel = "TestApp", intercepted = false)
 
         CrashEventBinder.bindGlobal(binding, e)
 
         val cd = binding.root.contentDescription?.toString().orEmpty()
         assertTrue(cd.contains("TestApp"))
+        assertTrue(cd.contains("Monitor only"))
     }
 
     @Test
@@ -198,6 +201,22 @@ class CrashEventBinderTest {
 
         assertEquals(View.VISIBLE, binding.tvSourceBadge.visibility)
         assertEquals("customSource", binding.tvSourceBadge.text.toString())
+    }
+
+    @Test
+    fun `bind shows intercepted outcome badge`() {
+        CrashEventBinder.bindGlobal(binding, event(intercepted = true))
+
+        assertEquals(View.VISIBLE, binding.tvOutcomeBadge.visibility)
+        assertEquals("Intercepted", binding.tvOutcomeBadge.text.toString())
+    }
+
+    @Test
+    fun `bind shows monitor-only outcome badge`() {
+        CrashEventBinder.bindGlobal(binding, event(intercepted = false))
+
+        assertEquals(View.VISIBLE, binding.tvOutcomeBadge.visibility)
+        assertEquals("Monitor only", binding.tvOutcomeBadge.text.toString())
     }
 
     // ─── Icon loading with nonexistent package ───

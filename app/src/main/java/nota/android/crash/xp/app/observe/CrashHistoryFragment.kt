@@ -11,14 +11,13 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.paging.LoadState
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import nota.android.crash.root.RootAvailability
 import nota.android.crash.xp.app.R
 import nota.android.crash.xp.app.common.ui.EmptyState
 import nota.android.crash.xp.app.common.ui.LoadingState
-import nota.android.crash.xp.app.common.ui.VerticalSpacingItemDecoration
+import nota.android.crash.xp.app.common.ui.RecyclerViewListSetup
 import nota.android.crash.xp.app.common.ui.showErrorToast
 import nota.android.crash.xp.app.databinding.FragmentCrashHistoryBinding
 import nota.android.crash.xp.app.di.ServiceLocator
@@ -74,11 +73,21 @@ class CrashHistoryFragment : Fragment() {
     }
 
     private fun bindEmptyState() {
+        val rootAvailable = ServiceLocator.rootAccessClient(requireContext()).probe() ==
+            RootAvailability.AVAILABLE
+        if (!rootAvailable) {
+            EmptyState.bind(
+                binding.emptyState.root,
+                getString(R.string.crash_history_root_required),
+                R.drawable.ic_tab_observe,
+            )
+            return
+        }
         EmptyState.bind(
             binding.emptyState.root,
             getString(R.string.crash_history_empty),
-            getString(R.string.history_empty_action),
-            { (parentFragment as? ObserveHostFragment)?.openConfigTab() },
+            getString(R.string.observe_analyze_logcat_action),
+            { (parentFragment as? ObserveHostFragment)?.openLogcatTab() },
             R.drawable.ic_tab_observe,
         )
     }
@@ -98,10 +107,7 @@ class CrashHistoryFragment : Fragment() {
         )
         binding.recyclerView.apply {
             adapter = this@CrashHistoryFragment.adapter
-            layoutManager = LinearLayoutManager(requireContext(), RecyclerView.VERTICAL, false)
-            addItemDecoration(VerticalSpacingItemDecoration(
-                resources.getDimensionPixelSize(R.dimen.spacing_xs)
-            ))
+            RecyclerViewListSetup.apply(this, requireContext())
         }
         adapter.addLoadStateListener { loadStates ->
             val isLoading = loadStates.refresh is LoadState.Loading

@@ -3,8 +3,8 @@ title: "Phase 4: 崩溃可观测性"
 type: roadmap
 status: in_progress
 phase: 4
-updated: 2026-06-23
-summary: "4C–4G-V2 部分 as-built；IS 矩阵与 4B-γ/配置入口待验"
+updated: 2026-06-24
+summary: "4B-δ 分布式 cache as-built；4F-ANR LogcatParser as-built；IS-D 矩阵待验"
 ---
 
 # Phase 4: 崩溃可观测性
@@ -73,6 +73,17 @@ summary: "4C–4G-V2 部分 as-built；IS 矩阵与 4B-γ/配置入口待验"
 - [ ] DirectFs `mkdirs` 失败可观测（FS-5）
 - [ ] 真机 FS-6 / FS-7（删改与 hook 写交错）
 
+### 4B-δ — 分布式 cache 存储 ✅（编码 as-built）
+
+> 方案：[crash-log-distributed-storage.md](../../../docs/architecture/crash-log-distributed-storage.md)；[ADR-024](../../../docs/decisions/024-distributed-cache-crash-storage.md) **accepted**。
+
+- [x] ADR-024 `accepted`
+- [x] **4B-δ-1** hook：`CrashLogPaths`、`LocalCacheBackend`、`BackendId.LOCAL_CACHE`；删 Provider/DirectFs/Relay/RootSu
+- [x] **4B-δ-2** 模块：`DistributedCrashLogRepository`、root 删改；删 RelayMerge/Ingest
+- [x] **4B-δ-3** `CrashLogMigrationCoordinator` + `distributed_cache_migrated`
+- [ ] IS-D1~IS-D5 真机验收
+- [x] `crash-logging.md` / `crash-log-backends.md` as-built 全文同步
+
 ### 4B 验收：独立启动矩阵
 
 > 详见 [crash-log-ipc.md § 目标进程独立启动](../../../docs/architecture/crash-log-ipc.md#目标进程独立启动时的权限与通信)
@@ -140,8 +151,20 @@ Provider / DirectFs / Relay 作为 `CrashLogBackend` 实现，不再单独 Phase
 
 - [x] P0：`scripts/adb-logcat-capture.sh`（开发者 adb 采集）
 - [x] P1：观测 tab「logcat」子页 + SAF 导入 + 片段列表 + 详情
-- [ ] P1b：（可选）root `logcat -d` 扫描
-- [ ] 验收模板扩展（`dev/verification/`）
+- [x] P1b：root `logcat -d` 多 buffer（`RootLogcatReader` + buffer Chip）
+- [ ] 验收模板扩展（`dev/verification/`）— L7 见 [anr_logcat_l7_template.md](../../verification/anr_logcat_l7_template.md)
+
+### 4F-ANR — ANR 观测（ADR-025）
+
+决策：[ADR-025](../../../docs/decisions/025-anr-observation-no-framework-hook.md)；规格：[anr-observation.md](../../../docs/architecture/anr-observation.md)。**不入** `events.jsonl` SSOT。
+
+- [x] [logcat-multi-source](../../../docs/architecture/logcat-multi-source.md) buffer P0 + **P2**（`main` + `system`）
+- [x] [logcat-multi-source](../../../docs/architecture/logcat-multi-source.md) buffer **P3**（`events`）
+- [x] `LogcatParser.isAnrHint` / `filterCrashRelated` ANR 启发式（对齐 adb-logcat-analysis）
+- [x] `LogcatFragment`「仅崩溃」Chip → `setCrashFilter` / `loadFromRoot` 尊重 `isFiltered`
+- [ ] 验收 L7 真机：见 [anr_logcat_l7_template.md](../../verification/anr_logcat_l7_template.md)
+- [ ] （backlog）路径 B：`ApplicationExitInfo`（API 30+）
+- [ ] （defer）`anr_hints.jsonl` 旁路持久化
 
 ## 4G — 智能分析（backlog，依赖 4C 详情页）
 
@@ -197,6 +220,9 @@ python3 scripts/check-docs-health.py
 - [crash-log-backends.md](../../../docs/architecture/crash-log-backends.md) — 多后端编排
 - [ADR-008](../../../docs/decisions/008-multi-backend-crash-log-storage.md)
 - [framework-injection-feasibility.md](../../../docs/architecture/framework-injection-feasibility.md)
+- [ADR-025](../../../docs/decisions/025-anr-observation-no-framework-hook.md)
+- [anr-observation.md](../../../docs/architecture/anr-observation.md)
+- [logcat-multi-source.md](../../../docs/architecture/logcat-multi-source.md)
 - [crash-intelligent-analysis.md](../../../docs/architecture/crash-intelligent-analysis.md) — 4G 智能分析 backlog
 - [ipc-design-qa-2026-06-20.md](../../iterations/crash-observability/ipc-design-qa-2026-06-20.md)
 - [crash-handler.md](../../../docs/architecture/crash-handler.md)

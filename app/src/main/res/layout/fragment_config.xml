@@ -58,14 +58,8 @@
             android:id="@+id/recyclerv"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:clipToPadding="false"
             android:paddingHorizontal="@dimen/filter_horizontal_padding"
             android:paddingBottom="@dimen/spacing_md"
-            app:fastScrollEnabled="true"
-            app:fastScrollHorizontalThumbDrawable="@drawable/fastscroll_thumb_horizontal"
-            app:fastScrollHorizontalTrackDrawable="@drawable/fastscroll_track_horizontal"
-            app:fastScrollVerticalThumbDrawable="@drawable/fastscroll_thumb_vertical"
-            app:fastScrollVerticalTrackDrawable="@drawable/fastscroll_track_vertical"
             tools:listitem="@layout/view_managed_app_row" />
 
         <include

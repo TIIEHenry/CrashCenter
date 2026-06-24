@@ -52,8 +52,8 @@ class CrashStatsFragment : Fragment() {
         EmptyState.bind(
             binding.emptyState.root,
             getString(R.string.stats_empty),
-            getString(R.string.stats_empty_action),
-            { (parentFragment as? ObserveHostFragment)?.selectSubTab(0) },
+            getString(R.string.observe_analyze_logcat_action),
+            { (parentFragment as? ObserveHostFragment)?.openLogcatTab() },
             R.drawable.ic_tab_observe,
         )
         viewLifecycleOwner.lifecycleScope.launch {
@@ -86,8 +86,8 @@ class CrashStatsFragment : Fragment() {
             EmptyState.bind(
                 binding.emptyState.root,
                 getString(R.string.stats_empty),
-                getString(R.string.stats_empty_action),
-                { (parentFragment as? ObserveHostFragment)?.selectSubTab(0) },
+                getString(R.string.observe_analyze_logcat_action),
+                { (parentFragment as? ObserveHostFragment)?.openLogcatTab() },
                 R.drawable.ic_tab_observe,
             )
         }

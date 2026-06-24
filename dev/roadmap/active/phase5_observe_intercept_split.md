@@ -3,7 +3,7 @@ title: "Phase 5: 全量观测与拦截分离"
 type: roadmap
 status: in_progress
 phase: 5
-updated: 2026-06-23
+updated: 2026-06-24
 summary: "ADR-023：默认注入观测；Switch 仅控 shouldIntercept；CrashHandler 双模式"
 ---
 
@@ -39,7 +39,8 @@ summary: "ADR-023：默认注入观测；Switch 仅控 shouldIntercept；CrashHa
 ## 5.4 — 迁移与文档
 
 - [x] `observe_intercept_split_migrated` 一次性标记
-- [x] UI 文案：角标/筛选「仅观测」「已拦截」；空态与移除确认
+- [x] UI 文案：角标/筛选「仅监测」「已拦截」；空态与移除确认
+- [x] `CrashEvent.intercepted` + 历史/单应用 item 角标
 - [x] 观测 Toolbar 去重（移除「统计」菜单；子 tab 显隐）；空态 CTA（历史→配置、统计→历史）
 - [x] 同步 `scope-and-prefs.md`、`app-management-ui.md`、`usage.md`、`crash-handler.md`、`crash-capture-pipeline.md`、`glossary.md`
 

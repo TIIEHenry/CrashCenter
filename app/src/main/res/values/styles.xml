@@ -33,6 +33,7 @@
         <item name="toolbarStyle">@style/AppTheme.Toolbar</item>
         <item name="textInputStyle">@style/AppTheme.SearchField</item>
         <item name="materialButtonStyle">@style/AppTheme.Button</item>
+        <item name="recyclerViewStyle">@style/AppTheme.FastScrollRecyclerView</item>
 
         <!-- Custom attrs (Fluent semantic) -->
         <item name="statusBannerActiveBackground">@color/statusActiveBg</item>
@@ -195,6 +196,16 @@
 
 
     <style name="AppTheme.Button" parent="Widget.Material3.Button.TextButton" />
+
+    <!--
+        RecyclerView defaults. Built-in fast scroll stays off; [VerticalFastScrollHelper]
+        draws a fixed-height thumb (see fastscroll_thumb_height) for long lists.
+    -->
+    <style name="AppTheme.FastScrollRecyclerView">
+        <item name="android:scrollbars">none</item>
+        <item name="android:clipToPadding">false</item>
+        <item name="fastScrollEnabled">false</item>
+    </style>
 
 </resources>
 

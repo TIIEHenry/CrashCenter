@@ -15,6 +15,7 @@ object CrashEventBuilder {
         processName: String?,
         throwable: Throwable,
         source: String,
+        intercepted: Boolean = false,
     ): CrashEvent {
         val root = throwable.cause ?: throwable
         return CrashEvent(
@@ -27,6 +28,7 @@ object CrashEventBuilder {
             message = root.message,
             stackTrace = truncateStack(Log.getStackTraceString(throwable)),
             source = source,
+            intercepted = intercepted,
         )
     }
 

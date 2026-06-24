@@ -145,6 +145,44 @@ class LogcatViewModelTest {
     }
 
     @Test
+    fun `setLevelVisible hides and shows level`() = testScope.runTest {
+        assertTrue(LogcatLevel.ERROR in viewModel.uiState.value.activeLevels)
+
+        viewModel.setLevelVisible(LogcatLevel.ERROR, visible = false)
+        assertFalse(LogcatLevel.ERROR in viewModel.uiState.value.activeLevels)
+
+        viewModel.setLevelVisible(LogcatLevel.ERROR, visible = true)
+        assertTrue(LogcatLevel.ERROR in viewModel.uiState.value.activeLevels)
+    }
+
+    @Test
+    fun `setLevelVisible is idempotent`() = testScope.runTest {
+        viewModel.setLevelVisible(LogcatLevel.DEBUG, visible = true)
+        assertEquals(LogcatUiState.DEFAULT_LEVELS, viewModel.uiState.value.activeLevels)
+
+        viewModel.setLevelVisible(LogcatLevel.DEBUG, visible = false)
+        viewModel.setLevelVisible(LogcatLevel.DEBUG, visible = false)
+        assertFalse(LogcatLevel.DEBUG in viewModel.uiState.value.activeLevels)
+    }
+
+    @Test
+    fun `level filter updates displayEntries`() = testScope.runTest {
+        val logcat = """
+            06-23 10:00:00.000  1234  1234 I TestTag: info log
+            06-23 10:00:01.000  1234  1234 E AndroidRuntime: error log
+        """.trimIndent()
+        viewModel.loadFromText(logcat, crashOnly = false)
+        advanceUntilIdle()
+
+        assertEquals(2, viewModel.uiState.value.displayEntries.size)
+
+        viewModel.setLevelVisible(LogcatLevel.INFO, visible = false)
+        val filtered = viewModel.uiState.value.displayEntries
+        assertEquals(1, filtered.size)
+        assertEquals(LogcatLevel.ERROR, filtered.single().level)
+    }
+
+    @Test
     fun `toggleLevel toggles SILENT independently`() = testScope.runTest {
         // SILENT is not in DEFAULT_LEVELS
         assertFalse(LogcatLevel.SILENT in viewModel.uiState.value.activeLevels)
@@ -181,9 +219,26 @@ class LogcatViewModelTest {
     // ─── setCrashFilter ───
 
     @Test
-    fun `setCrashFilter has no effect when entries are empty`() = testScope.runTest {
+    fun `setCrashFilter stores flag when entries are empty`() = testScope.runTest {
         viewModel.setCrashFilter(true)
-        assertFalse(viewModel.uiState.value.isFiltered)
+        assertTrue(viewModel.uiState.value.isFiltered)
+        assertTrue(viewModel.uiState.value.entries.isEmpty())
+    }
+
+    @Test
+    fun `loadFromText with crashOnly keeps ANR hints`() = testScope.runTest {
+        val logcat = """
+            06-23 10:00:00.000  1000  1000 I TestTag: normal log
+            06-23 10:00:01.000  1000  1000 E ActivityManager: ANR in com.example.app
+        """.trimIndent()
+        viewModel.loadFromText(logcat, crashOnly = true)
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertTrue(state.isFiltered)
+        assertEquals(2, state.totalRawCount)
+        assertEquals(1, state.entries.size)
+        assertTrue(LogcatParser.isAnrHint(state.entries.single()))
     }
 
     @Test
@@ -194,10 +249,44 @@ class LogcatViewModelTest {
         assertFalse(viewModel.uiState.value.isFiltered)
 
         viewModel.setCrashFilter(true)
+        advanceUntilIdle()
         assertTrue(viewModel.uiState.value.isFiltered)
 
         viewModel.setCrashFilter(false)
+        advanceUntilIdle()
         assertFalse(viewModel.uiState.value.isFiltered)
+    }
+
+    @Test
+    fun `setSearchQuery filters displayEntries by tag and message`() = testScope.runTest {
+        val logcat = """
+            06-23 10:00:00.000  1234  1234 I TestTag: hello world
+            06-23 10:00:01.000  1234  1234 E AndroidRuntime: error log
+        """.trimIndent()
+        viewModel.loadFromText(logcat, crashOnly = false)
+        advanceUntilIdle()
+        assertEquals(2, viewModel.uiState.value.displayEntries.size)
+
+        viewModel.setSearchQuery("AndroidRuntime")
+        assertEquals(1, viewModel.uiState.value.displayEntries.size)
+        assertEquals("AndroidRuntime", viewModel.uiState.value.displayEntries.single().tag)
+
+        viewModel.setSearchQuery("hello")
+        assertEquals(1, viewModel.uiState.value.displayEntries.size)
+        assertEquals("TestTag", viewModel.uiState.value.displayEntries.single().tag)
+
+        viewModel.setSearchQuery("")
+        assertEquals(2, viewModel.uiState.value.displayEntries.size)
+    }
+
+    @Test
+    fun `setSearchQuery is case insensitive`() = testScope.runTest {
+        val logcat = "06-23 10:00:00.000  1234  1234 I TestTag: Hello World"
+        viewModel.loadFromText(logcat, crashOnly = false)
+        advanceUntilIdle()
+
+        viewModel.setSearchQuery("hello")
+        assertEquals(1, viewModel.uiState.value.displayEntries.size)
     }
 
     // ─── clearError ───

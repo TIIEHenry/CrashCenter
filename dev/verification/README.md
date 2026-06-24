@@ -3,8 +3,8 @@ title: "设备验收指南"
 type: guide
 status: accepted
 phase: N/A
-updated: 2026-06-19
-summary: "CrashCenter 真机 adb 验收入口、脚本与报告规范"
+updated: 2026-06-24
+summary: "CrashCenter 真机 adb 验收入口；含 ANR logcat L7（ADR-025）"
 ---
 
 # 设备验收
@@ -48,15 +48,19 @@ CrashCenter 的验收以 **Xposed 真机环境** 为前提：模块激活、hook
 | 6 | Scope Mode **开启** | 仅 Switch **开启**的非系统 app 被 hook（「处理系统应用」开启时含系统 app） |
 | 7 | Scope Mode **关闭**（默认） | 全部 app 被 hook；Switch 关闭仅影响 Toast/通知，**不**阻止 hook |
 
-## Phase 4B：独立启动验收（CrashLogger）
+## Phase 4B-δ：分布式 cache 验收（ADR-024）
 
-模块 **force-stop** 或 **从未打开 UI** 时，hook 仍须能写入崩溃日志。矩阵见 [phase4_crash_observability.md](../roadmap/active/phase4_crash_observability.md#4b-验收独立启动矩阵) 与 [crash-log-ipc.md](../../docs/architecture/crash-log-ipc.md#目标进程独立启动时的权限与通信)。
+写路径**不依赖**模块进程；读路径**须 root**。矩阵见 [crash-log-distributed-storage.md](../../docs/architecture/crash-log-distributed-storage.md#独立启动与-is-矩阵分布式) 与 [phase4 §4B-δ](../roadmap/active/phase4_crash_observability.md#4b-δ--分布式-cache-存储-编码-as-built)。
 
 | # | 要点 | 期望 |
 |---|------|------|
-| IS-1 | force-stop 模块 → 目标 app 崩溃 | JSONL 或 Provider 写入成功 |
-| IS-2 | 安装后未开 CrashCenter UI | 同上；默认 scope 仍 hook |
-| IS-5 | Provider 误配 signature permission（负例） | hook insert 失败 — 禁止此配置 |
+| IS-D1 | root；目标 app 崩溃 → 打开历史 | `{pkg}/cache/crash_logs/events.jsonl` 有新行；UI 可见 |
+| IS-D2 | **无** root | 历史/统计空态；不展示部分数据 |
+| IS-D3 | 模块 force-stop → 目标 app 崩溃 | adb root `cat` cache JSONL 仍含 stack |
+| IS-D4 | legacy canonical 升级 | `distributed_cache_migrated`；legacy 已清理 |
+| IS-D5 | Toolbar 清空 → 再崩溃 | 他包 cache 已删；仅新事件 |
+
+> 历史 IS-1~IS-6（Provider / canonical）已由 ADR-024 取代，见 [crash-log-ipc.md](../../docs/architecture/crash-log-ipc.md) 归档说明。
 
 ## logcat 关键字
 
@@ -71,6 +75,19 @@ adb logcat -s XposedBridge | grep -E "catch package|onCreate|XposedEntry"
 | `catch package: <pkg>` | 该包已被 hook |
 | `onCreate` | Application hook 已触发 |
 | `selfCheck:pkg: nota.android.crash.xp.app` | 模块自身 hook 成功 |
+
+## ANR 验收（L7）
+
+模板：[anr_logcat_l7_template.md](anr_logcat_l7_template.md)（[ADR-025](../../docs/decisions/025-anr-observation-no-framework-hook.md)）。
+
+```bash
+adb shell su -c 'logcat -b system -d -v threadtime -t 500' | grep -iE 'ANR in|am_anr|not responding'
+```
+
+| 日志 | 含义 |
+|------|------|
+| `ANR in <pkg>` | 系统 ANR 文本头 |
+| `am_anr` | events buffer 结构化事件（文本模式） |
 
 ## 单会话策略
 

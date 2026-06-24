@@ -4,7 +4,7 @@ type: progress
 status: active
 phase: N/A
 updated: 2026-06-24
-summary: "Phase 5 观测/拦截 as-built；配置单轨化，legacy 迁移已移除"
+summary: "ADR-024 分布式 cache 存储 as-built；Phase 5 监测/拦截"
 ---
 
 # 项目进度状态
@@ -15,19 +15,19 @@ summary: "Phase 5 观测/拦截 as-built；配置单轨化，legacy 迁移已移
 |---|------|
 | 活跃 Phase | [Phase 3](../roadmap/active/phase3_ui_redesign.md) 🔄（LSPosed 手动 smoke + 3E M3） |
 | 并行 Phase | [Phase 4](../roadmap/active/phase4_crash_observability.md) 🔄 **IS 矩阵待验**；[Phase 5](../roadmap/active/phase5_observe_intercept_split.md) 🔄 **5.1–5.3 as-built** |
-| 阻塞 | LSPosed 手动 smoke（observe + intercept）；4B IS-1~IS-6 / IS-R1~IS-R5 真机矩阵 |
+| 阻塞 | LSPosed 手动 smoke（observe + intercept）；4B IS-D1~IS-D5 真机矩阵 |
 | 验证基线 | `461QYGDD2226C` **2026-06-19**：consolidated smoke **PASS**；dark mode Meizu **PASS** |
-| 文档 | 2026-06-24 legacy 兼容移除 + prefs 单轨 as-built 同步 |
+| 文档 | 2026-06-24 ADR-024 as-built + 4F-ANR + logcat Paging3 |
 
 ### 已完成
 
 - Phase 1–2 归档；UI Shell（ADR-009）；Phase 3G 受管应用 + 干预规则（**2026-06-24 收敛为全量列表 + managed_packages**）
 - **4B-α**：`CrashLogCoordinator` 多后端并行；`CrashLogProvider`；retention 默认 500/8MB
-- **4B-β（部分）**：`RootSuBackend`、`RootFsBackend`、`RelayMergeBackend`（relay harvest + id dedupe）、`CrashLogIngestCoordinator`；`ingestedFrom` 字段
+- **4B-δ（as-built）**：[ADR-024](../../docs/decisions/024-distributed-cache-crash-storage.md) 分布式 `cache` 存储；`LocalCacheBackend` hook 写；`DistributedCrashLogRepository` root 聚合读；移除 Provider/canonical/ingest
 - **4C**：历史 Paging + `CrashDetailBottomSheet` + CodeEditor 双载体
 - **4D（部分）**：`CrashStatsFragment` + `StatsAggregator`；Toolbar 清空/retention；**`PerAppCrashActivity`** 统计 TOP 下钻
 - **4E（部分）**：SAF zip 导出 + 隐私提示；通知 Intent `crash_id`
-- **4F（部分）**：`LogcatFragment` SAF 导入；`scripts/adb-logcat-capture.sh`
+- **4F（部分）**：`LogcatFragment` SAF 导入；`scripts/adb-logcat-capture.sh`；root 多 buffer + **`LogcatParser.isAnrHint`（4F-ANR）**
 - **4G-MVP（部分）**：`RuleEngine` + `rules_v1.json` + 详情 lazy 分析卡片 + 单测
 - **4G-V2（部分）**：`CrashSignature` + `topCategories()` / `topClusters()` + 统计页双 TOP 区块；`CrashEvent.analysis` JSONL 持久化 defer
 - **5（部分）**：[ADR-023](../../docs/decisions/023-injection-observe-intercept-split.md)：`ScopeDecision` install/intercept 分离；`CrashHandler` 双模式；观测 `logSync`
@@ -35,7 +35,7 @@ summary: "Phase 5 观测/拦截 as-built；配置单轨化，legacy 迁移已移
 ### 待办
 
 - **5**：UI 文案 + 文档 as-built ✅；LSPosed observe+intercept smoke 待验
-- **4B**：IS 矩阵 → verification 报告 → ADR-017 accepted；Coordinator Phase 1 短窗（当前 RootSu 与 Phase 2 并行）
+- **4B**：IS-D1~IS-D5 真机矩阵（取代 IS-1~IS-6 canonical 路径）
 - **4B-γ**：`CanonicalJsonlStore` 统一读写锁；ADR-021 accepted
 - **4D+**：配置 tab「崩溃记录」入口；统计页时间范围 Chip
 - **4G**：`CrashEvent.analysis` schema、`AnalysisWorker` ingest 路径、规则 i18n
@@ -44,6 +44,51 @@ summary: "Phase 5 观测/拦截 as-built；配置单轨化，legacy 迁移已移
 ---
 
 ## Recent Sessions
+
+### 2026-06-24 — 文档 as-built 同步 + 提交
+
+- **架构**：`crash-log-backends.md` 4B-δ 全文；`crash-log-distributed-storage.md` 实施勾选；`code-editor-porting` 移除 CodeEditorAntlr
+- **验收**：`verification/README` IS-D1~IS-D5 取代 IS-1~IS-6
+- **roadmap**：phase4 4B-δ 文档项勾选
+- **验证**：`generate-docs-index.sh` + `check-docs-health.py` + `:app:assembleDebug` + `:app:testDebugUnitTest`
+
+### 2026-06-24 — ADR-024 分布式 cache 崩溃存储（编码）
+
+- **写**：`LocalCacheBackend` → 各 app `cache/crash_logs/events.jsonl`；`CrashLogCoordinator` 单后端
+- **读**：`DistributedCrashLogRepository` root 扫描聚合；无 root 返回空
+- **移除**：`CrashLogProvider`、`DirectFs`/`Relay`/`RootSu`/`RelayMerge`/`IngestCoordinator`
+- **迁移**：`CrashLogMigrationCoordinator` + `distributed_cache_migrated`
+- **验证**：`:app:assembleDebug` + `:app:testDebugUnitTest` OK；审查修复 retention/迁移/指纹/空态
+
+### 2026-06-24 — 4F-ANR UI 过滤 + ANR 规则补全
+
+- **编码**：`chipCrashOnly` + `PREF_LOGCAT_CRASH_FILTER_DEFAULT`；`loadFromRoot`/`loadFromText` 应用 `filterCrashRelated`；`Input dispatching timed out`；列表 `ANR ·` 前缀
+- **测试**：`LogcatViewModelTest` ANR + `crashOnly`；`LogcatParserTest` 更新
+- **验证**：`:app:testDebugUnitTest` + `:app:assembleDebug`
+
+### 2026-06-24 — 4F-ANR 实施（LogcatParser ANR_HINT）
+
+- **编码**：`LogcatParser.isAnrHint` / `filterCrashRelated`；`LogcatParserTest` ANR 用例
+- **文档**：`anr-observation` as-built；phase4 4F-ANR 勾选；`anr_logcat_l7_template.md`；`unified-root-service` minSdk 26
+- **验证**：`:app:testDebugUnitTest`（LogcatParserTest）；`:app:assembleDebug`
+
+### 2026-06-24 — ADR-025 评审后文档补齐
+
+- **新建**：[anr-observation.md](../../docs/architecture/anr-observation.md)（路径 A/B、INTERCEPT 表、旁路 schema）
+- **修订**：ADR-025 路径命名；`adb-logcat-analysis` `ANR_HINT`；`logcat-multi-source` → accepted；phase4 **4F-ANR** 任务；`crash-intelligent-analysis` RuleEngine 澄清
+- **验证**：`generate-docs-index.sh` + `check-docs-health.py`
+
+### 2026-06-24 — ADR-025：ANR 观测不走 Framework hook
+
+- **决策**：[ADR-025](../../docs/decisions/025-anr-observation-no-framework-hook.md) accepted；否决 `AnrHelper` / system_server ANR hook 与 Framework 抑制 ANR
+- **采纳路径**：logcat P2/P3（`system` / `events`）、可选 `ApplicationExitInfo`；`events.jsonl` 仍为 Java crash SSOT
+- **文档**：`framework-injection-feasibility` 用例 6、`crash-logging`、`logcat-multi-source`、`glossary`
+
+### 2026-06-24 — 监测/拦截术语与 CrashEvent.intercepted
+
+- **数据**：`CrashEvent.intercepted` 必填；缺字段 JSONL 行丢弃；列表始终显示监测/拦截角标
+- **UI**：历史/单应用列表角标「已拦截」「仅监测」；文案「监测」取代误用的「拦截」（统计/空态/tab）
+- **验证**：`:app:assembleDebug` + 相关单测
 
 ### 2026-06-24 — 移除 legacy 兼容 + 配置单轨化
 

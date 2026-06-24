@@ -39,7 +39,6 @@ android {
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation project(':CodeEditor')
-    implementation project(':CodeEditorAntlr')
     implementation project(':ui_common')
 
     implementation 'androidx.annotation:annotation:1.9.1'

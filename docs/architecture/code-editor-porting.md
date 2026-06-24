@@ -3,8 +3,8 @@ title: "CodeEditor 移植方案（日志浏览）"
 type: architecture
 status: accepted
 phase: 4
-updated: 2026-06-22
-summary: "参照 celestailruler CodeEditor 三模块，在 observe/detail 域替换 TextView 详情页并支撑 Phase 4 崩溃历史浏览"
+updated: 2026-06-24
+summary: "CodeEditor + CodeEditorClient vendored；CodeEditorAntlr 未纳入构建；日志浏览用 TextLanguage"
 ---
 
 # CodeEditor 移植方案（日志浏览）
@@ -17,7 +17,7 @@ summary: "参照 celestailruler CodeEditor 三模块，在 observe/detail 域替
 
 **推荐移植 celestailruler 的 `CodeEditor` + `CodeEditorClient` 两套 library 模块**，以 `BaseCodeEditorClient`（只读浏览模式）替换当前 `ActivityCrashInfo` 的 `TextView`，并在 Phase 4C **崩溃历史详情**复用同一组件浏览 `stackTrace` / 格式化 `CrashEvent` JSON。
 
-- **不必**为日志浏览引入 `CodeEditorAntlr`（Lua 语法）；默认 `TextLanguage` 即可覆盖 stack trace 与 JSONL 行。
+- **不必**为日志浏览引入 `CodeEditorAntlr`（Lua 语法）；`settings.gradle` 仅 vendored `:CodeEditor`、`:CodeEditorClient`、`:ui_common`（2026-06-24 移除 `lib/CodeEditorAntlr`）。默认 `TextLanguage` 即可覆盖 stack trace 与 JSONL 行。
 - **不必**使用 celestailruler 的 `CodeEditorClient` 子类（Lua 保存/运行）；那是脚本编辑场景。
 - celestailruler 已在 `CrashInfoActivity` 验证过**与 CrashCenter 同构**的崩溃详情场景。
 - **Hybrid dual-carrier**：壳内观测域用 `CrashDetailBottomSheet`（半屏 + Editor）；外部通知 / 深链仍用全屏 `ActivityCrashInfo` / `CrashLogDetailActivity`。两载体共用 `CrashLogViewerClient`。
@@ -31,16 +31,16 @@ summary: "参照 celestailruler CodeEditor 三模块，在 observe/detail 域替
 
 ```
 :CodeEditor          — 核心 View（CodeEditor / CodeTextField）、Document、TextLanguage
-:CodeEditorAntlr     — ANTLR 语法（Lua 等）；日志浏览可不依赖
 :CodeEditorClient    — UI 壳：contents_codeeditor 布局 + BaseCodeEditorClient
-:app                 — CrashInfoActivity / CodeEditorClient(Lua) 等业务集成
+:ui_common           — 共享 UI 组件
+:CodeEditorAntlr     — （未 vendored）ANTLR 语法（Lua 等）；日志浏览不依赖
 ```
 
 | 模块 | namespace | minSdk | 体量（约） | CrashCenter 是否需要 |
 |------|-----------|--------|------------|---------------------|
 | `CodeEditor` | `tiiehenry.code` | 21 | ~49 Java 文件 | ✅ |
 | `CodeEditorClient` | `tiiehenry.code.editor.client` | 21 | ~36 kt/java | ✅ |
-| `CodeEditorAntlr` | `tiiehenry.code.antlr` | 21 | ANTLR runtime | ❌ MVP 日志浏览 |
+| `CodeEditorAntlr` | `tiiehenry.code.antlr` | 21 | ANTLR runtime | ❌ 未纳入 CrashCenter 构建 |
 
 ### 核心类职责
 

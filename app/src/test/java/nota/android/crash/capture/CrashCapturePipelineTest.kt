@@ -233,6 +233,7 @@ class CrashCapturePipelineTest {
         assertEquals("java.lang.IllegalStateException", event.exceptionClass)
         assertEquals("illegal state", event.message)
         assertEquals("uncaught", event.source)
+        assertEquals(true, event.intercepted)
         assertNotNull(event.id)
         assertTrue(event.id.isNotEmpty())
         assertTrue(event.timestampMs > 0)
@@ -261,5 +262,51 @@ class CrashCapturePipelineTest {
 
         verify(mockCoordinator).logSync(eq<Application>(app), any<CrashEvent>())
         verify(mockCoordinator, never()).logAsync(any<Application>(), any<CrashEvent>())
+    }
+
+    @Test
+    fun `intercept mode sets intercepted true on event`() {
+        val events = mutableListOf<CrashEvent>()
+        Mockito.doAnswer { invocation ->
+            events.add(invocation.getArgument<CrashEvent>(1))
+            null
+        }.`when`(mockCoordinator).logAsync(eq<Application>(app), any<CrashEvent>())
+
+        CrashCapturePipeline.onException(
+            application = app,
+            packageName = "com.example.app",
+            appInfo = appInfo,
+            throwable = RuntimeException("intercept"),
+            source = "uncaught",
+            decision = decision,
+        )
+
+        assertEquals(true, events.single().intercepted)
+    }
+
+    @Test
+    fun `observe mode sets intercepted false on event`() {
+        val observeDecision = ScopeDecision(
+            shouldInstall = true,
+            shouldIntercept = false,
+            showNotify = false,
+            crashLogEnabled = true,
+        )
+        val events = mutableListOf<CrashEvent>()
+        Mockito.doAnswer { invocation ->
+            events.add(invocation.getArgument<CrashEvent>(1))
+            null
+        }.`when`(mockCoordinator).logSync(eq<Application>(app), any<CrashEvent>())
+
+        CrashCapturePipeline.onException(
+            application = app,
+            packageName = "com.example.app",
+            appInfo = appInfo,
+            throwable = RuntimeException("observe"),
+            source = "uncaught",
+            decision = observeDecision,
+        )
+
+        assertEquals(false, events.single().intercepted)
     }
 }

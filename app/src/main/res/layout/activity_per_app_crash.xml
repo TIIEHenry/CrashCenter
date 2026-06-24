@@ -101,7 +101,7 @@
                         android:layout_marginTop="@dimen/spacing_xs"
                         android:textColor="?android:attr/textColorSecondary"
                         android:textSize="13sp"
-                        tools:text="28 intercepts · last 10 min ago" />
+                        tools:text="28 monitored · last 10 min ago" />
 
                     <TextView
                         android:id="@+id/tvTopException"
@@ -159,14 +159,8 @@
             android:id="@+id/recyclerView"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:clipToPadding="false"
             android:paddingHorizontal="@dimen/spacing_md"
             android:visibility="gone"
-            app:fastScrollEnabled="true"
-            app:fastScrollHorizontalThumbDrawable="@drawable/fastscroll_thumb_horizontal"
-            app:fastScrollHorizontalTrackDrawable="@drawable/fastscroll_track_horizontal"
-            app:fastScrollVerticalThumbDrawable="@drawable/fastscroll_thumb_vertical"
-            app:fastScrollVerticalTrackDrawable="@drawable/fastscroll_track_vertical"
             tools:visibility="visible" />
 
         <include

@@ -29,8 +29,7 @@ rootProject.name = "CrashCenter"
 include ':app'
 
 def libRoot = file('lib')
-include ':CodeEditor', ':CodeEditorAntlr', ':CodeEditorClient', ':ui_common'
+include ':CodeEditor', ':CodeEditorClient', ':ui_common'
 project(':CodeEditor').projectDir = new File(libRoot, 'CodeEditor')
-project(':CodeEditorAntlr').projectDir = new File(libRoot, 'CodeEditorAntlr')
 project(':CodeEditorClient').projectDir = new File(libRoot, 'CodeEditorClient')
 project(':ui_common').projectDir = new File(libRoot, 'ui_common')

@@ -21,6 +21,7 @@ class CrashEventTest {
             message = "Something went wrong",
             stackTrace = "at com.example.Foo.bar(Foo.java:42)",
             source = "xposed",
+            intercepted = true,
             backendWritten = listOf("local", "remote"),
         )
 
@@ -37,6 +38,7 @@ class CrashEventTest {
         assertEquals(original.message, restored.message)
         assertEquals(original.stackTrace, restored.stackTrace)
         assertEquals(original.source, restored.source)
+        assertEquals(original.intercepted, restored.intercepted)
         assertEquals(original.backendWritten, restored.backendWritten)
     }
 
@@ -99,7 +101,7 @@ class CrashEventTest {
 
     @Test
     fun `fromJson returns null for empty id`() {
-        val json = """{"id":"","timestampMs":0,"packageName":"","exceptionClass":"","stackTrace":""}"""
+        val json = """{"id":"","timestampMs":0,"packageName":"","exceptionClass":"","stackTrace":"","intercepted":false}"""
         assertNull(CrashEvent.fromJson(json))
     }
 
@@ -118,7 +120,7 @@ class CrashEventTest {
 
     @Test
     fun `fromJson handles missing optional fields`() {
-        val json = """{"id":"evt-789","timestampMs":100,"packageName":"pkg","exceptionClass":"Ex","stackTrace":"trace"}"""
+        val json = """{"id":"evt-789","timestampMs":100,"packageName":"pkg","exceptionClass":"Ex","stackTrace":"trace","intercepted":false}"""
         val event = CrashEvent.fromJson(json)
 
         assertNotNull(event)
@@ -127,6 +129,7 @@ class CrashEventTest {
         assertEquals("pkg", event.packageName)
         assertEquals("Ex", event.exceptionClass)
         assertEquals("trace", event.stackTrace)
+        assertEquals(false, event.intercepted)
         assertNull(event.appLabel)
         assertNull(event.processName)
         assertNull(event.message)
@@ -136,7 +139,7 @@ class CrashEventTest {
 
     @Test
     fun `fromJson parses backendWritten array`() {
-        val json = """{"id":"evt","timestampMs":0,"packageName":"","exceptionClass":"","stackTrace":"","backendWritten":["a","b","c"]}"""
+        val json = """{"id":"evt","timestampMs":0,"packageName":"","exceptionClass":"","stackTrace":"","intercepted":false,"backendWritten":["a","b","c"]}"""
         val event = CrashEvent.fromJson(json)
 
         assertNotNull(event)
@@ -145,7 +148,7 @@ class CrashEventTest {
 
     @Test
     fun `fromJson ignores empty strings in backendWritten`() {
-        val json = """{"id":"evt","timestampMs":0,"packageName":"","exceptionClass":"","stackTrace":"","backendWritten":["a","","c"]}"""
+        val json = """{"id":"evt","timestampMs":0,"packageName":"","exceptionClass":"","stackTrace":"","intercepted":false,"backendWritten":["a","","c"]}"""
         val event = CrashEvent.fromJson(json)
 
         assertNotNull(event)
@@ -154,7 +157,7 @@ class CrashEventTest {
 
     @Test
     fun `fromJson handles empty backendWritten array`() {
-        val json = """{"id":"evt","timestampMs":0,"packageName":"","exceptionClass":"","stackTrace":"","backendWritten":[]}"""
+        val json = """{"id":"evt","timestampMs":0,"packageName":"","exceptionClass":"","stackTrace":"","intercepted":false,"backendWritten":[]}"""
         val event = CrashEvent.fromJson(json)
 
         assertNotNull(event)
@@ -163,7 +166,7 @@ class CrashEventTest {
 
     @Test
     fun `fromJson handles missing backendWritten`() {
-        val json = """{"id":"evt","timestampMs":0,"packageName":"","exceptionClass":"","stackTrace":""}"""
+        val json = """{"id":"evt","timestampMs":0,"packageName":"","exceptionClass":"","stackTrace":"","intercepted":false}"""
         val event = CrashEvent.fromJson(json)
 
         assertNotNull(event)
@@ -220,6 +223,47 @@ class CrashEventTest {
         assertEquals(listOf("a", "b"), updated.backendWritten)
         // Original should be unchanged
         assertTrue(original.backendWritten.isEmpty())
+    }
+
+    @Test
+    fun `fromJson parses intercepted boolean`() {
+        val json = """{"id":"evt","timestampMs":0,"packageName":"","exceptionClass":"","stackTrace":"","intercepted":false}"""
+        val event = CrashEvent.fromJson(json)
+
+        assertNotNull(event)
+        assertEquals(false, event!!.intercepted)
+    }
+
+    @Test
+    fun `toJsonLine always includes intercepted`() {
+        val event = CrashEvent(
+            id = "evt",
+            timestampMs = 0L,
+            packageName = "pkg",
+            appLabel = null,
+            processName = null,
+            exceptionClass = "Ex",
+            message = null,
+            stackTrace = "trace",
+            source = null,
+            intercepted = true,
+        )
+        val json = event.toJsonLine()
+        assertTrue(json.contains("\"intercepted\":true"))
+    }
+
+    @Test
+    fun `toJsonLine includes intercepted false`() {
+        val event = CrashEvent(
+            id = "evt",
+            timestampMs = 0L,
+            packageName = "pkg",
+            exceptionClass = "Ex",
+            stackTrace = "trace",
+            intercepted = false,
+        )
+        val json = event.toJsonLine()
+        assertTrue(json.contains("\"intercepted\":false"))
     }
 
     @Test
@@ -283,12 +327,19 @@ class CrashEventTest {
     }
 
     @Test
-    fun `fromJson uses defaults for missing required fields`() {
+    fun `fromJson uses defaults for missing required fields except intercepted`() {
         val json = """{"id":"evt"}"""
+        assertNull(CrashEvent.fromJson(json))
+    }
+
+    @Test
+    fun `fromJson accepts event with only id and intercepted`() {
+        val json = """{"id":"evt","intercepted":true}"""
         val event = CrashEvent.fromJson(json)
 
         assertNotNull(event)
         assertEquals("evt", event!!.id)
+        assertEquals(true, event.intercepted)
         assertEquals(0L, event.timestampMs)
         assertEquals("", event.packageName)
         assertEquals("Unknown", event.exceptionClass)

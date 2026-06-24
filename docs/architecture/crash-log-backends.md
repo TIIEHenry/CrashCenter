@@ -3,438 +3,162 @@ title: "崩溃日志多后端存储"
 type: architecture
 status: accepted
 phase: 4
-updated: 2026-06-23
-summary: "CrashLogBackend 抽象、4B-α Phase 2 并行 + 4B-β RelayMerge ingest as-built；canonical JSONL 为 SSOT"
+updated: 2026-06-24
+summary: "ADR-024：hook LocalCacheBackend 写 + 模块 RootFs 聚合读；历史多后端见归档章节"
 ---
 
 # 崩溃日志多后端存储
 
-> 适用模块：`:app`（4B-α：`CrashLogCoordinator`、`CrashLogBackendRegistry`、Phase 2 backends、`CrashLogProvider`）
-> 机制对比与 FAQ 见 [crash-log-ipc.md](crash-log-ipc.md)
-> 存储决策见 [ADR-007](../decisions/007-crash-log-cross-process-storage.md)、[ADR-008](../decisions/008-multi-backend-crash-log-storage.md)
-> Root 实现参考：[unified-root-service.md](unified-root-service.md)（单 RootService + Broker，`proposed`）；上游模式 [root-service-patterns.md](../reference/root-service-patterns.md)
+> 适用模块：`:app`（hook `CrashLogCoordinator` + `LocalCacheBackend`；模块 `DistributedCrashLogRepository` + `RootFsBackend`）
+> **4B-δ as-built**：[ADR-024](../decisions/024-distributed-cache-crash-storage.md)、[crash-log-distributed-storage.md](crash-log-distributed-storage.md)
+> 机制对比与 FAQ 见 [crash-log-ipc.md](crash-log-ipc.md)（Provider 章节已过时，仅历史参考）
 
-## 概述
+## 概述（4B-δ）
 
-在 Xposed 用户通常已具备 root（Magisk / KernelSU + LSPosed）的前提下，将 Phase 4 崩溃持久化从 ADR-007 的 **串行 A→B 主备**，演进为：
+ADR-024 将 hook 侧多后端并行（Provider / DirectFs / relay / RootSu）收敛为 **单一写后端**：
 
-1. **多后端抽象** — 每种 IPC / 特权路径实现统一 `CrashLogBackend`
-2. **hook 侧并行写入** — root 短窗优先，失败后多 IPC 并行
-3. **模块侧 root ingest** — 管理器用 root 读取各 app 私有 relay，合并进 canonical 存储并供 UI 管理
-
-**4B-α 范围**：hook 侧 Phase 2 三后端并行。
-
-**4B-β 范围（2026-06-23 部分 as-built）**：`RootSuBackend`、`RootFsBackend`、`RelayMergeBackend` + `CrashLogIngestCoordinator`（模块启动 harvest）；ingest 按 `event.id` dedupe（ADR-017 proposed）。
+1. **写** — `LocalCacheBackend` 追加至目标 app `{cache}/crash_logs/events.jsonl`（同 UID，**无需 root**）
+2. **读** — `DistributedCrashLogRepository` root 扫描各 app cache JSONL 聚合（**须 root**；无 root 返回空）
+3. **删改** — `RootCrashLogMutation` + `RootFsBackend`（模块侧 root 删改各 app cache 文件）
 
 **不变量**（与 [crash-logging.md](crash-logging.md) 一致）：
 
-- 观测层不改变干预层语义：异步、失败 **silent**、不阻塞 [CrashHandler](crash-handler.md)、不 `System.exit`
-- **Canonical SSOT**：`/data/data/nota.android.crash.xp.app/files/crash_logs/events.jsonl`
+- 观测层不改变干预层语义：异步 / 同步写、失败 **silent**、不阻塞 [CrashHandler](crash-handler.md)
+- **分布式 SSOT**：每条崩溃归属发生进程所在 app 的 `cache/crash_logs/events.jsonl`
 - 配置开关走 [XSharedPreferences](../decisions/003-xsharedpreferences-cross-process.md) 只读；**事件体不走 prefs**
 
-## As-built 4B-α（2026-06-19）
+---
 
-### 写入时序（已实现）
+## As-built 4B-δ（2026-06-24）
 
-4B-α **跳过 Phase 1**（`RootSuBackend` 未注册）。`CrashLogCoordinator.logAsync` 在单线程 executor 上构建 `CrashEvent` 后直接 `runPhase2Parallel`：
+### 写入时序
 
 ```mermaid
 sequenceDiagram
     participant Pipe as CrashCapturePipeline
     participant H as CrashLogCoordinator
-    participant P as ProviderBackend
-    participant D as DirectFsBackend
-    participant T as TargetRelayBackend
-    participant C as canonical JSONL
+    participant L as LocalCacheBackend
+    participant F as per-app cache JSONL
 
-    Pipe->>H: logAsync(ctx, pkg, t, source)
-    H->>H: CrashEventBuilder.build
-    par Phase 2 parallel (≤2s)
-        H->>P: append
-        P->>C: ContentResolver.insert → Provider
-        H->>D: append
-        D->>C: createPackageContext → CanonicalJsonlWriter
-        H->>T: append
-        T->>T: files/crashcenter_relay/{id}.json
-    end
-    Note over H: 各 backend 独立 Thread；CountDownLatch 等待；全失败 silent
+    Pipe->>H: logAsync / logSync(ctx, event)
+  Note over H: crash_log_enabled + local_cache pref
+    H->>L: append(ctx, event, deadlineMs)
+    L->>F: CrashLogJsonlStore.append
+    Note over L: 失败 silent；不阻塞干预层
 ```
 
-| 常量 | 值 | 源码 |
-|------|-----|------|
-| `PARALLEL_TIMEOUT_MS` | 2000 | `CrashLogCoordinator` |
-| `crashExecutor` | 单线程 | `Executors.newSingleThreadExecutor()` |
-| Phase 1 | **未实现** | defer 4B-β |
+| 模式 | 方法 | 超时 | 场景 |
+|------|------|------|------|
+| 拦截 | `logAsync` | 2000ms | 进程续命，后台 IO |
+| 观测 | `logSync` | 500ms | 进程退出前须落盘（[ADR-023](../decisions/023-injection-observe-intercept-split.md)） |
 
-### CrashLogBackend 接口（as-built）
+### CrashLogBackend 接口（保留）
 
 ```kotlin
 interface CrashLogBackend {
     val id: BackendId
-    val tier: Int
-    val runsOn: ProcessSlot
-    fun probe(context: Context): BackendAvailability
     fun append(context: Context, event: CrashEvent, deadlineMs: Long): AppendResult
 }
 ```
 
-- **同步** `append`（非 `suspend`）；实现须内部 `catch`，不向外抛
-- `AppendResult`：`Success` | `Failure(reason)`
-- 成功时 stamp `event.withBackendWritten(listOf(id.wireName))` 再写入
+hook 侧仅注册 **`LocalCacheBackend`**（`BackendId.LOCAL_CACHE`）。`CrashLogBackendRegistry` 保留抽象供测试与模块侧 `RootFsBackend` 复用。
 
-### CrashLogBackendRegistry（hook Phase 2）
+### 注册表（当前）
 
-| BackendId | tier | 类 | 默认启用 pref |
-|-----------|------|-----|---------------|
-| `provider_insert` | 1 | `ProviderBackend` | `crash_log_backend_provider` |
-| `direct_fs` | 2 | `DirectFsBackend` | `crash_log_backend_direct_fs` |
-| `target_relay` | 3 | `TargetRelayBackend` | `crash_log_backend_relay` |
+| BackendId | 进程 | 类 | 职责 |
+|-----------|------|-----|------|
+| `local_cache` | HOOK | `LocalCacheBackend` | 写本 app `CrashLogPaths.eventsFile(ctx)` |
+| `root_fsm` | MODULE | `RootFsBackend` | root 扫描 / 删改各 app cache JSONL |
 
-`enabledHookPhase2Backends(context)` 读 `XSharedPreferences` 过滤；`crash_log_enabled == false` 时 Coordinator 短路。
+**已移除**：`provider_insert`、`direct_fs`、`target_relay`、`root_su`、`relay_merge`、`CrashLogProvider`、`CrashLogIngestCoordinator`。
 
-### 路径与 CrashLogContract
+### 路径
 
-| 目标 | 路径 | 写入方 |
-|------|------|--------|
-| Canonical JSONL | `/data/data/nota.android.crash.xp.app/files/crash_logs/events.jsonl` | `DirectFsBackend`、`CrashLogProvider` |
-| Target relay | `/data/user/0/{packageName}/files/crashcenter_relay/{eventId}.json` | `TargetRelayBackend` |
+| 角色 | 路径 |
+|------|------|
+| 分布式 SSOT | `/data/user/{userId}/{packageName}/cache/crash_logs/events.jsonl` |
+| 路径 API | `CrashLogPaths.eventsFile(context)` |
+| 单文件 I/O | `CrashLogJsonlStore`（retention 500 条 / 8 MB） |
+| Legacy relay（仅迁移） | `files/crashcenter_relay/{id}.json` |
 
-```kotlin
-object CrashLogContract {
-    const val AUTHORITY = "nota.android.crash.xp.app.crashlog"
-    const val PATH_EVENTS = "events"
-    const val COLUMN_PAYLOAD = "payload"
-    const val COLUMN_PACKAGE_NAME = "package_name"
-    val EVENTS_URI = Uri.parse("content://$AUTHORITY/$PATH_EVENTS")
-}
+### 模块读路径
+
+```
+DistributedCrashLogRepository
+  └── CrashLogCacheScanner（root 遍历 userId × packageName）
+        └── 按 CrashEvent.id 去重（保留 timestampMs 较大者）
+              └── CrashHistoryFragment / StatsAggregator / PerAppCrashActivity
 ```
 
-Provider IPC 细节见 [crash-log-ipc.md § As-built](crash-log-ipc.md#as-builtcrashlogprovider4b-α)。
-
-### CanonicalJsonlWriter
-
-模块与 hook 直写路径共用：
-
-- `RandomAccessFile` + `FileLock` append
-- Retention：**500 条或 8 MB 先到者**（`MAX_ENTRIES` / `MAX_BYTES`）；删最旧行
-- 调用点：`DirectFsBackend`、`CrashLogProvider.insert`
+`CrashLogMigrationCoordinator`：一次性将 legacy canonical + relay 迁入各 app cache（pref `distributed_cache_migrated`）。
 
 ### backendWritten 字段
 
-JSONL 每行含 `backendWritten: ["provider_insert", ...]`，记录该次 append 成功的 backend wire name。多后端并行时各 backend 独立 stamp；relay ingest 经 `RelayMergeBackend` 按 `id` dedupe 后合并为一行（`ingestedFrom` 标注来源）。
+JSONL 每行含 `backendWritten: ["local_cache"]`。`ingestedFrom` **已移除**（无 relay ingest）。
 
-### As-built 4B-β（2026-06-23，部分）
+### 配置项
 
-| 组件 | 状态 |
-|------|------|
-| `RootSuBackend`（hook） | ✅ 与 Phase 2 **并行**注册（非原 Phase 1 短窗串行） |
-| `RootFsBackend`（模块） | ✅ `RootAccessClient` + libsu |
-| `RelayMergeBackend`（模块） | ✅ root 扫描 `crashcenter_relay/` → canonical append；`id` dedupe；删已 ingest relay |
-| `CrashLogIngestCoordinator` | ✅ `Application.onCreate` 委托 `RelayMergeBackend.harvest()` |
-| `ingestedFrom` 字段 | ✅ relay merge 路径写入（如 `target_relay`） |
-| IS-R1~IS-R5 真机矩阵 | 待 `dev/verification/` |
+| Key | 默认 | 含义 |
+|-----|------|------|
+| `crash_log_enabled` | true | 总开关 |
+| `crash_log_backend_local_cache` | true | hook 写本 app cache |
+| `crash_log_max_entries` | 500 | retention 条数（per-app 文件） |
 
----
+旧版 `crash_log_backend_provider` / `direct_fs` / `relay` / `ingest_on_start` 等 pref **不再读取**。
 
-## 进程模型
+### 验收矩阵（IS-D）
 
-```
-┌────────────────── 目标 app 进程 (hook, 目标 UID) ──────────────────┐
-│  CrashLogCoordinator.logAsync(event)                                │
-│    Phase 1: RootSuBackend (tier 0, ≤1.5s)                           │
-│    Phase 2: ProviderBackend ∥ DirectFsBackend ∥ TargetRelayBackend│
-└───────────────────────────────┬─────────────────────────────────────┘
-                                │ 各后端写入不同位置
-                                ▼
-┌────────────────── 模块 app 进程 (nota.android.crash.xp.app) ──────────┐
-│  CrashLogIngestCoordinator（模块启动 / Provider 回调 / 定时）         │
-│    RootFsBackend (tier 0) — libsu RootService，参考 AppSnapShotor   │
-│    RelayMergeBackend — 扫描 */files/crashcenter_relay/               │
-│    LocalFsBackend — 同 UID 读/写 canonical JSONL                    │
-│  CrashHistory UI — 列表 / 详情 / 清空 / retention / 导出             │
-└────────────────────────────────────────────────────────────────────┘
-```
+取代 IS-1~IS-6 / IS-R* 中与 Provider / canonical 相关的期望。详见 [crash-log-distributed-storage.md §IS 矩阵](crash-log-distributed-storage.md#独立启动与-is-矩阵分布式) 与 `dev/verification/`。
 
-| 角色 | 进程 | 职责 |
-|------|------|------|
-| **写入协调** | 目标 app（hook） | 崩溃后多后端 append / relay |
-| **ingest 协调** | 模块 app | root 读各 app 私有 relay → merge canonical |
-| **管理 UI** | 模块 app | 读 canonical；清空 / 统计 / 导出 |
-
-**关键区分**：root 有两条腿，不可混用：
-
-| 后端 | 进程 | 机制 |
-|------|------|------|
-| `RootSuBackend` | hook | `su -c` append canonical（轻量，不 bind RootService） |
-| `RootFsBackend` | 模块 | libsu `RootService` + `FileSystemManager`（AppSnapShotor 模式） |
-
-hook 进程 **不得** 依赖 libsu AAR；模块进程 **不得** 假设 hook 侧 root 一定成功。
-
----
-
-## CrashLogBackend 抽象
-
-### 接口契约
-
-```kotlin
-interface CrashLogBackend {
-    val id: BackendId
-    val tier: Int              // 0 = 最高优先级（root）
-    val runsOn: ProcessSlot    // HOOK | MODULE
-
-    /** 廉价探测；崩溃路径避免阻塞 IO */
-    fun probe(): BackendAvailability
-
-    /** 单次 append；内部 catch，不向外抛（4B-α：同步，非 suspend） */
-    fun append(context: Context, event: CrashEvent, deadlineMs: Long): AppendResult
-}
-
-enum class BackendAvailability { READY, MAYBE, UNAVAILABLE }
-
-enum class ProcessSlot { HOOK, MODULE }
-```
-
-### 注册表
-
-| BackendId | tier | 进程 | 说明 |
-|-----------|------|------|------|
-| `root_su` | 0 | HOOK | `su` append canonical JSONL — ✅ 4B-β（与 Phase 2 并行） |
-| `provider_insert` | 1 | HOOK | `ContentResolver.insert` → [CrashLogProvider](crash-log-ipc.md) |
-| `direct_fs` | 2 | HOOK | `createPackageContext(module).filesDir` 直写 |
-| `target_relay` | 3 | HOOK | 写目标 app 私有 relay（同 UID，几乎必成功） |
-| `root_fsm` | 0 | MODULE | libsu RootService 读写 — ✅ 4B-β |
-| `local_fs` | 1 | MODULE | 同 UID canonical 读写（`FileCrashLogRepository` 读路径 ✅） |
-| `relay_merge` | 2 | MODULE | 扫描 relay 目录 merge + dedupe — ✅ 4B-β |
-| `logcat` | 9 | HOOK | 调试，不参与 success 判定；分析见 [adb-logcat-analysis.md](adb-logcat-analysis.md) |
-
----
-
-## hook 侧：CrashLogCoordinator（目标 vs as-built）
-
-### 写入时序（4B-β 目标）
-
-```mermaid
-sequenceDiagram
-    participant H as CrashLogCoordinator
-    participant R as RootSuBackend
-    participant P as ProviderBackend
-    participant D as DirectFsBackend
-    participant T as TargetRelayBackend
-    participant C as canonical JSONL
-
-    H->>R: Phase 1 append (≤ ROOT_FIRST_TIMEOUT)
-    alt root OK
-        R->>C: su append
-        H-->>H: done (可选仍写 relay，见 pref)
-    else root fail / timeout
-        par Phase 2 parallel
-            H->>P: append
-            H->>D: append
-            H->>T: append relay
-        end
-        Note over H: 记录 metrics；silent if all fail
-    end
-```
-
-### 参数默认值
-
-| 常量 | 默认 | 4B-α 状态 |
-|------|------|-----------|
-| `ROOT_FIRST_TIMEOUT_MS` | 1500 | defer 4B-β |
-| `PARALLEL_TIMEOUT_MS` | 2000 | ✅ 已实现 |
-| `crashExecutor` | 单线程 | ✅ 已实现 |
-
-### 调用位置（as-built）
-
-- `CrashCapturePipeline.onException` → `CrashLogCoordinator.logAsync`（**与 `showNotify` 解耦**）
-- **不得**放入 `try { Toast... } catch { System.exit(0) }` 块
-- `crash_log_enabled == false` 时短路返回
-
----
-
-## 各写入后端
-
-### Tier 0 — RootSuBackend（hook，defer 4B-β）
-
-```bash
-# 禁止 JSON 直接拼接 shell；使用 base64 或 su 写 temp 再 append
-su -c 'base64 -d >> /data/data/nota.android.crash.xp.app/files/crash_logs/events.jsonl'
-```
-
-| 项 | 说明 |
-|----|------|
-| `probe()` | 缓存 `SuProbe` 结果（TTL 5min）；Magisk DenyList 失败 → `UNAVAILABLE` |
-| 权限 | 设备 root；**目标 app 进程**须未被 DenyList |
-| 失败 | 进入 Phase 2，silent |
-
-### Tier 1 — ProviderBackend
-
-与 [crash-log-ipc.md § Fallback B](crash-log-ipc.md#b-contentprovider-insertfallback) 一致：
-
-- `exported="true"`，**无** signature `android:permission`
-- Provider 内 `callingUid` ↔ `packageName` 校验
-
-### Tier 2 — DirectFsBackend
-
-与 ADR-007 Primary A 一致：`createPackageContext(MODULE_PKG, CONTEXT_IGNORE_SECURITY).getFilesDir()`。
-
-### Tier 3 — TargetRelayBackend
-
-写入目标 app **同 UID** 私有目录（绕过跨包 SELinux）：
-
-```
-/data/user/0/{packageName}/files/crashcenter_relay/{eventId}.json
-```
-
-| 项 | 说明 |
-|----|------|
-| 可靠性 | 同 UID 写，**几乎总成功** |
-| 用途 | Phase 2 并行兜底；canonical 全失败时仍留副本 |
-| ingest | 模块侧 root 读回 merge（见下节） |
-
----
-
-## 模块侧：CrashLogIngestCoordinator（as-built 4B-β）
-
-> **2026-06-23**：`CrashLogIngestCoordinator` 在 `CrashCenterApplication.onCreate` 调度 IO 协程；root 可用且 `crash_log_enabled` + `relay_merge` pref 开启时，委托 **`RelayMergeBackend.harvest()`**。扫描、dedupe、append、删 relay 逻辑在 `RelayMergeBackend`；Coordinator 为薄调度层。
-
-**管理器用 root 读取各 app 私有 relay，合并进 canonical，并供 UI 管理。**
-
-| 步骤 | 后端 | 说明 |
-|------|------|------|
-| 1 | `RootFsBackend` | root 扫描 `/data/user/*/*/files/crashcenter_relay/` |
-| 2 | `RelayMergeBackend` | 按 `event.id` dedupe → append canonical |
-| 3 | `LocalFsBackend` | UI 读 canonical；retention 轮转 |
-| 4 | 清理 | 删除已 ingest 的 relay 文件（或标记 `.ingested`） |
-
-### 触发时机
-
-| 触发 | 说明 |
-|------|------|
-| 模块 `Application.onCreate` | 用户打开管理器 |
-| `CrashLogProvider.insert` 回调 | hook 走 Provider 时可顺带 schedule ingest |
-| 可选 `WorkManager` | 周期性 harvest（须 root 仍可用） |
-
-### RootFsBackend（经统一 Root 层）
-
-模块进程内经 [unified-root-service.md](unified-root-service.md) 的 `RootAccessClient`：
-
-1. `AppShell.initMainShell` — libsu，`FLAG_MOUNT_MASTER`，`su`
-2. `Shell.getShell().isRoot` → 单次 `CrashCenterRootService` bind → `RootBroker` → `FileSystemModule`
-3. `list` / `openRead` / `delete` relay；**不**再独立 `FileSystemManagerRootService` 类
-
-**不复制** AppSnapShotor 的 PM / tar / SSAID 栈；Broker 仅 FS + probe（prefs 读可走同一 FSM）。
-
-路径常量参考 AppSnapShotor `PathHelper`：
-
-- USER：`/data/user/{userId}/{packageName}`
-- relay：`{USER}/files/crashcenter_relay/`
-
-### 读 canonical 是否需 root
-
-| 操作 | 需 root |
-|------|---------|
-| UI 读 `events.jsonl` | **否**（模块同 UID） |
-| 读其他 app 私有 relay | **是** |
-| hook 已写入 canonical | ingest 可跳过 relay 扫描 |
-
----
-
-## 数据模型扩展
-
-在 [crash-logging.md § CrashEvent](crash-logging.md#数据模型) 基础上增加：
-
-```json
-{
-  "id": "550e8400-e29b-41d4-a716-446655440000",
-  "backendWritten": ["root_su"],
-  "ingestedFrom": "target_relay"
-}
-```
-
-### 去重规则
-
-| 场景 | 规则 |
-|------|------|
-| 多后端并行写 canonical | 写侧：root 成功可跳过 Phase 2（pref `crash_log_parallel_after_root`） |
-| relay + canonical 重复 | 读侧 merge 按 `id` dedupe；同 id 取 `tier` 更高 backend |
-| meta.json | `pendingRelayCount`、`lastIngestMs` |
-
----
-
-## 配置项（prefs / XSharedPreferences 只读）
-
-| Key | 类型 | 默认 | 含义 |
-|-----|------|------|------|
-| `crash_log_enabled` | boolean | true | 总开关 |
-| `crash_log_backend_root_su` | boolean | true | hook 侧 root su |
-| `crash_log_backend_provider` | boolean | true | Provider |
-| `crash_log_backend_direct_fs` | boolean | true | 直写 module filesDir |
-| `crash_log_backend_relay` | boolean | true | target relay |
-| `crash_log_relay_always` | boolean | false | root 成功仍写 relay（双保险） |
-| `crash_log_ingest_on_start` | boolean | true | 模块启动时 root ingest |
-| `crash_log_max_entries` | int | 500 | retention 条数上限 |
-
----
-
-## 模块拆分（实施参考）
-
-```
-:app                 UI、Application、ingest 调度
-:crash-log-api       CrashEvent、CrashLogBackend、BackendId（纯接口）
-:crash-log-root      RootFsBackend、AppShell、RootService（可选，仅模块依赖 libsu）
-```
-
-hook 侧 backend 实现留在 `:app` 或独立 `:crash-log-hook` 源集，**不 link libsu**。
-
----
-
-## 与 ADR-007 关系
-
-| ADR-007 | 本方案 |
-|---------|--------|
-| canonical JSONL + Provider | **保留** |
-| 串行 A→B | 升级为 **Coordinator + 多后端** |
-| 未含 root | **Tier 0 root 优先** + 模块 ingest |
-| 未含 relay | **Tier 3 兜底** + root harvest |
-
-ADR-007 **不废止**；见 [ADR-008](../decisions/008-multi-backend-crash-log-storage.md)。
-
----
-
-## 验收矩阵（扩展）
-
-在 [phase4_crash_observability.md § 4B](../../dev/roadmap/active/phase4_crash_observability.md) 基础上增加：
-
-| # | 场景 | 期望 |
+| # | 要点 | 期望 |
 |---|------|------|
-| IS-R1 | root + 非 DenyList 目标 | Phase1 `root_su` 写 canonical |
-| IS-R2 | DenyList 目标 app | Phase1 失败 → Provider / relay 成功 |
-| IS-R3 | 仅 relay 成功 | 打开模块 → root ingest → UI 可见 |
-| IS-R4 | 全 hook 后端失败 | silent；干预层续命 |
-| IS-R5 | 模块无 root | canonical / Provider 路径仍可用；ingest 跳过 |
+| IS-D1 | root + 目标 app 崩溃 | cache JSONL 有新行；历史 UI 可见 |
+| IS-D2 | 无 root | 历史/统计空态；不展示部分数据 |
+| IS-D3 | 模块 force-stop | 写不依赖模块进程；adb root `cat` cache 可见 |
+| IS-D4 | legacy 升级 | `distributed_cache_migrated`；legacy 已清理 |
+| IS-D5 | Toolbar 清空 | 他包 cache 已删；新崩溃可再写入 |
 
 ---
 
-## 风险与缓解
+## 历史架构（4B-α/β，已由 ADR-024 取代）
 
-| 风险 | 缓解 |
-|------|------|
-| su 拖慢崩溃路径 | Phase1 短超时；单线程 executor |
-| 重复记录 | `event.id` dedupe |
-| hook 误链 libsu | root_su 仅用 `ProcessBuilder("su")` 或极薄封装 |
-| Provider 伪造 | UID ↔ packageName 校验（不变） |
-| relay 磁盘碎片 | ingest 后 delete；retention 硬顶 |
-| 无 root 用户 | Provider + relay 仍写；UI 读 canonical；ingest 降级 |
+<details>
+<summary>canonical + Provider + relay + ingest 多后端模型（归档参考）</summary>
+
+### 写入时序（4B-α，2026-06-19）
+
+`CrashLogCoordinator.logAsync` 在单线程 executor 上 `runPhase2Parallel`：
+
+| BackendId | tier | 类 |
+|-----------|------|-----|
+| `provider_insert` | 1 | `ProviderBackend` → `CrashLogProvider` |
+| `direct_fs` | 2 | `DirectFsBackend` → 模块 `filesDir` |
+| `target_relay` | 3 | `TargetRelayBackend` → `crashcenter_relay/` |
+
+Canonical SSOT：`/data/data/nota.android.crash.xp.app/files/crash_logs/events.jsonl`。
+
+### 4B-β 扩展（2026-06-23，已移除）
+
+| 组件 | 原职责 |
+|------|--------|
+| `RootSuBackend` | hook `su` append canonical |
+| `RelayMergeBackend` | root 扫描 relay → canonical merge |
+| `CrashLogIngestCoordinator` | `Application.onCreate` harvest |
+| `FileCrashLogRepository` | 读 canonical 单文件 |
+
+决策与迁移理由见 [ADR-024](../decisions/024-distributed-cache-crash-storage.md)。IPC 细节见 [crash-log-ipc.md](crash-log-ipc.md)（历史）。
+
+</details>
 
 ---
 
 ## 相关文档
 
+- [crash-log-distributed-storage.md](crash-log-distributed-storage.md) — 4B-δ 路径、扫描、迁移
 - [crash-logging.md](crash-logging.md) — 观测层总方案、CrashEvent 模型
-- [crash-log-ipc.md](crash-log-ipc.md) — IPC 机制对比与 FAQ
-- [ADR-007](../decisions/007-crash-log-cross-process-storage.md) — 初版跨进程存储
-- [ADR-008](../decisions/008-multi-backend-crash-log-storage.md) — 多后端并行决策
-- [framework-injection-feasibility.md](framework-injection-feasibility.md) — 不采用 framework 代写
+- [ADR-024](../decisions/024-distributed-cache-crash-storage.md) — 存储架构决策
+- [ADR-008](../decisions/008-multi-backend-crash-log-storage.md) — 多后端并行（partially superseded）
+- [unified-root-service.md](unified-root-service.md) — 模块侧 `RootAccessClient`
+- [crash-log-ipc.md](crash-log-ipc.md) — IPC FAQ（Provider 历史）
 - [phase4_crash_observability.md](../../dev/roadmap/active/phase4_crash_observability.md) — 实施任务
 - [glossary.md](../glossary.md) — CrashLogBackend、CrashLogCoordinator 等术语

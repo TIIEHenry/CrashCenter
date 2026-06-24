@@ -11,6 +11,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import kotlinx.coroutines.launch
 
+import nota.android.crash.root.RootAvailability
 import nota.android.crash.xp.PrefManager
 import nota.android.crash.xp.XposedManagerLauncher
 import nota.android.crash.xp.app.ModuleActivation
@@ -29,6 +30,7 @@ class MainShellActivity : AppCompatActivity() {
     }
     private lateinit var navigator: ShellNavigator
     private lateinit var tabController: ShellTabController
+    private var rootPermissionDialogVisible = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -67,6 +69,7 @@ class MainShellActivity : AppCompatActivity() {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 shellViewModel.uiState.collect { state ->
                     updateXposedStatusBanner(state)
+                    maybeShowRootPermissionDialog(state.rootAvailability)
                 }
             }
         }
@@ -82,12 +85,14 @@ class MainShellActivity : AppCompatActivity() {
         super.onResume()
         tabController.onResume()
         shellViewModel.refreshRootStatus(applicationContext, ServiceLocator.rootAccessClient(applicationContext))
-        showRootPermissionDialogIfNeeded()
     }
 
-    private fun showRootPermissionDialogIfNeeded() {
+    private fun maybeShowRootPermissionDialog(rootAvailability: RootAvailability?) {
+        if (rootAvailability == null || rootAvailability == RootAvailability.AVAILABLE) return
         val prefs = ServiceLocator.prefs(applicationContext)
         if (prefs.getBoolean(PrefManager.PREF_ROOT_DIALOG_DISMISSED, false)) return
+        if (rootPermissionDialogVisible) return
+        rootPermissionDialogVisible = true
         MaterialAlertDialogBuilder(this)
             .setTitle(R.string.root_permission_title)
             .setMessage(R.string.root_permission_message)
@@ -95,6 +100,7 @@ class MainShellActivity : AppCompatActivity() {
                 prefs.edit { putBoolean(PrefManager.PREF_ROOT_DIALOG_DISMISSED, true) }
             }
             .setPositiveButton(android.R.string.ok, null)
+            .setOnDismissListener { rootPermissionDialogVisible = false }
             .show()
     }
 
@@ -104,12 +110,18 @@ class MainShellActivity : AppCompatActivity() {
 
     private fun setupStatusBanner() {
         StatusBanner.setOnClickListener(binding.statusBanner.root) {
-            if (!XposedManagerLauncher.open(this)) {
-                MaterialAlertDialogBuilder(this)
+            if (XposedManagerLauncher.open(this)) return@setOnClickListener
+            val dialog = MaterialAlertDialogBuilder(this)
+            if (isModuleActive()) {
+                dialog
+                    .setTitle(R.string.xposed_manager_open_failed_title)
+                    .setMessage(R.string.xposed_manager_open_failed_message)
+            } else {
+                dialog
                     .setTitle(R.string.xposed_not_active)
                     .setMessage(R.string.xposed_hint)
-                    .show()
             }
+            dialog.show()
         }
     }
 

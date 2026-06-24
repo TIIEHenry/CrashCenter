@@ -21,8 +21,6 @@ import nota.android.crash.xp.app.data.CrashSortMode
 import nota.android.crash.xp.app.databinding.FragmentObserveHostBinding
 import nota.android.crash.xp.app.di.ServiceLocator
 import nota.android.crash.xp.app.di.crashHistoryViewModelFactory
-import nota.android.crash.xp.app.shell.MainShellActivity
-import nota.android.crash.xp.app.shell.ShellTab
 
 class ObserveHostFragment : Fragment() {
 
@@ -140,8 +138,8 @@ class ObserveHostFragment : Fragment() {
         _binding?.viewPager?.setCurrentItem(tab, true)
     }
 
-    fun openConfigTab() {
-        (requireActivity() as? MainShellActivity)?.requestShellTab(ShellTab.CONFIG)
+    fun openLogcatTab() {
+        selectSubTab(TAB_LOGCAT)
     }
 
     fun prepareOptionsMenu(menu: Menu) {
@@ -158,16 +156,19 @@ class ObserveHostFragment : Fragment() {
         when (currentTab) {
             TAB_LOGCAT -> {
                 for (id in historyOnlyIds + sharedIds) menu.findItem(id)?.isVisible = false
+                menu.findItem(R.id.item_observe_refresh_logcat)?.isVisible = true
                 menu.findItem(R.id.item_observe_import_logcat)?.isVisible = true
             }
             TAB_HISTORY -> {
                 for (id in historyOnlyIds + sharedIds) menu.findItem(id)?.isVisible = true
+                menu.findItem(R.id.item_observe_refresh_logcat)?.isVisible = false
                 menu.findItem(R.id.item_observe_import_logcat)?.isVisible = false
                 menuActions.prepareMenu(menu)
             }
             TAB_STATS -> {
                 for (id in historyOnlyIds) menu.findItem(id)?.isVisible = false
                 for (id in sharedIds) menu.findItem(id)?.isVisible = true
+                menu.findItem(R.id.item_observe_refresh_logcat)?.isVisible = false
                 menu.findItem(R.id.item_observe_import_logcat)?.isVisible = false
             }
         }

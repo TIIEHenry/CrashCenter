@@ -38,6 +38,21 @@ class ShellOnlyAdapter : RootAccessClient {
         }
     }
 
+    override suspend fun fileStat(path: String): RootFileStat? {
+        return try {
+            val result = Shell.cmd("timeout $TIMEOUT_SEC su -c stat -c '%Y %s' \"$path\"").exec()
+            if (!result.isSuccess || result.out.isEmpty()) return null
+            val parts = result.out.first().trim().split(Regex("\\s+"))
+            if (parts.size < 2) return null
+            val mtimeSec = parts[0].toLongOrNull() ?: return null
+            val length = parts[1].toLongOrNull() ?: return null
+            RootFileStat(mtimeMs = mtimeSec * 1000L, length = length)
+        } catch (e: Exception) {
+            Log.w("ShellOnlyAdapter", "fileStat failed", e)
+            null
+        }
+    }
+
     override suspend fun readText(path: String): String? {
         return try {
             val result = Shell.cmd("timeout $TIMEOUT_SEC su -c cat \"$path\"").exec()
@@ -73,9 +88,23 @@ class ShellOnlyAdapter : RootAccessClient {
         }
     }
 
+    override suspend fun writeText(path: String, content: String): Boolean {
+        return try {
+            val encoded = Base64.encodeToString(content.toByteArray(Charsets.UTF_8), Base64.NO_WRAP)
+            val parent = path.substringBeforeLast('/')
+            val result = Shell.cmd(
+                "timeout $TIMEOUT_SEC su -c 'mkdir -p \"$parent\" && printf %s \"$encoded\" | base64 -d > \"$path\"'"
+            ).exec()
+            result.isSuccess
+        } catch (e: Exception) {
+            Log.w("ShellOnlyAdapter", "writeText failed", e)
+            false
+        }
+    }
+
     override suspend fun delete(path: String): Boolean {
         return try {
-            val result = Shell.cmd("timeout $TIMEOUT_SEC su -c rm \"$path\"").exec()
+            val result = Shell.cmd("timeout $TIMEOUT_SEC su -c rm -f \"$path\"").exec()
             result.isSuccess
         } catch (e: Exception) {
             Log.w("ShellOnlyAdapter", "delete failed", e)

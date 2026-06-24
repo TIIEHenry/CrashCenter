@@ -44,6 +44,33 @@ class CrashDetailViewModelTest {
         )
     }
 
+    @Test
+    fun `loadCrashDetail reads crashId from fragment argument bundle in SavedStateHandle`() = runTest(testDispatcher) {
+        val event = CrashEvent(
+            id = "from-bundle-id",
+            timestampMs = 1000L,
+            packageName = "nota.android.crash.xp.app",
+            exceptionClass = "java.lang.RuntimeException",
+            stackTrace = "java.lang.RuntimeException: menu test\n\tat Foo.bar(Foo.kt:1)",
+            source = "test",
+        )
+        repository.addEvent(event)
+
+        val viewModel = CrashDetailViewModel(
+            repository = repository,
+            ioDispatcher = testDispatcher,
+            savedStateHandle = SavedStateHandle(
+                mapOf(CrashDetailBottomSheet.EXTRA_CRASH_ID to "from-bundle-id"),
+            ),
+        )
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertTrue(state is CrashDetailUiState.Success)
+        val success = state as CrashDetailUiState.Success
+        assertTrue(success.stackTrace.contains("menu test"))
+    }
+
     // ─── Initial State ───
 
     @Test

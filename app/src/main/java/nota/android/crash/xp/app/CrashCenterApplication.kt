@@ -7,7 +7,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
-import nota.android.crash.log.CrashLogIngestCoordinator
+import nota.android.crash.log.CrashLogMigrationCoordinator
 import nota.android.crash.root.AppShell
 
 class CrashCenterApplication : Application() {
@@ -17,9 +17,9 @@ class CrashCenterApplication : Application() {
         CoroutineScope(
             SupervisorJob() + Dispatchers.IO + CoroutineExceptionHandler { _, t ->
                 Log.w(TAG, "Background coroutine failed", t)
-            }
+            },
         ).launch {
-            CrashLogIngestCoordinator.ingest(this@CrashCenterApplication)
+            CrashLogMigrationCoordinator.migrate(this@CrashCenterApplication)
         }
     }
 

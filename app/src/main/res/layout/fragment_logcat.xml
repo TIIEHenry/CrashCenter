@@ -1,197 +1,226 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:orientation="vertical">
 
     <LinearLayout
-        android:id="@+id/contentContainer"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="wrap_content"
         android:orientation="vertical"
+        android:paddingHorizontal="@dimen/filter_horizontal_padding"
+        android:paddingTop="@dimen/filter_row_padding_vertical"
+        android:paddingBottom="@dimen/filter_row_padding_vertical">
+
+    <!-- Source mode chips (Root / File) -->
+    <HorizontalScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:clipToPadding="false"
+        android:scrollbars="none">
+
+        <com.google.android.material.chip.ChipGroup
+            android:id="@+id/chipGroupMode"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:singleLine="true"
+            app:singleSelection="true">
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipModeRoot"
+                style="@style/AppTheme.Chip"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:checked="true"
+                android:text="@string/logcat_mode_root" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipModeFile"
+                style="@style/AppTheme.Chip"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/logcat_mode_file" />
+
+        </com.google.android.material.chip.ChipGroup>
+
+    </HorizontalScrollView>
+
+    <!-- Buffer selection chips (Root mode only) -->
+    <HorizontalScrollView
+        android:id="@+id/bufferChipRow"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/filter_row_section_gap"
+        android:clipToPadding="false"
+        android:scrollbars="none">
+
+        <com.google.android.material.chip.ChipGroup
+            android:id="@+id/chipGroupBuffer"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:singleLine="true"
+            app:singleSelection="true">
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipBufferMain"
+                style="@style/AppTheme.Chip"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:checked="true"
+                android:text="@string/logcat_buffer_main" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipBufferSystem"
+                style="@style/AppTheme.Chip"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/logcat_buffer_system" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipBufferCrash"
+                style="@style/AppTheme.Chip"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/logcat_buffer_crash" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipBufferEvents"
+                style="@style/AppTheme.Chip"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/logcat_buffer_events" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipBufferRadio"
+                style="@style/AppTheme.Chip"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/logcat_buffer_radio" />
+
+        </com.google.android.material.chip.ChipGroup>
+
+    </HorizontalScrollView>
+
+    <!-- Level + crash filter chips -->
+    <HorizontalScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/filter_row_section_gap"
+        android:clipToPadding="false"
+        android:scrollbars="none">
+
+        <com.google.android.material.chip.ChipGroup
+            android:id="@+id/chipGroup"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:singleSelection="false">
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipCrashOnly"
+                style="@style/AppTheme.Chip"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:checked="true"
+                android:text="@string/logcat_filter_crash_only" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipFatal"
+                style="@style/AppTheme.Chip"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:checked="true"
+                android:text="@string/logcat_level_fatal" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipError"
+                style="@style/AppTheme.Chip"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:checked="true"
+                android:text="@string/logcat_level_error" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipWarning"
+                style="@style/AppTheme.Chip"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:checked="true"
+                android:text="@string/logcat_level_warning" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipInfo"
+                style="@style/AppTheme.Chip"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:checked="true"
+                android:text="@string/logcat_level_info" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipDebug"
+                style="@style/AppTheme.Chip"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:checked="true"
+                android:text="@string/logcat_level_debug" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipVerbose"
+                style="@style/AppTheme.Chip"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:checked="true"
+                android:text="@string/logcat_level_verbose" />
+
+        </com.google.android.material.chip.ChipGroup>
+
+    </HorizontalScrollView>
+
+    <include
+        android:id="@+id/searchField"
+        layout="@layout/view_dense_search_field"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/filter_row_section_gap" />
+
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/entryCount"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingHorizontal="@dimen/filter_horizontal_padding"
+        android:paddingTop="@dimen/spacing_xs"
+        android:paddingBottom="@dimen/spacing_xs"
+        android:textAppearance="?attr/textAppearanceLabelSmall"
+        android:textColor="?android:attr/textColorSecondary"
         android:visibility="gone"
-        tools:visibility="visible">
+        tools:text="42 entries"
+        tools:visibility="visible" />
 
-        <!-- Source mode chips (Root / File) -->
-        <HorizontalScrollView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:clipToPadding="false"
-            android:paddingHorizontal="@dimen/spacing_sm"
-            android:scrollbars="none">
-
-            <com.google.android.material.chip.ChipGroup
-                android:id="@+id/chipGroupMode"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:paddingVertical="@dimen/spacing_sm"
-                app:singleLine="true"
-                app:singleSelection="true">
-
-                <com.google.android.material.chip.Chip
-                    android:id="@+id/chipModeRoot"
-                    style="@style/AppTheme.Chip"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:checked="true"
-                    android:text="@string/logcat_mode_root" />
-
-                <com.google.android.material.chip.Chip
-                    android:id="@+id/chipModeFile"
-                    style="@style/AppTheme.Chip"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/logcat_mode_file" />
-
-            </com.google.android.material.chip.ChipGroup>
-
-        </HorizontalScrollView>
-
-        <!-- Buffer selection chips (Root mode only) -->
-        <HorizontalScrollView
-            android:id="@+id/bufferChipRow"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:clipToPadding="false"
-            android:paddingHorizontal="@dimen/spacing_sm"
-            android:scrollbars="none">
-
-            <com.google.android.material.chip.ChipGroup
-                android:id="@+id/chipGroupBuffer"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:paddingBottom="@dimen/spacing_sm"
-                app:singleLine="true"
-                app:singleSelection="true">
-
-                <com.google.android.material.chip.Chip
-                    android:id="@+id/chipBufferMain"
-                    style="@style/AppTheme.Chip"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:checked="true"
-                    android:text="@string/logcat_buffer_main" />
-
-                <com.google.android.material.chip.Chip
-                    android:id="@+id/chipBufferSystem"
-                    style="@style/AppTheme.Chip"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/logcat_buffer_system" />
-
-                <com.google.android.material.chip.Chip
-                    android:id="@+id/chipBufferCrash"
-                    style="@style/AppTheme.Chip"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/logcat_buffer_crash" />
-
-                <com.google.android.material.chip.Chip
-                    android:id="@+id/chipBufferEvents"
-                    style="@style/AppTheme.Chip"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/logcat_buffer_events" />
-
-                <com.google.android.material.chip.Chip
-                    android:id="@+id/chipBufferRadio"
-                    style="@style/AppTheme.Chip"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/logcat_buffer_radio" />
-
-            </com.google.android.material.chip.ChipGroup>
-
-        </HorizontalScrollView>
-
-        <!-- Level filter chips -->
-        <HorizontalScrollView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:clipToPadding="false"
-            android:paddingHorizontal="@dimen/spacing_sm"
-            android:scrollbars="none">
-
-            <com.google.android.material.chip.ChipGroup
-                android:id="@+id/chipGroup"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:paddingVertical="@dimen/spacing_sm"
-                app:singleSelection="false">
-
-                <com.google.android.material.chip.Chip
-                    android:id="@+id/chipFatal"
-                    style="@style/Widget.Material3.Chip.Filter"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/logcat_level_fatal" />
-
-                <com.google.android.material.chip.Chip
-                    android:id="@+id/chipError"
-                    style="@style/Widget.Material3.Chip.Filter"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/logcat_level_error" />
-
-                <com.google.android.material.chip.Chip
-                    android:id="@+id/chipWarning"
-                    style="@style/Widget.Material3.Chip.Filter"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/logcat_level_warning" />
-
-                <com.google.android.material.chip.Chip
-                    android:id="@+id/chipInfo"
-                    style="@style/Widget.Material3.Chip.Filter"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/logcat_level_info" />
-
-                <com.google.android.material.chip.Chip
-                    android:id="@+id/chipDebug"
-                    style="@style/Widget.Material3.Chip.Filter"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/logcat_level_debug" />
-
-            </com.google.android.material.chip.ChipGroup>
-
-        </HorizontalScrollView>
-
-        <!-- Entry count -->
-        <TextView
-            android:id="@+id/entryCount"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:paddingHorizontal="@dimen/spacing_lg"
-            android:textAppearance="?attr/textAppearanceLabelSmall"
-            android:textColor="?android:attr/textColorSecondary"
-            tools:text="42 entries" />
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/recyclerView"
             android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
-            android:clipToPadding="false"
-            android:paddingBottom="@dimen/spacing_lg"
-            app:fastScrollEnabled="true"
-            app:fastScrollHorizontalThumbDrawable="@drawable/fastscroll_thumb_horizontal"
-            app:fastScrollHorizontalTrackDrawable="@drawable/fastscroll_track_horizontal"
-            app:fastScrollVerticalThumbDrawable="@drawable/fastscroll_thumb_vertical"
-            app:fastScrollVerticalTrackDrawable="@drawable/fastscroll_track_vertical" />
+            android:layout_height="match_parent"
+            android:visibility="gone"
+            tools:visibility="visible" />
 
-    </LinearLayout>
+        <include
+            android:id="@+id/loadingPanel"
+            layout="@layout/view_loading_state"
+            android:visibility="gone" />
 
-    <include
-        android:id="@+id/loadingPanel"
-        layout="@layout/view_loading_state"
-        android:visibility="gone" />
+        <include
+            android:id="@+id/emptyState"
+            layout="@layout/view_empty_state_action"
+            android:visibility="gone" />
 
-    <include
-        android:id="@+id/emptyState"
-        layout="@layout/view_empty_state"
-        android:visibility="gone" />
+    </FrameLayout>
 
-</FrameLayout>
+</LinearLayout>

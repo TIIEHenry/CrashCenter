@@ -12,8 +12,10 @@ import androidx.core.content.edit
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import nota.android.crash.log.CanonicalJsonlWriter
+import kotlinx.coroutines.withContext
+import nota.android.crash.log.CrashLogJsonlStore
 import nota.android.crash.xp.PrefManager
 import nota.android.crash.xp.app.R
 import nota.android.crash.xp.app.data.CrashFilter
@@ -241,11 +243,11 @@ internal class CrashHistoryMenuActions(
         val prefs = ServiceLocator.prefs(fragment.requireContext())
         val currentMaxEntries = prefs.getInt(
             PrefManager.PREF_CRASH_LOG_MAX_ENTRIES,
-            CanonicalJsonlWriter.DEFAULT_MAX_ENTRIES,
+            CrashLogJsonlStore.DEFAULT_MAX_ENTRIES,
         )
         val currentMaxBytesMb = prefs.getLong(
             PrefManager.PREF_CRASH_LOG_MAX_BYTES,
-            CanonicalJsonlWriter.DEFAULT_MAX_BYTES,
+            CrashLogJsonlStore.DEFAULT_MAX_BYTES,
         ) / (1024L * 1024L)
 
         val density = fragment.resources.displayMetrics.density
@@ -278,9 +280,9 @@ internal class CrashHistoryMenuActions(
             .setView(container)
             .setPositiveButton(android.R.string.ok) { _, _ ->
                 val maxEntries = entriesInput.text.toString().toIntOrNull()?.coerceIn(1, 100_000)
-                    ?: CanonicalJsonlWriter.DEFAULT_MAX_ENTRIES
+                    ?: CrashLogJsonlStore.DEFAULT_MAX_ENTRIES
                 val maxBytesMb = bytesInput.text.toString().toLongOrNull()?.coerceIn(1, 1024)
-                    ?: (CanonicalJsonlWriter.DEFAULT_MAX_BYTES / (1024L * 1024L))
+                    ?: (CrashLogJsonlStore.DEFAULT_MAX_BYTES / (1024L * 1024L))
                 val maxBytes = maxBytesMb * 1024L * 1024L
 
                 prefs.edit {
@@ -288,10 +290,15 @@ internal class CrashHistoryMenuActions(
                     putLong(PrefManager.PREF_CRASH_LOG_MAX_BYTES, maxBytes)
                 }
 
-                CanonicalJsonlWriter.maxEntries = maxEntries
-                CanonicalJsonlWriter.maxBytes = maxBytes
+                CrashLogJsonlStore.maxEntries = maxEntries
+                CrashLogJsonlStore.maxBytes = maxBytes
 
-                Toast.makeText(fragment.requireContext(), R.string.retention_saved, Toast.LENGTH_SHORT).show()
+                fragment.viewLifecycleOwner.lifecycleScope.launch {
+                    withContext(Dispatchers.IO) {
+                        ServiceLocator.crashLogRepository(fragment.requireContext()).applyRetention()
+                    }
+                    Toast.makeText(fragment.requireContext(), R.string.retention_saved, Toast.LENGTH_SHORT).show()
+                }
             }
             .setNegativeButton(android.R.string.cancel, null)
             .show()

@@ -1,288 +1,56 @@
 package nota.android.crash.log
 
+import android.content.Context
 import android.content.SharedPreferences
+import androidx.test.core.app.ApplicationProvider
+import nota.android.crash.log.backend.LocalCacheBackend
 import nota.android.crash.xp.PrefManager
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
+import org.junit.Before
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.mockito.kotlin.doReturn
+import org.mockito.kotlin.mock
+import org.mockito.kotlin.whenever
+import org.robolectric.RobolectricTestRunner
 
+@RunWith(RobolectricTestRunner::class)
 class CrashLogBackendRegistryTest {
 
-    // ─── default-on policy ───
+    private lateinit var context: Context
+    private lateinit var prefs: SharedPreferences
 
-    @Test
-    fun `enabledHookPhase2Backends with empty prefs returns all hook backends`() {
-        val prefs = FakeSharedPreferences()
-        val backends = CrashLogBackendRegistry.enabledHookPhase2Backends(prefs)
-        val ids = backends.map { it.id }
-        assertTrue(ids.contains(BackendId.ROOT_SU))
-        assertTrue(ids.contains(BackendId.PROVIDER_INSERT))
-        assertTrue(ids.contains(BackendId.DIRECT_FS))
-        assertTrue(ids.contains(BackendId.TARGET_RELAY))
-        assertEquals(4, backends.size)
-    }
-
-    // ─── individual preference disabling ───
-
-    @Test
-    fun `enabledHookPhase2Backends disables provider when provider pref is false`() {
-        val prefs = FakeSharedPreferences(
-            PrefManager.PREF_CRASH_LOG_BACKEND_PROVIDER to false,
-        )
-        val backends = CrashLogBackendRegistry.enabledHookPhase2Backends(prefs)
-        val ids = backends.map { it.id }
-        assertEquals(3, backends.size)
-        assertTrue(ids.contains(BackendId.ROOT_SU))
-        assertTrue(ids.contains(BackendId.DIRECT_FS))
-        assertTrue(ids.contains(BackendId.TARGET_RELAY))
+    @Before
+    fun setUp() {
+        context = ApplicationProvider.getApplicationContext()
+        prefs = mock()
+        doReturn(true).`when`(prefs).getBoolean(PrefManager.PREF_CRASH_LOG_ENABLED, true)
+        doReturn(true).`when`(prefs).getBoolean(PrefManager.PREF_CRASH_LOG_BACKEND_LOCAL_CACHE, true)
     }
 
     @Test
-    fun `enabledHookPhase2Backends disables direct_fs when direct_fs pref is false`() {
-        val prefs = FakeSharedPreferences(
-            PrefManager.PREF_CRASH_LOG_BACKEND_DIRECT_FS to false,
-        )
-        val backends = CrashLogBackendRegistry.enabledHookPhase2Backends(prefs)
-        val ids = backends.map { it.id }
-        assertEquals(3, backends.size)
-        assertTrue(ids.contains(BackendId.ROOT_SU))
-        assertTrue(ids.contains(BackendId.PROVIDER_INSERT))
-        assertTrue(ids.contains(BackendId.TARGET_RELAY))
-    }
-
-    @Test
-    fun `enabledHookPhase2Backends disables relay when relay pref is false`() {
-        val prefs = FakeSharedPreferences(
-            PrefManager.PREF_CRASH_LOG_BACKEND_RELAY to false,
-        )
-        val backends = CrashLogBackendRegistry.enabledHookPhase2Backends(prefs)
-        val ids = backends.map { it.id }
-        assertEquals(3, backends.size)
-        assertTrue(ids.contains(BackendId.ROOT_SU))
-        assertTrue(ids.contains(BackendId.PROVIDER_INSERT))
-        assertTrue(ids.contains(BackendId.DIRECT_FS))
-    }
-
-    // ─── all backends disabled ───
-
-    @Test
-    fun `enabledHookPhase2Backends with all prefs false returns empty list`() {
-        val prefs = FakeSharedPreferences(
-            PrefManager.PREF_CRASH_LOG_BACKEND_ROOT_SU to false,
-            PrefManager.PREF_CRASH_LOG_BACKEND_PROVIDER to false,
-            PrefManager.PREF_CRASH_LOG_BACKEND_DIRECT_FS to false,
-            PrefManager.PREF_CRASH_LOG_BACKEND_RELAY to false,
-        )
-        val backends = CrashLogBackendRegistry.enabledHookPhase2Backends(prefs)
-        assertTrue(backends.isEmpty())
-    }
-
-    // ─── default-on with other prefs set ───
-
-    @Test
-    fun `enabledHookPhase2Backends pref true does not change default behavior`() {
-        val prefs = FakeSharedPreferences(
-            PrefManager.PREF_CRASH_LOG_BACKEND_ROOT_SU to true,
-            PrefManager.PREF_CRASH_LOG_BACKEND_PROVIDER to true,
-            PrefManager.PREF_CRASH_LOG_BACKEND_DIRECT_FS to true,
-            PrefManager.PREF_CRASH_LOG_BACKEND_RELAY to true,
-        )
-        val backends = CrashLogBackendRegistry.enabledHookPhase2Backends(prefs)
-        assertEquals(4, backends.size)
-    }
-
-    // ─── mixed enable/disable ───
-
-    @Test
-    fun `enabledHookPhase2Backends with mixed enable disable`() {
-        val prefs = FakeSharedPreferences(
-            PrefManager.PREF_CRASH_LOG_BACKEND_PROVIDER to true,
-            PrefManager.PREF_CRASH_LOG_BACKEND_DIRECT_FS to false,
-            PrefManager.PREF_CRASH_LOG_BACKEND_RELAY to true,
-        )
-        val backends = CrashLogBackendRegistry.enabledHookPhase2Backends(prefs)
-        val ids = backends.map { it.id }
-        assertEquals(3, backends.size)
-        assertTrue(ids.contains(BackendId.ROOT_SU))
-        assertTrue(ids.contains(BackendId.PROVIDER_INSERT))
-        assertTrue(ids.contains(BackendId.TARGET_RELAY))
-    }
-
-    // ─── unknown keys in prefs do not affect result ───
-
-    @Test
-    fun `enabledHookPhase2Backends ignores unrelated preference keys`() {
-        val prefs = FakeSharedPreferences(
-            "unrelated_key" to false,
-            "some_other_flag" to true,
-        )
-        val backends = CrashLogBackendRegistry.enabledHookPhase2Backends(prefs)
-        assertEquals(4, backends.size)
-    }
-
-    // ─── root_su preference control ───
-
-    @Test
-    fun `enabledHookPhase2Backends disables ROOT_SU when pref is false`() {
-        val prefs = FakeSharedPreferences(
-            PrefManager.PREF_CRASH_LOG_BACKEND_ROOT_SU to false,
-        )
-        val backends = CrashLogBackendRegistry.enabledHookPhase2Backends(prefs)
-        val ids = backends.map { it.id }
-        assertTrue(ids.none { it == BackendId.ROOT_SU })
-        assertEquals(3, backends.size)
-    }
-
-    // ─── module-side backends ───
-
-    @Test
-    fun `enabledModuleBackends with empty prefs returns module backends by default`() {
-        val prefs = FakeSharedPreferences()
-        val backends = CrashLogBackendRegistry.enabledModuleBackends(prefs)
-        val ids = backends.map { it.id }
-        assertTrue(ids.contains(BackendId.ROOT_FS))
-        assertTrue(ids.contains(BackendId.RELAY_MERGE))
-        assertEquals(2, backends.size)
-    }
-
-    @Test
-    fun `enabledModuleBackends disables relay_merge when pref is false`() {
-        val prefs = FakeSharedPreferences(
-            PrefManager.PREF_CRASH_LOG_BACKEND_RELAY_MERGE to false,
-        )
-        val backends = CrashLogBackendRegistry.enabledModuleBackends(prefs)
-        val ids = backends.map { it.id }
+    fun `enabled hook backends returns LocalCache when enabled`() {
+        val backends = CrashLogBackendRegistry.enabledHookBackends(prefs)
         assertEquals(1, backends.size)
-        assertTrue(ids.contains(BackendId.ROOT_FS))
-        assertTrue(ids.none { it == BackendId.RELAY_MERGE })
+        assertEquals(LocalCacheBackend, backends[0])
     }
 
     @Test
-    fun `enabledModuleBackends disables root_fs when pref is false`() {
-        val prefs = FakeSharedPreferences(
-            PrefManager.PREF_CRASH_LOG_BACKEND_ROOT_FS to false,
-        )
-        val backends = CrashLogBackendRegistry.enabledModuleBackends(prefs)
-        val ids = backends.map { it.id }
-        assertEquals(1, backends.size)
-        assertTrue(ids.contains(BackendId.RELAY_MERGE))
+    fun `disabled crash log returns empty`() {
+        whenever(prefs.getBoolean(PrefManager.PREF_CRASH_LOG_ENABLED, true)).thenReturn(false)
+        assertTrue(CrashLogBackendRegistry.enabledHookBackends(prefs).isEmpty())
     }
 
     @Test
-    fun `enabledModuleBackends includes root_fs when pref is true`() {
-        val prefs = FakeSharedPreferences(
-            PrefManager.PREF_CRASH_LOG_BACKEND_ROOT_FS to true,
-            PrefManager.PREF_CRASH_LOG_BACKEND_RELAY_MERGE to true,
-        )
-        val backends = CrashLogBackendRegistry.enabledModuleBackends(prefs)
-        assertEquals(2, backends.size)
-        assertEquals(BackendId.ROOT_FS, backends[0].id)
-        assertEquals(BackendId.RELAY_MERGE, backends[1].id)
+    fun `disabled local cache returns empty`() {
+        whenever(prefs.getBoolean(PrefManager.PREF_CRASH_LOG_BACKEND_LOCAL_CACHE, true)).thenReturn(false)
+        assertTrue(CrashLogBackendRegistry.enabledHookBackends(prefs).isEmpty())
     }
 
     @Test
-    fun `enabledModuleBackends never includes hook-side backends`() {
-        val prefs = FakeSharedPreferences()
-        val backends = CrashLogBackendRegistry.enabledModuleBackends(prefs)
-        val ids = backends.map { it.id }
-        assertTrue(ids.none { it == BackendId.PROVIDER_INSERT })
-        assertTrue(ids.none { it == BackendId.DIRECT_FS })
-        assertTrue(ids.none { it == BackendId.TARGET_RELAY })
-    }
-
-    // ─── Fake SharedPreferences ───
-
-    private class FakeSharedPreferences(
-        vararg initial: Pair<String, Any>,
-    ) : SharedPreferences {
-
-        private val store = mutableMapOf<String, Any>(*initial)
-
-        override fun getAll(): Map<String, *> = store.toMap()
-
-        override fun getString(key: String, defValue: String?): String? =
-            store[key] as? String ?: defValue
-
-        override fun getStringSet(key: String, defValue: MutableSet<String>?): MutableSet<String>? =
-            @Suppress("UNCHECKED_CAST")
-            (store[key] as? MutableSet<String>) ?: defValue
-
-        override fun getInt(key: String, defValue: Int): Int =
-            (store[key] as? Int) ?: defValue
-
-        override fun getLong(key: String, defValue: Long): Long =
-            (store[key] as? Long) ?: defValue
-
-        override fun getFloat(key: String, defValue: Float): Float =
-            (store[key] as? Float) ?: defValue
-
-        override fun getBoolean(key: String, defValue: Boolean): Boolean =
-            (store[key] as? Boolean) ?: defValue
-
-        override fun contains(key: String): Boolean = store.containsKey(key)
-
-        override fun edit(): SharedPreferences.Editor = FakeEditor(store)
-
-        override fun registerOnSharedPreferenceChangeListener(
-            listener: SharedPreferences.OnSharedPreferenceChangeListener?,
-        ) = Unit
-
-        override fun unregisterOnSharedPreferenceChangeListener(
-            listener: SharedPreferences.OnSharedPreferenceChangeListener?,
-        ) = Unit
-
-        private class FakeEditor(
-            private val store: MutableMap<String, Any>,
-        ) : SharedPreferences.Editor {
-
-            private val pending = mutableMapOf<String, Any?>()
-
-            override fun putString(key: String, value: String?): SharedPreferences.Editor {
-                pending[key] = value; return this
-            }
-
-            override fun putStringSet(
-                key: String,
-                values: MutableSet<String>?,
-            ): SharedPreferences.Editor {
-                pending[key] = values; return this
-            }
-
-            override fun putInt(key: String, value: Int): SharedPreferences.Editor {
-                pending[key] = value; return this
-            }
-
-            override fun putLong(key: String, value: Long): SharedPreferences.Editor {
-                pending[key] = value; return this
-            }
-
-            override fun putFloat(key: String, value: Float): SharedPreferences.Editor {
-                pending[key] = value; return this
-            }
-
-            override fun putBoolean(key: String, value: Boolean): SharedPreferences.Editor {
-                pending[key] = value; return this
-            }
-
-            override fun remove(key: String): SharedPreferences.Editor {
-                pending[key] = null; return this
-            }
-
-            override fun clear(): SharedPreferences.Editor {
-                pending.clear(); store.clear(); return this
-            }
-
-            override fun commit(): Boolean {
-                pending.forEach { (k, v) ->
-                    if (v == null) store.remove(k) else store[k] = v
-                }
-                pending.clear()
-                return true
-            }
-
-            override fun apply() {
-                commit()
-            }
-        }
+    fun `module backends empty after ADR-024`() {
+        assertTrue(CrashLogBackendRegistry.enabledModuleBackends(prefs).isEmpty())
+        assertTrue(CrashLogBackendRegistry.enabledModuleBackends(context).isEmpty())
     }
 }

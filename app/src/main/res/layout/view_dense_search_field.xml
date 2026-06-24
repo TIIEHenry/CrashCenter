@@ -5,6 +5,7 @@
     style="@style/AppTheme.SearchField"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:hint="@string/search_hint"
     app:endIconMode="clear_text"
     app:startIconDrawable="@drawable/ic_search">
 
@@ -13,7 +14,6 @@
         style="@style/AppTheme.SearchField.EditText"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="@string/search_hint"
         android:imeOptions="actionSearch"
         android:inputType="text"
         android:maxLines="1"

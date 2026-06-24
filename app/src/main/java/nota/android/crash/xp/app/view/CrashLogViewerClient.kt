@@ -22,6 +22,7 @@ class CrashLogViewerClient(
 
     override fun initView() {
         super.initView()
+        isWordWrap = true
         // Keep editor interactive (select, zoom, scroll) — don't set isEditable=false
         quickFloatLayout.upView.visibility = View.GONE
         quickFloatLayout.downView.visibility = View.GONE
@@ -31,6 +32,17 @@ class CrashLogViewerClient(
 
     fun showStackTrace(text: String?) {
         this.text = text ?: ""
+    }
+
+    var isWordWrap: Boolean
+        get() = codeEditor.isWordWrap
+        set(enabled) {
+            codeEditor.setWordWrap(enabled)
+        }
+
+    fun toggleWordWrap(): Boolean {
+        isWordWrap = !isWordWrap
+        return isWordWrap
     }
 
     companion object {

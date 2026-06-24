@@ -3,6 +3,7 @@ package nota.android.crash.xp.app.observe
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
+import android.content.res.ColorStateList
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -21,6 +22,7 @@ import nota.android.crash.analysis.RuleEngine
 import nota.android.crash.common.data.CrashAnalysis
 import nota.android.crash.xp.app.R
 import nota.android.crash.xp.app.common.ui.configureCrashDetailBottomSheetAppearance
+import nota.android.crash.xp.app.common.ui.themeColor
 import nota.android.crash.xp.app.data.CrashDetailLoader
 import nota.android.crash.xp.app.di.ServiceLocator
 import nota.android.crash.xp.app.di.crashDetailViewModelFactory
@@ -82,9 +84,14 @@ class CrashDetailBottomSheet : BottomSheetDialogFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         binding.btnClose.setOnClickListener { dismiss() }
-        binding.btnCopy.setOnClickListener { copyStackTraceToClipboard() }
+        binding.btnWordWrap.setOnClickListener { toggleWordWrap() }
+        binding.btnWordWrap.setOnLongClickListener {
+            copyStackTraceToClipboard()
+            true
+        }
         binding.analysisDevSuggestionHeader.setOnClickListener { toggleDevSuggestion() }
         viewer = CrashLogViewerClient.attach(requireContext(), binding.viewerContainer)
+        updateWordWrapButton()
         initRuleEngine()
         observeViewModel()
     }
@@ -143,6 +150,22 @@ class CrashDetailBottomSheet : BottomSheetDialogFragment() {
                 }
             }
         }
+    }
+
+    private fun toggleWordWrap() {
+        viewer?.toggleWordWrap()
+        updateWordWrapButton()
+    }
+
+    private fun updateWordWrapButton() {
+        val enabled = viewer?.isWordWrap == true
+        val context = requireContext()
+        val tint = if (enabled) {
+            context.themeColor(androidx.appcompat.R.attr.colorPrimary)
+        } else {
+            context.themeColor(android.R.attr.textColorPrimary)
+        }
+        binding.btnWordWrap.imageTintList = ColorStateList.valueOf(tint)
     }
 
     private fun copyStackTraceToClipboard() {

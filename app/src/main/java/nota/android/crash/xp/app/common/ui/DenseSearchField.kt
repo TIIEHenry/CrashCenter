@@ -10,6 +10,10 @@ object DenseSearchField {
 
     fun editText(root: View): EditText = ViewDenseSearchFieldBinding.bind(root).searchInput
 
+    fun setHint(root: View, hint: CharSequence) {
+        ViewDenseSearchFieldBinding.bind(root).searchLayout.hint = hint
+    }
+
     fun setOnQueryChangeListener(root: View, listener: (String) -> Unit) {
         editText(root).addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) = Unit

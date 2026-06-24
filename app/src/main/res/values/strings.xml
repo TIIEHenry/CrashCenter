@@ -1,7 +1,7 @@
 <resources>
-    <string name="app_name">CrashCenter</string>
+    <string name="app_name">StabilityCenter</string>
     <string name="xposed_description">Intercept uncaught Java exceptions in hooked apps</string>
-    <string name="crash_tip">CrashCenter [Xposed]</string>
+    <string name="crash_tip">StabilityCenter [Xposed]</string>
     <string name="using_warning_title">ReadMe</string>
     <string name="using_warning">1.It is a Xposed module, so it needs xposed to support\n2.It aims to ignoring the errors instead of handling the errors.
     it may bring unexpected problems, so use it carefully(not sure)\n3.the most simple way to use this module, apply
@@ -30,6 +30,8 @@
 
     <string name="xposed_not_active">Xposed module is not actived</string>
     <string name="xposed_hint">Please active this module in Xposed Installer app and then reboot you phone</string>
+    <string name="xposed_manager_open_failed_title">Cannot open Xposed manager</string>
+    <string name="xposed_manager_open_failed_message">The module is active. Open LSPosed, EdXposed, or Xposed Installer from your launcher or notification, or install the manager app.</string>
     <string name="item_scope_mode_short">Scope</string>
     <string name="item_handle_system_short">Sys hook</string>
     <string name="item_show_system_short">Show sys</string>
@@ -42,21 +44,22 @@
     <string name="crash_info_title">Crash details</string>
     <string name="crash_detail_close">Close crash details</string>
     <string name="crash_detail_copy">Copy all</string>
+    <string name="crash_detail_word_wrap_hint">Toggle word wrap. Long press to copy all.</string>
     <string name="crash_detail_copied">Copied to clipboard</string>
 
     <string name="permission_banner_title">App list incomplete — grant package visibility</string>
     <string name="permission_banner_title_compact">Incomplete app list — tap to grant</string>
     <string name="permission_grant_action">Grant</string>
     <string name="permission_rationale_title">Package visibility required</string>
-    <string name="permission_rationale_message">CrashCenter needs to see all installed apps so you can choose which ones to hook.\n\nOn Android 11 and later, enable "Query all packages" (or reinstall the app if the permission was never granted):\n\n1. Tap Open settings below\n2. Open Permissions\n3. Allow query all packages\n4. Return here — the list will refresh automatically</string>
+    <string name="permission_rationale_message">StabilityCenter needs to see all installed apps so you can choose which ones to hook.\n\nOn Android 11 and later, enable "Query all packages" (or reinstall the app if the permission was never granted):\n\n1. Tap Open settings below\n2. Open Permissions\n3. Allow query all packages\n4. Return here — the list will refresh automatically</string>
     <string name="permission_open_settings">Open settings</string>
     <string name="permission_settings_failed">Could not open app settings</string>
     <string name="tab_config">Config</string>
-    <string name="tab_observe">Observe</string>
+    <string name="tab_observe">Monitor</string>
     <string name="tab_history">History</string>
     <string name="tab_stats">Stats</string>
     <string name="stats_empty">No crash data yet. Statistics appear after crashes are recorded.</string>
-    <string name="stats_empty_action">View history</string>
+    <string name="observe_analyze_logcat_action">Analyze logcat</string>
     <string name="stats_loading">Loading statistics…</string>
     <string name="stats_label_total">Total</string>
     <string name="stats_label_unique_apps">Unique apps</string>
@@ -66,27 +69,33 @@
     <string name="stats_section_top_categories">Top crash categories</string>
     <string name="stats_section_top_clusters">Top duplicate crashes</string>
     <string name="stats_none">—</string>
-    <string name="per_app_empty">No intercept records for this app yet.</string>
+    <string name="per_app_empty">No monitored crash records for this app yet.</string>
     <string name="per_app_loading">Loading crash records…</string>
     <string name="per_app_uninstalled">Uninstalled</string>
-    <string name="per_app_summary_format">%1$d intercepts · last %2$s</string>
+    <string name="per_app_summary_format">%1$d monitored · last %2$s</string>
     <string name="per_app_top_exception_format">Most common: %1$s (%2$d)</string>
     <plurals name="per_app_count">
         <item quantity="one">%d crash record</item>
         <item quantity="other">%d crash records</item>
     </plurals>
+    <string name="per_app_launch_menu">Launch app</string>
+    <string name="per_app_launch_failed">Cannot launch this app</string>
     <string name="per_app_clear_menu">Clear app records</string>
     <string name="per_app_clear_confirm_title">Clear crash records?</string>
     <string name="per_app_clear_confirm_message">All crash records for %s will be permanently deleted.</string>
     <string name="per_app_clear_success">Crash records cleared</string>
-    <string name="crash_history_empty">No crash records yet. Observed crashes will appear here when logging is enabled.</string>
-    <string name="history_empty_action">Open configuration</string>
+    <string name="crash_history_empty">No crash records yet. Monitored crashes will appear here.</string>
+    <string name="crash_history_root_required">Root access is required to read crash logs from hooked apps. Enable root for CrashCenter in your root manager, then return here.</string>
     <string name="crash_history_loading">Loading crash history…</string>
     <string name="crash_event_subtitle_format">%1$s · %2$s</string>
     <string name="crash_source_ueh">UEH</string>
     <string name="crash_source_looper">Looper</string>
     <string name="crash_source_ueh_a11y">Uncaught exception handler</string>
     <string name="crash_source_looper_a11y">Main thread loop</string>
+    <string name="crash_outcome_intercepted">Intercepted</string>
+    <string name="crash_outcome_monitor_only">Monitor only</string>
+    <string name="crash_outcome_intercepted_a11y">Crash intercepted, app kept running</string>
+    <string name="crash_outcome_monitor_only_a11y">Crash monitored only, app may exit</string>
     <string name="observe_menu_filter">Filter</string>
     <string name="observe_menu_filter_clear">Clear filter</string>
     <string name="observe_filter_title">Filter by package</string>
@@ -134,10 +143,10 @@
 
     <!-- Managed apps (Phase 3G) -->
     <string name="managed_filter_enabled">Intercepting</string>
-    <string name="managed_filter_pending">Observe only</string>
+    <string name="managed_filter_pending">Monitor only</string>
     <string name="managed_status_enabled">Intercepting</string>
-    <string name="managed_status_pending">Observe only</string>
-    <string name="managed_empty_message">No managed apps yet. Apps in your LSPosed scope are still observed; add apps here to configure crash interception.</string>
+    <string name="managed_status_pending">Monitor only</string>
+    <string name="managed_empty_message">No managed apps yet. Apps in your LSPosed scope are still monitored; add apps here to configure crash interception.</string>
     <string name="managed_filter_empty">No apps match the current filters</string>
     <string name="add_managed_app">Add app</string>
     <string name="add_managed_done">Done</string>
@@ -156,17 +165,22 @@
     <string name="delete_rule">Delete rule</string>
     <string name="remove_managed_app">Remove app</string>
     <string name="remove_managed_app_confirm_title">Remove managed app?</string>
-    <string name="remove_managed_app_confirm_message">Interception settings for this app will be removed. If it remains in LSPosed scope, crashes are still observed.</string>
+    <string name="remove_managed_app_confirm_message">Interception settings for this app will be removed. If it remains in LSPosed scope, crashes are still monitored.</string>
     <string name="remove_managed_app_success">App removed from managed list</string>
-    <string name="intervention_status_pending">Observe only</string>
+    <string name="intervention_status_pending">Monitor only</string>
     <string name="rule_saved">Rule saved</string>
 
     <!-- Logcat analysis (4F) -->
     <string name="tab_logcat">Logcat</string>
     <string name="observe_menu_import_logcat">Import logcat</string>
-    <string name="logcat_empty">No logcat data loaded. Import a logcat file (.txt) captured via adb logcat, or enable root mode to read logcat buffers directly.</string>
+    <string name="observe_menu_refresh_logcat">Refresh logcat</string>
+    <string name="logcat_empty">No logcat data loaded. Import a logcat file (.txt) captured via adb logcat, or tap Read logcat if root access is available.</string>
+    <string name="logcat_empty_root">No logcat data loaded. Tap Read logcat to fetch the current buffer, or switch buffers above.</string>
+    <string name="logcat_read_action">Read logcat</string>
+    <string name="logcat_buffer_empty">No entries in this buffer. Try another buffer or tap Refresh.</string>
+    <string name="logcat_root_read_failed">Failed to read logcat. Confirm root access in your root manager, then tap Refresh.</string>
     <string name="root_permission_title">Root access</string>
-    <string name="root_permission_message">Root access allows CrashCenter to read crash logs from hooked apps and read Logcat buffers directly from the device.\n\nPlease manually enable root permission for CrashCenter in your root manager app.</string>
+    <string name="root_permission_message">Root access allows StabilityCenter to read crash logs from hooked apps and read Logcat buffers directly from the device.\n\nPlease manually enable root permission for StabilityCenter in your root manager app.</string>
     <string name="logcat_loading">Parsing logcat…</string>
     <string name="logcat_import_action">Import logcat file</string>
     <string name="logcat_import_error">Failed to read logcat file</string>
@@ -177,6 +191,10 @@
     <string name="logcat_level_warning">W</string>
     <string name="logcat_level_info">I</string>
     <string name="logcat_level_debug">D</string>
+    <string name="logcat_level_verbose">V</string>
+    <string name="logcat_filter_crash_only">Crash only</string>
+    <string name="logcat_search_hint">Filter by tag or message</string>
+    <string name="logcat_search_no_match">No log entries match the filter</string>
     <string name="logcat_mode_root">Root</string>
     <string name="logcat_mode_file">File</string>
     <string name="logcat_buffer_main">Main</string>

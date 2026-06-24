@@ -1,6 +1,7 @@
 package nota.android.crash.xp.app.di
 
 import android.content.Context
+import androidx.fragment.app.Fragment
 import androidx.lifecycle.AbstractSavedStateViewModelFactory
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -82,8 +83,11 @@ fun ServiceLocator.perAppCrashViewModelFactory(
 fun ServiceLocator.crashDetailViewModelFactory(
     owner: SavedStateRegistryOwner,
     context: Context,
-): ViewModelProvider.Factory =
-    object : AbstractSavedStateViewModelFactory(owner, null) {
+): ViewModelProvider.Factory {
+    // Fragment arguments (e.g. crash_id) must be passed as defaultArgs so SavedStateHandle
+    // can read them; passing null leaves CrashDetailViewModel with an empty crashId.
+    val defaultArgs = (owner as? Fragment)?.arguments
+    return object : AbstractSavedStateViewModelFactory(owner, defaultArgs) {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(
             key: String,
@@ -96,3 +100,4 @@ fun ServiceLocator.crashDetailViewModelFactory(
             ) as T
         }
     }
+}

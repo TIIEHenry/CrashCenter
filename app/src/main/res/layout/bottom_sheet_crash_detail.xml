@@ -42,15 +42,15 @@
             app:tint="?android:attr/textColorPrimary" />
 
         <ImageButton
-            android:id="@+id/btnCopy"
+            android:id="@+id/btnWordWrap"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:background="@drawable/shell_press_surface_rounded"
-            android:contentDescription="@string/crash_detail_copy"
+            android:contentDescription="@string/crash_detail_word_wrap_hint"
             android:minWidth="40dp"
             android:minHeight="40dp"
             android:padding="@dimen/spacing_sm"
-            android:src="@drawable/ic_copy"
+            android:src="@drawable/ic_wrap_text"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent"
@@ -68,7 +68,7 @@
             android:textColor="?android:attr/textColorPrimary"
             android:textSize="17sp"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@id/btnCopy"
+            app:layout_constraintEnd_toStartOf="@id/btnWordWrap"
             app:layout_constraintStart_toEndOf="@id/btnClose"
             app:layout_constraintTop_toTopOf="parent"
             tools:text="NullPointerException" />

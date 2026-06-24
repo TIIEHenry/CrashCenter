@@ -50,6 +50,7 @@ object CrashCapturePipeline {
                 processName = processName,
                 throwable = throwable,
                 source = source,
+                intercepted = decision.shouldIntercept,
             )
 
             // Observation and feedback are independent failure domains (ADR-011).

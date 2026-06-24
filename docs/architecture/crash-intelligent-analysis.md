@@ -3,7 +3,7 @@ title: "崩溃智能分析"
 type: architecture
 status: proposed
 phase: 4
-updated: 2026-06-23
+updated: 2026-06-24
 summary: "4G-MVP + 4G-V2 部分 as-built：RuleEngine、详情 lazy 分析、CrashSignature 统计聚类；JSONL analysis 持久化 defer"
 ---
 
@@ -67,7 +67,9 @@ CrashHandler / XposedEntry（hook）
 | logcat 导入 | 启发式 `kind` 与 JSONL **对账**；未 hook 的 `JAVA_FATAL` 可 P2 入库并走同一分析管道 |
 | `ActivityCrashInfo` | 通知即时详情；Phase 4C 起由 CodeEditor 详情 + `crash_id` 深链取代整段 Intent stack |
 
-**边界**：仅 **Java 层**被拦截异常；Native crash、ANR 不在主 taxonomy（logcat 通道可提供 `NATIVE_HINT` 只读提示，见 [adb-logcat-analysis.md](adb-logcat-analysis.md)）。
+**边界**：仅 **Java 层**被拦截异常进入主 taxonomy 与 `events.jsonl` 统计；Native crash、**ANR 实时监测**不在 scope。logcat 可提供 `NATIVE_HINT` / `ANR_HINT` 只读提示（[adb-logcat-analysis.md](adb-logcat-analysis.md)、[anr-observation.md](anr-observation.md)）。
+
+**`RuleEngine` 的 `anr` 规则**：仅当详情页 stack **已含** `ANR in` 文本时被动匹配（如用户导入 logcat 片段），**不等于** ANR 监测能力。
 
 ---
 
@@ -328,7 +330,7 @@ scripts/                analyze-crashes.py（V3）
 | 项 | 实现 |
 |----|------|
 | 数据类 | `CrashAnalysis`（`category`、`rootCauseTags`、`suggestion`、`devSuggestion`）— **未**写入 `CrashEvent` JSONL |
-| 引擎 | `RuleEngine` + `assets/crash_analysis/rules_v1.json`（英文；NPE/OOM/ANR 等 ~10 条规则） |
+| 引擎 | `RuleEngine` + `assets/crash_analysis/rules_v1.json`（英文；NPE/OOM 等；`anr` 规则仅匹配 stack 含 `ANR in` 的**被动**分类） |
 | 触发 | `CrashDetailBottomSheet` 加载 stack 后 **lazy** `match()`；无 `AnalysisWorker` / ingest 预分析 |
 | UI 详情 | `AnalysisCard`：分类 Chip、rootCause Chip 行、用户建议、可展开开发者建议、免责声明 |
 | 聚类 | `CrashSignature`：stack 前 5 帧规范化 → `signatureHash`（16 hex）/ `clusterId`（12 字符）；**读时计算**，不写 JSONL |
@@ -396,7 +398,8 @@ scripts/                analyze-crashes.py（V3）
 
 - [crash-logging.md](crash-logging.md) — CrashEvent SSOT
 - [crash-stats-ui.md](crash-stats-ui.md) — 统计 UI（扩展 category/cluster）
-- [adb-logcat-analysis.md](adb-logcat-analysis.md) — logcat 补充通道
+- [adb-logcat-analysis.md](adb-logcat-analysis.md) — logcat 补充通道（`ANR_HINT`）
+- [anr-observation.md](anr-observation.md) — ANR 路径 A/B；RuleEngine `anr` 规则非监测
 - [code-editor-porting.md](code-editor-porting.md) — 详情页 CodeEditor
 - [crash-handler.md](crash-handler.md) — 干预层边界
 - [crash-notification.md](crash-notification.md) — 即时通知 vs 历史分析

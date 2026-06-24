@@ -3,7 +3,7 @@ title: "统一 Root 服务架构"
 type: architecture
 status: proposed
 phase: 4
-updated: 2026-06-22
+updated: 2026-06-24
 summary: "单 CrashCenterRootService + RootBroker 多子 Binder；模块进程统一特权 I/O；hook 侧同契约 Shell 适配器"
 ---
 
@@ -333,7 +333,7 @@ AIDL（若用）：`app/src/main/aidl/nota/android/crash/root/`
 1. `IngestModule` 放在 root 进程还是 app 进程用 FSM 直接扫描？**建议**：逻辑在 app 进程，Broker 只暴露 FSM，ingest 编排留在 `CrashLogIngestCoordinator`（更简单调试）。
 2. `PrefMigrationModule` 是否必要？**建议**：首版可用 FSM `readText` 替代独立 AIDL，Broker 仅暴露 `FILE_SYSTEM` + `SU_PROBE` 两个子 Binder，prefs 走 FS 模块。
 3. hook `RootSuBackend` 是否在 DenyList 普及后降级为「文档保留、默认关闭」？**倾向**：prefs 默认 `crash_log_backend_root_su=false`，待 IS-R 矩阵再定。
-4. minSdk 21 与 libsu 6.x 兼容性 — 实施时锁定版本并在 `build.gradle` 登记。
+4. minSdk 26 与 libsu 6.x 兼容性 — 实施时锁定版本并在 `build.gradle` 登记（见 [AGENTS.md](../../AGENTS.md)）。
 
 ---
 

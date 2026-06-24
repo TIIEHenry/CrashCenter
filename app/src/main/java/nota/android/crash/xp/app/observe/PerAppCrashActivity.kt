@@ -13,16 +13,13 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.paging.LoadState
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import nota.android.crash.xp.app.R
 import nota.android.crash.xp.app.SystemBars
 import nota.android.crash.xp.app.common.ui.EmptyState
 import nota.android.crash.xp.app.common.ui.LoadingState
-import nota.android.crash.xp.app.common.ui.VerticalSpacingItemDecoration
+import nota.android.crash.xp.app.common.ui.RecyclerViewListSetup
 import nota.android.crash.xp.app.common.ui.showErrorToast
 import nota.android.crash.xp.app.config.PackageInfoLoader
 import nota.android.crash.xp.app.data.PerAppStats
@@ -37,6 +34,7 @@ class PerAppCrashActivity : AppCompatActivity() {
     private var exceptionClass: String? = null
     private lateinit var adapter: CrashHistoryPagingAdapter
     private var lastHistoryCleared = 0
+    private lateinit var menuActions: PerAppCrashMenuActions
 
     private val viewModel: PerAppCrashViewModel by viewModels {
         ServiceLocator.perAppCrashViewModelFactory(this, packageName, exceptionClass)
@@ -64,6 +62,15 @@ class PerAppCrashActivity : AppCompatActivity() {
         loadAppHeader()
         setupList()
         setupFilter()
+        menuActions = PerAppCrashMenuActions(
+            activity = this,
+            packageName = packageName,
+            getAppLabel = { binding.tvLabel.text.toString() },
+            onClearConfirmed = {
+                viewModel.clearRecords()
+                Toast.makeText(this, R.string.per_app_clear_success, Toast.LENGTH_SHORT).show()
+            },
+        )
         setupMenu()
 
         lifecycleScope.launch {
@@ -126,10 +133,7 @@ class PerAppCrashActivity : AppCompatActivity() {
         )
         binding.recyclerView.apply {
             adapter = this@PerAppCrashActivity.adapter
-            layoutManager = LinearLayoutManager(this@PerAppCrashActivity, RecyclerView.VERTICAL, false)
-            addItemDecoration(VerticalSpacingItemDecoration(
-                resources.getDimensionPixelSize(R.dimen.spacing_xs)
-            ))
+            RecyclerViewListSetup.apply(this, this@PerAppCrashActivity)
         }
         EmptyState.bind(binding.emptyState.root, getString(R.string.per_app_empty), R.drawable.ic_tab_observe)
         adapter.addLoadStateListener { loadStates ->
@@ -169,34 +173,23 @@ class PerAppCrashActivity : AppCompatActivity() {
     }
 
     private fun setupMenu() {
-        addMenuProvider(object : MenuProvider {
-            override fun onCreateMenu(menu: android.view.Menu, menuInflater: android.view.MenuInflater) {
-                menuInflater.inflate(R.menu.menu_per_app_crash, menu)
-            }
-
-            override fun onMenuItemSelected(menuItem: android.view.MenuItem): Boolean {
-                return when (menuItem.itemId) {
-                    R.id.item_clear_per_app -> {
-                        showClearDialog()
-                        true
-                    }
-                    else -> false
+        addMenuProvider(
+            object : MenuProvider {
+                override fun onCreateMenu(menu: android.view.Menu, menuInflater: android.view.MenuInflater) {
+                    menuInflater.inflate(R.menu.menu_per_app_crash, menu)
                 }
-            }
-        })
-    }
 
-    private fun showClearDialog() {
-        val label = binding.tvLabel.text.toString()
-        MaterialAlertDialogBuilder(this)
-            .setTitle(R.string.per_app_clear_confirm_title)
-            .setMessage(getString(R.string.per_app_clear_confirm_message, label))
-            .setPositiveButton(android.R.string.ok) { _, _ ->
-                viewModel.clearRecords()
-                Toast.makeText(this, R.string.per_app_clear_success, Toast.LENGTH_SHORT).show()
-            }
-            .setNegativeButton(android.R.string.cancel, null)
-            .show()
+                override fun onPrepareMenu(menu: android.view.Menu) {
+                    menuActions.prepareMenu(menu)
+                }
+
+                override fun onMenuItemSelected(menuItem: android.view.MenuItem): Boolean {
+                    return menuActions.handleItem(menuItem)
+                }
+            },
+            this,
+            Lifecycle.State.RESUMED,
+        )
     }
 
     private fun renderSummary(state: PerAppCrashUiState) {

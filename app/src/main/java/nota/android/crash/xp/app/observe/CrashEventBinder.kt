@@ -3,6 +3,7 @@ package nota.android.crash.xp.app.observe
 import android.content.Context
 import android.text.format.DateUtils
 import android.view.View
+import android.widget.TextView
 import androidx.core.content.ContextCompat
 import nota.android.crash.xp.app.R
 import nota.android.crash.common.data.CrashEvent
@@ -26,16 +27,21 @@ object CrashEventBinder {
             event.shortExceptionClass,
             detail,
         )
-        binding.root.contentDescription = context.getString(
-            R.string.legacy_app_row_a11y,
-            label,
-            subtitle,
-            relativeTime,
-        )
+        val outcomeLabel = outcomeLabel(context, event)
+        binding.root.contentDescription = buildString {
+            append(label)
+            append("，")
+            append(outcomeLabel)
+            append("，")
+            append(subtitle)
+            append("，")
+            append(relativeTime)
+        }
         binding.tvSubtitle.text = subtitle
 
         binding.ivIcon.setImageDrawable(loadIcon(context, event.packageName))
 
+        bindOutcomeBadge(context, binding.tvOutcomeBadge, event)
         bindSourceBadge(context, binding.tvSourceBadge, event.source)
     }
 
@@ -54,15 +60,8 @@ object CrashEventBinder {
             binding.tvMessage.visibility = View.GONE
         }
 
-        val sourceLabel = formatSource(context, event.source)
-        if (sourceLabel != null) {
-            binding.tvSourceBadge.visibility = View.VISIBLE
-            binding.tvSourceBadge.text = sourceLabel.label
-            binding.tvSourceBadge.contentDescription = sourceLabel.contentDescription
-        } else {
-            binding.tvSourceBadge.visibility = View.GONE
-            binding.tvSourceBadge.contentDescription = null
-        }
+        bindOutcomeBadge(context, binding.tvOutcomeBadge, event)
+        bindSourceBadge(context, binding.tvSourceBadge, event.source)
     }
 
     private fun relativeTime(context: Context, event: CrashEvent) = DateUtils.getRelativeTimeSpanString(
@@ -72,7 +71,23 @@ object CrashEventBinder {
         DateUtils.FORMAT_ABBREV_RELATIVE,
     )
 
-    private fun bindSourceBadge(context: Context, badge: android.widget.TextView, source: String?) {
+    private fun bindOutcomeBadge(context: Context, badge: TextView, event: CrashEvent) {
+        if (event.intercepted) {
+            badge.visibility = View.VISIBLE
+            badge.setText(R.string.crash_outcome_intercepted)
+            badge.setBackgroundResource(R.drawable.bg_status_active)
+            badge.setTextColor(ContextCompat.getColor(context, R.color.statusActiveText))
+            badge.contentDescription = context.getString(R.string.crash_outcome_intercepted_a11y)
+        } else {
+            badge.visibility = View.VISIBLE
+            badge.setText(R.string.crash_outcome_monitor_only)
+            badge.setBackgroundResource(R.drawable.bg_status_inactive)
+            badge.setTextColor(ContextCompat.getColor(context, R.color.statusInactiveText))
+            badge.contentDescription = context.getString(R.string.crash_outcome_monitor_only_a11y)
+        }
+    }
+
+    private fun bindSourceBadge(context: Context, badge: TextView, source: String?) {
         val sourceLabel = formatSource(context, source)
         if (sourceLabel != null) {
             badge.visibility = View.VISIBLE
@@ -83,6 +98,13 @@ object CrashEventBinder {
             badge.contentDescription = null
         }
     }
+
+    private fun outcomeLabel(context: Context, event: CrashEvent): String =
+        if (event.intercepted) {
+            context.getString(R.string.crash_outcome_intercepted)
+        } else {
+            context.getString(R.string.crash_outcome_monitor_only)
+        }
 
     private fun loadIcon(context: Context, packageName: String) = try {
         context.packageManager.getApplicationIcon(packageName)

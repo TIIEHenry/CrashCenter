@@ -9,9 +9,9 @@
 
     <dimen name="content_padding_horizontal">16dp</dimen>
     <dimen name="filter_horizontal_padding">@dimen/content_padding_horizontal</dimen>
-    <dimen name="filter_row_padding_vertical">4dp</dimen>
-    <dimen name="filter_row_section_gap">4dp</dimen>
-    <dimen name="filter_row_height">32dp</dimen>
+    <dimen name="filter_row_padding_vertical">0dp</dimen>
+    <dimen name="filter_row_section_gap">0dp</dimen>
+    <dimen name="filter_row_height">28dp</dimen>
 
     <!-- Fluent 2 corner radii -->
     <dimen name="fluent_corner_radius_control">4dp</dimen>
@@ -23,6 +23,10 @@
     <dimen name="app_icon_size">48dp</dimen>
     <dimen name="app_icon_size_compact">36dp</dimen>
     <dimen name="list_item_min_height">48dp</dimen>
+    <!-- Fixed-height fast scroll (see VerticalFastScrollHelper). -->
+    <dimen name="fastscroll_thumb_height">56dp</dimen>
+    <dimen name="fastscroll_track_width">8dp</dimen>
+    <dimen name="fastscroll_margin_end">2dp</dimen>
     <dimen name="status_banner_height">32dp</dimen>
     <dimen name="status_icon_size">18dp</dimen>
     <dimen name="chip_min_height_compact">28dp</dimen>

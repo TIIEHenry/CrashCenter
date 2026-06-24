@@ -8,7 +8,7 @@ import nota.android.crash.xp.PrefManager
 import nota.android.crash.xp.app.config.ManagedAppRepository
 import nota.android.crash.xp.app.config.PackageVisibilityRepository
 import nota.android.crash.xp.app.data.CrashLogRepository
-import nota.android.crash.xp.app.data.FileCrashLogRepository
+import nota.android.crash.xp.app.data.DistributedCrashLogRepository
 import kotlin.reflect.KMutableProperty0
 
 /**
@@ -60,7 +60,7 @@ object ServiceLocator {
 
     fun crashLogRepository(context: Context): CrashLogRepository =
         getOrCreate(::crashLogRepository) {
-            FileCrashLogRepository(context.applicationContext, prefs(context))
+            DistributedCrashLogRepository(context.applicationContext, prefs(context))
         }
 
     fun rootAccessClient(context: Context): RootAccessClient =

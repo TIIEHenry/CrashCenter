@@ -9,13 +9,10 @@ object PrefManager {
     const val PREF_XPOSED_DIALOG_DISMISSED = "xposed_dialog_dismissed"
     const val PREF_ROOT_DIALOG_DISMISSED = "root_dialog_dismissed"
     const val PREF_CRASH_LOG_ENABLED = "crash_log_enabled"
-    const val PREF_CRASH_LOG_BACKEND_PROVIDER = "crash_log_backend_provider"
-    const val PREF_CRASH_LOG_BACKEND_DIRECT_FS = "crash_log_backend_direct_fs"
-    const val PREF_CRASH_LOG_BACKEND_RELAY = "crash_log_backend_relay"
-    const val PREF_CRASH_LOG_BACKEND_ROOT_SU = "crash_log_backend_root_su"
-    const val PREF_CRASH_LOG_BACKEND_ROOT_FS = "crash_log_backend_root_fs"
-    const val PREF_CRASH_LOG_BACKEND_RELAY_MERGE = "crash_log_backend_relay_merge"
+    const val PREF_CRASH_LOG_BACKEND_LOCAL_CACHE = "crash_log_backend_local_cache"
+    const val PREF_DISTRIBUTED_CACHE_MIGRATED = "distributed_cache_migrated"
     const val PREF_CRASH_LOG_MAX_ENTRIES = "crash_log_max_entries"
     const val PREF_CRASH_LOG_MAX_BYTES = "crash_log_max_bytes"
+    const val PREF_LOGCAT_CRASH_FILTER_DEFAULT = "logcat_crash_filter_default"
     const val ITSELF = PACKAGE_NAME
 }
