@@ -2,16 +2,16 @@ package nota.android.crash.xp.app.shell
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import android.os.Bundle
-import android.view.Menu
-import android.view.MenuItem
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.edit
+import androidx.core.view.MenuProvider
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import kotlinx.coroutines.launch
 
-import nota.android.crash.xp.PrefMigrator
+import nota.android.crash.xp.PrefManager
 import nota.android.crash.xp.XposedManagerLauncher
 import nota.android.crash.xp.app.ModuleActivation
 import nota.android.crash.xp.app.di.ServiceLocator
@@ -31,12 +31,6 @@ class MainShellActivity : AppCompatActivity() {
     private lateinit var tabController: ShellTabController
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        val prefs = ServiceLocator.prefs(applicationContext)
-        val legacyPrefState = PrefMigrator.migrateIfNeeded(
-            applicationContext, prefs, ServiceLocator.rootAccessClient(applicationContext)
-        )
-        PrefMigrator.migrateManagedModelIfNeeded(applicationContext, prefs, legacyPrefState)
-        PrefMigrator.migrateObserveInterceptSplitIfNeeded(prefs)
         super.onCreate(savedInstanceState)
         binding = ActivityMainShellBinding.inflate(layoutInflater)
         setContentView(binding.root)
@@ -49,6 +43,25 @@ class MainShellActivity : AppCompatActivity() {
 
         navigator = ShellNavigator(supportFragmentManager, R.id.fragmentContainer)
         tabController = ShellTabController(this, binding, shellViewModel, navigator)
+
+        addMenuProvider(object : MenuProvider {
+            override fun onCreateMenu(menu: android.view.Menu, menuInflater: android.view.MenuInflater) {
+                val tab = tabController.currentTab()
+                val menuRes = tabController.optionsMenuResForTab(tab)
+                menu.clear()
+                if (menuRes != null) {
+                    menuInflater.inflate(menuRes, menu)
+                }
+            }
+
+            override fun onPrepareMenu(menu: android.view.Menu) {
+                tabController.prepareOptionsMenu(menu)
+            }
+
+            override fun onMenuItemSelected(menuItem: android.view.MenuItem): Boolean {
+                return tabController.onOptionsItemSelected(menuItem)
+            }
+        });
 
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -69,19 +82,20 @@ class MainShellActivity : AppCompatActivity() {
         super.onResume()
         tabController.onResume()
         shellViewModel.refreshRootStatus(applicationContext, ServiceLocator.rootAccessClient(applicationContext))
+        showRootPermissionDialogIfNeeded()
     }
 
-    override fun onCreateOptionsMenu(menu: Menu): Boolean {
-        return tabController.onCreateOptionsMenu(menu)
-    }
-
-    override fun onPrepareOptionsMenu(menu: Menu): Boolean {
-        tabController.onPrepareOptionsMenu(menu)
-        return super.onPrepareOptionsMenu(menu)
-    }
-
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        return tabController.onOptionsItemSelected(item) || super.onOptionsItemSelected(item)
+    private fun showRootPermissionDialogIfNeeded() {
+        val prefs = ServiceLocator.prefs(applicationContext)
+        if (prefs.getBoolean(PrefManager.PREF_ROOT_DIALOG_DISMISSED, false)) return
+        MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.root_permission_title)
+            .setMessage(R.string.root_permission_message)
+            .setNeutralButton(R.string.btn_dont_show_again) { _, _ ->
+                prefs.edit { putBoolean(PrefManager.PREF_ROOT_DIALOG_DISMISSED, true) }
+            }
+            .setPositiveButton(android.R.string.ok, null)
+            .show()
     }
 
     fun requestShellTab(tab: ShellTab) {

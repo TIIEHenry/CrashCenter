@@ -98,8 +98,7 @@ hook 侧观测层 MVP 与模块 UI Shell 已落地：
 | 观测 UI | `xp/app/observe/` | `ObserveHostFragment`、`CrashHistoryFragment`、Paging |
 | 模块 DI | `xp/app/di/ServiceLocator.kt` | Repository 单例（until Hilt） |
 | 崩溃详情 | `ActivityCrashInfo.java` | 通知点击后展示 stack trace |
-| 偏好常量 | `PrefManager.java` | scope + `crash_log_enabled` / backend toggle keys |
-| 偏好迁移 | `PrefMigrator.kt` | 一次性从 legacy `tiiehenry.xp.grapcrash` 导入配置 |
+| 偏好常量 | `PrefManager.kt` | `managed_packages`、`handle_system`、`show_system_ui`、crash log 键 |
 | 包可见性 | `PackageVisibilityHelper.kt` | Android 11+ `QUERY_ALL_PACKAGES` 检测与手动授权引导 |
 | Xposed 管理器跳转 | `XposedManagerLauncher.kt` | 状态条点击 → 多框架回退打开 LSPosed / EdXposed |
 | 通用列表 | `common/ui/adapter/BaseListAdapter.kt` | 通用 Adapter / ViewHolder |
@@ -109,9 +108,8 @@ hook 侧观测层 MVP 与模块 UI Shell 已落地：
 ```
 MainShellActivity / ConfigFragment (UI 进程)
   └── SharedPreferences "crash"
-        ├── scope_mode
-        ├── handle_system
-        ├── package_list (Set<String>, 禁用列表)
+        ├── managed_packages (Set<String>, 已拦截包)
+        ├── handle_system / show_system_ui
         └── crash_log_enabled / crash_log_backend_* (观测开关，4B-α)
 
 XposedEntry (目标 app 进程)

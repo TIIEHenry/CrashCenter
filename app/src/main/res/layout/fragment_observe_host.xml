@@ -16,8 +16,70 @@
         app:tabSelectedTextColor="@color/colorPrimary"
         app:tabTextColor="?android:attr/textColorSecondary" />
 
-    <FrameLayout
-        android:id="@+id/observeContent"
+    <HorizontalScrollView
+        android:id="@+id/sortChipRow"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:scrollbars="none"
+        android:paddingHorizontal="@dimen/spacing_md"
+        android:paddingVertical="@dimen/spacing_sm"
+        android:visibility="gone">
+
+        <com.google.android.material.chip.ChipGroup
+            android:id="@+id/sortChipGroup"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:singleLine="true"
+            app:singleSelection="true">
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/item_sort_time_newest"
+                style="@style/AppTheme.Chip.Setting"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/observe_sort_time_newest" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/item_sort_time_oldest"
+                style="@style/AppTheme.Chip.Setting"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/observe_sort_time_oldest" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/item_sort_package_asc"
+                style="@style/AppTheme.Chip.Setting"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/observe_sort_package_asc" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/item_sort_package_desc"
+                style="@style/AppTheme.Chip.Setting"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/observe_sort_package_desc" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/item_sort_exception_asc"
+                style="@style/AppTheme.Chip.Setting"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/observe_sort_exception_asc" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/item_sort_exception_desc"
+                style="@style/AppTheme.Chip.Setting"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/observe_sort_exception_desc" />
+
+        </com.google.android.material.chip.ChipGroup>
+
+    </HorizontalScrollView>
+
+    <androidx.viewpager2.widget.ViewPager2
+        android:id="@+id/viewPager"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1" />

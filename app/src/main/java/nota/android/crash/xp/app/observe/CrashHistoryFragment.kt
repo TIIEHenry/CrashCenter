@@ -1,5 +1,6 @@
 package nota.android.crash.xp.app.observe
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -17,6 +18,7 @@ import kotlinx.coroutines.launch
 import nota.android.crash.xp.app.R
 import nota.android.crash.xp.app.common.ui.EmptyState
 import nota.android.crash.xp.app.common.ui.LoadingState
+import nota.android.crash.xp.app.common.ui.VerticalSpacingItemDecoration
 import nota.android.crash.xp.app.common.ui.showErrorToast
 import nota.android.crash.xp.app.databinding.FragmentCrashHistoryBinding
 import nota.android.crash.xp.app.di.ServiceLocator
@@ -82,13 +84,24 @@ class CrashHistoryFragment : Fragment() {
     }
 
     private fun setupList() {
-        adapter = CrashHistoryPagingAdapter { event ->
-            CrashDetailBottomSheet.newInstance(event.id)
-                .show(parentFragmentManager, CrashDetailBottomSheet.TAG)
-        }
+        adapter = CrashHistoryPagingAdapter(
+            onItemClick = { event ->
+                CrashDetailBottomSheet.newInstance(event.id)
+                    .show(parentFragmentManager, CrashDetailBottomSheet.TAG)
+            },
+            onItemLongClick = { event ->
+                val intent = Intent(requireContext(), PerAppCrashActivity::class.java).apply {
+                    putExtra(PerAppCrashActivity.EXTRA_PACKAGE_NAME, event.packageName)
+                }
+                startActivity(intent)
+            },
+        )
         binding.recyclerView.apply {
             adapter = this@CrashHistoryFragment.adapter
             layoutManager = LinearLayoutManager(requireContext(), RecyclerView.VERTICAL, false)
+            addItemDecoration(VerticalSpacingItemDecoration(
+                resources.getDimensionPixelSize(R.dimen.spacing_xs)
+            ))
         }
         adapter.addLoadStateListener { loadStates ->
             val isLoading = loadStates.refresh is LoadState.Loading

@@ -5,7 +5,6 @@ import android.content.SharedPreferences
 import nota.android.crash.root.RootAccessClient
 import nota.android.crash.root.RootServiceRemoteAdapter
 import nota.android.crash.xp.PrefManager
-import nota.android.crash.xp.app.config.LegacyAppRepository
 import nota.android.crash.xp.app.config.ManagedAppRepository
 import nota.android.crash.xp.app.config.PackageVisibilityRepository
 import nota.android.crash.xp.app.data.CrashLogRepository
@@ -20,9 +19,6 @@ object ServiceLocator {
 
     @Volatile
     private var prefs: SharedPreferences? = null
-
-    @Volatile
-    private var legacyAppRepository: LegacyAppRepository? = null
 
     @Volatile
     private var managedAppRepository: ManagedAppRepository? = null
@@ -52,11 +48,6 @@ object ServiceLocator {
                 .getSharedPreferences(PrefManager.PREF_NAME, Context.MODE_PRIVATE)
         }
 
-    fun legacyAppRepository(context: Context): LegacyAppRepository =
-        getOrCreate(::legacyAppRepository) {
-            LegacyAppRepository(context.applicationContext, prefs(context))
-        }
-
     fun managedAppRepository(context: Context): ManagedAppRepository =
         getOrCreate(::managedAppRepository) {
             ManagedAppRepository(context.applicationContext, prefs(context))
@@ -83,7 +74,6 @@ object ServiceLocator {
     fun clear() {
         synchronized(this) {
             prefs = null
-            legacyAppRepository = null
             managedAppRepository = null
             packageVisibilityRepository = null
             crashLogRepository = null

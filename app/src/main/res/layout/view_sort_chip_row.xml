@@ -15,45 +15,36 @@
         android:scrollbars="none">
 
         <com.google.android.material.chip.ChipGroup
-            android:id="@+id/managed_chipGroup"
+            android:id="@+id/sort_chipGroup"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             app:singleLine="true"
             app:singleSelection="true">
 
             <com.google.android.material.chip.Chip
-                android:id="@+id/managed_chipAll"
+                android:id="@+id/sort_chipRecent"
                 style="@style/AppTheme.Chip"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:checked="true"
-                android:text="@string/item_all" />
+                android:text="@string/sort_recent_short" />
 
             <com.google.android.material.chip.Chip
-                android:id="@+id/managed_chipEnabled"
+                android:id="@+id/sort_chipName"
                 style="@style/AppTheme.Chip"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/managed_filter_enabled" />
+                android:text="@string/sort_name_short" />
 
             <com.google.android.material.chip.Chip
-                android:id="@+id/managed_chipPending"
+                android:id="@+id/sort_chipCrashFreq"
                 style="@style/AppTheme.Chip"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/managed_filter_pending" />
+                android:text="@string/sort_crash_freq_short" />
 
         </com.google.android.material.chip.ChipGroup>
 
     </HorizontalScrollView>
-
-    <TextView
-        android:id="@+id/managed_countLabel"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="@dimen/spacing_sm"
-        android:textColor="@color/textTertiary"
-        android:textSize="12sp"
-        tools:text="3 apps" />
 
 </LinearLayout>

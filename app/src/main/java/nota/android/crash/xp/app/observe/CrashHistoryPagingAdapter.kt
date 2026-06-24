@@ -1,39 +1,82 @@
 package nota.android.crash.xp.app.observe
 
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
 import androidx.paging.PagingDataAdapter
 import androidx.recyclerview.widget.DiffUtil
+import androidx.recyclerview.widget.RecyclerView
 import nota.android.crash.common.data.CrashEvent
 import nota.android.crash.xp.app.databinding.ViewCrashEventRowBinding
+import nota.android.crash.xp.app.databinding.ViewPerAppCrashEventRowBinding
+
+enum class CrashHistoryDisplayMode { GLOBAL, PER_APP }
 
 class CrashEventViewHolder(
-    private val binding: ViewCrashEventRowBinding,
+    itemView: View,
+    private val binder: (CrashEvent) -> Unit,
     onClick: (Int) -> Unit,
-) : androidx.recyclerview.widget.RecyclerView.ViewHolder(binding.root) {
+    onLongClick: ((Int) -> Boolean)? = null,
+) : RecyclerView.ViewHolder(itemView) {
 
     init {
-        binding.root.setOnClickListener {
+        itemView.setOnClickListener {
             onClick(bindingAdapterPosition)
+        }
+        if (onLongClick != null) {
+            itemView.setOnLongClickListener {
+                onLongClick(bindingAdapterPosition)
+            }
         }
     }
 
     fun bind(event: CrashEvent) {
-        CrashEventBinder.bind(binding, event)
+        binder(event)
     }
 }
 
 class CrashHistoryPagingAdapter(
     private val onItemClick: (CrashEvent) -> Unit,
+    private val onItemLongClick: ((CrashEvent) -> Unit)? = null,
+    private val displayMode: CrashHistoryDisplayMode = CrashHistoryDisplayMode.GLOBAL,
 ) : PagingDataAdapter<CrashEvent, CrashEventViewHolder>(DIFF_CALLBACK) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): CrashEventViewHolder {
-        val binding = ViewCrashEventRowBinding.inflate(
-            LayoutInflater.from(parent.context), parent, false
-        )
-        return CrashEventViewHolder(binding) { position ->
-            if (position != androidx.recyclerview.widget.RecyclerView.NO_POSITION) {
-                getItem(position)?.let { onItemClick(it) }
+        val inflater = LayoutInflater.from(parent.context)
+        val longClick: ((Int) -> Boolean)? = onItemLongClick?.let { handler ->
+            { position ->
+                if (position != RecyclerView.NO_POSITION) {
+                    getItem(position)?.let { event ->
+                        handler(event)
+                        true
+                    } ?: false
+                } else false
+            }
+        }
+        return when (displayMode) {
+            CrashHistoryDisplayMode.GLOBAL -> {
+                val binding = ViewCrashEventRowBinding.inflate(inflater, parent, false)
+                CrashEventViewHolder(binding.root,
+                    binder = { event -> CrashEventBinder.bindGlobal(binding, event) },
+                    onClick = { position ->
+                        if (position != RecyclerView.NO_POSITION) {
+                            getItem(position)?.let { onItemClick(it) }
+                        }
+                    },
+                    onLongClick = longClick,
+                )
+            }
+            CrashHistoryDisplayMode.PER_APP -> {
+                val binding = ViewPerAppCrashEventRowBinding.inflate(inflater, parent, false)
+                CrashEventViewHolder(binding.root,
+                    binder = { event -> CrashEventBinder.bindPerApp(binding, event) },
+                    onClick = { position ->
+                        if (position != RecyclerView.NO_POSITION) {
+                            getItem(position)?.let { onItemClick(it) }
+                        }
+                    },
+                    onLongClick = longClick,
+                )
             }
         }
     }

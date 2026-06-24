@@ -45,8 +45,8 @@ class ShellTabController(
                     }
                 }
 
-                override fun invalidateOptionsMenu() {
-                    activity.invalidateOptionsMenu()
+                override fun invalidateMenu() {
+                    activity.invalidateMenu()
                 }
             },
         )
@@ -71,26 +71,18 @@ class ShellTabController(
         viewModel.refreshXposedStatus(activity)
     }
 
-    fun onCreateOptionsMenu(menu: android.view.Menu): Boolean {
-        val tab = coordinator.currentTab()
-        val menuRes = coordinator.optionsMenuResForTab(tab)
-        return if (menuRes != null) {
-            activity.menuInflater.inflate(menuRes, menu)
-            true
-        } else {
-            menu.clear()
-            true
-        }
-    }
+    // ─── Forwarding to coordinator, called by Activityʼs MenuProvider ───
 
-    fun onPrepareOptionsMenu(menu: android.view.Menu): Boolean {
+    fun currentTab(): ShellTab = coordinator.currentTab()
+
+    fun optionsMenuResForTab(tab: ShellTab): Int? = coordinator.optionsMenuResForTab(tab)
+
+    fun prepareOptionsMenu(menu: android.view.Menu) {
         coordinator.prepareOptionsMenu(menu)
-        return true
     }
 
-    fun onOptionsItemSelected(item: android.view.MenuItem): Boolean {
-        return coordinator.onOptionsItemSelected(item)
-    }
+    fun onOptionsItemSelected(item: android.view.MenuItem): Boolean =
+        coordinator.onOptionsItemSelected(item)
 
     fun selectShellTab(tab: ShellTab) {
         coordinator.selectTab(tab, fromUser = true)

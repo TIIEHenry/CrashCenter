@@ -3,7 +3,7 @@ title: "术语表"
 type: concept
 status: accepted
 phase: N/A
-updated: 2026-06-23
+updated: 2026-06-24
 summary: "CrashCenter 项目术语单一事实源（含受管应用、观测/拦截分离）"
 ---
 
@@ -14,13 +14,12 @@ summary: "CrashCenter 项目术语单一事实源（含受管应用、观测/拦
 | 术语 | 定义 |
 |------|------|
 | **CrashCenter** | 本 Xposed 模块项目，应用 ID `nota.android.crash.xp.app`，显示名 CrashCenter / 崩溃中心 |
-| **Scope Mode** | 作用域模式。开启时过滤**系统应用**是否安装捕获；第三方 app 默认安装观测（ADR-023） |
-| **Disabled Package** | `package_list` 中记录的包名（**Legacy**）。Switch **关闭** → 仅观测（`shouldIntercept=false`） |
-| **Managed App（受管应用）** | 用户策展列表中的包；用于 per-app 拦截/通知配置，**不**门控是否观测 |
-| **Intervention Rule（干预规则）** | `intervention_rules` JSON；`CATCH_ALL.enabled` → `shouldIntercept` |
-| **仅观测** | Switch OFF / 无 enabled 规则：`shouldInstall=true`，`shouldIntercept=false` |
+| **Scope Mode** | （已移除 `scope_mode` 键）系统 app 是否安装捕获由 `handle_system` 控制 |
+| **Intercept enabled** | 包名在 `managed_packages` 中 → `shouldIntercept=true` |
+| **Managed App（受管应用）** | 历史术语（ADR-015）；现 UI 为全量已安装列表，Switch 写 `managed_packages` |
+| **仅观测** | Switch OFF / 不在 `managed_packages`：`shouldInstall=true`，`shouldIntercept=false` |
 | **shouldInstall** | hook 侧是否安装 `Application.onCreate` 捕获（ADR-023）；取代原 `shouldHook` 的注入语义 |
-| **shouldIntercept** | hook 侧是否启用 Looper 续命 + 吞异常；行内 Switch / `CATCH_ALL.enabled` 映射此字段 |
+| **shouldIntercept** | hook 侧是否启用 Looper 续命 + 吞异常；行内 Switch ↔ `managed_packages` |
 | **Observe-only（纯观测）** | `shouldInstall=true` 且 `shouldIntercept=false`：记录崩溃后转发系统默认处理，进程可退出 |
 | **CrashHandler** | 崩溃捕获器：INTERCEPT 续命；OBSERVE 转发 UEH（ADR-023 as-built） |
 | **Observation Layer** | 观测层：记录 Java 未捕获异常；**不依赖**是否拦截续命（ADR-023）；与干预层分离 |

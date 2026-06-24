@@ -9,8 +9,8 @@
 
     <dimen name="content_padding_horizontal">16dp</dimen>
     <dimen name="filter_horizontal_padding">@dimen/content_padding_horizontal</dimen>
-    <dimen name="filter_row_padding_vertical">8dp</dimen>
-    <dimen name="filter_row_section_gap">8dp</dimen>
+    <dimen name="filter_row_padding_vertical">4dp</dimen>
+    <dimen name="filter_row_section_gap">4dp</dimen>
     <dimen name="filter_row_height">32dp</dimen>
 
     <!-- Fluent 2 corner radii -->

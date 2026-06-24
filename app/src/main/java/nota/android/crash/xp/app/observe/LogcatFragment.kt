@@ -1,6 +1,7 @@
 package nota.android.crash.xp.app.observe
 
 import android.app.Activity
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -10,6 +11,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.edit
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
@@ -18,10 +20,12 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.chip.Chip
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import nota.android.crash.root.RootLogcatReader
+import nota.android.crash.xp.PrefManager
 import nota.android.crash.xp.app.R
 import nota.android.crash.xp.app.common.ui.EmptyState
 import nota.android.crash.xp.app.common.ui.LoadingState
@@ -94,21 +98,19 @@ class LogcatFragment : Fragment() {
         }
     }
 
-    private fun setupModeChips() {
-        val rootAvailable = RootLogcatReader.isAvailable(requireContext())
-        binding.chipModeRoot.isEnabled = rootAvailable
-        if (!rootAvailable) {
-            binding.chipModeRoot.isChecked = false
-            binding.chipModeFile.isChecked = true
-        }
+    private var isProgrammaticModeChange = false
 
+    private fun setupModeChips() {
         binding.chipGroupMode.setOnCheckedStateChangeListener { _, checkedIds ->
+            if (isProgrammaticModeChange) return@setOnCheckedStateChangeListener
             val checkedId = checkedIds.firstOrNull() ?: return@setOnCheckedStateChangeListener
             when (checkedId) {
                 R.id.chipModeRoot -> {
-                    binding.bufferChipRow.visibility = View.VISIBLE
-                    val buffer = resolveSelectedBuffer()
-                    viewModel.loadFromRoot(requireContext(), buffer)
+                    requestRootThen {
+                        binding.bufferChipRow.visibility = View.VISIBLE
+                        val buffer = resolveSelectedBuffer()
+                        viewModel.loadFromRoot(requireContext(), buffer)
+                    }
                 }
                 R.id.chipModeFile -> {
                     binding.bufferChipRow.visibility = View.GONE
@@ -121,15 +123,22 @@ class LogcatFragment : Fragment() {
 
         // Initial visibility
         val initialMode = viewModel.uiState.value.sourceMode
+        isProgrammaticModeChange = true
         if (initialMode == SourceMode.ROOT) {
             binding.chipModeRoot.isChecked = true
             binding.bufferChipRow.visibility = View.VISIBLE
         } else if (initialMode == SourceMode.FILE) {
             binding.chipModeFile.isChecked = true
             binding.bufferChipRow.visibility = View.GONE
-        } else if (!rootAvailable) {
-            binding.bufferChipRow.visibility = View.GONE
         }
+        isProgrammaticModeChange = false
+    }
+
+    private fun setFileModeProgrammatic() {
+        isProgrammaticModeChange = true
+        binding.chipModeFile.isChecked = true
+        binding.bufferChipRow.visibility = View.GONE
+        isProgrammaticModeChange = false
     }
 
     private fun setupBufferChips() {
@@ -184,20 +193,36 @@ class LogcatFragment : Fragment() {
         return LogcatBuffer.MAIN
     }
 
-    private fun checkRootAndLoad() {
-        viewLifecycleOwner.lifecycleScope.launch {
-            val available = withContext(Dispatchers.IO) {
-                RootLogcatReader.isAvailable(requireContext())
+    private fun requestRootThen(onProceed: () -> Unit) {
+        val prefs = requireContext().getSharedPreferences(PrefManager.PREF_NAME, Context.MODE_PRIVATE)
+        if (prefs.getBoolean(PrefManager.PREF_ROOT_DIALOG_DISMISSED, false)) {
+            onProceed()
+            return
+        }
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle(R.string.root_permission_title)
+            .setMessage(R.string.root_permission_message)
+            .setNeutralButton(R.string.btn_dont_show_again) { _, _ ->
+                prefs.edit { putBoolean(PrefManager.PREF_ROOT_DIALOG_DISMISSED, true) }
+                onProceed()
             }
-            if (available) {
-                binding.chipModeRoot.isChecked = true
-                binding.bufferChipRow.visibility = View.VISIBLE
-                viewModel.loadFromRoot(requireContext(), resolveSelectedBuffer())
-            } else {
-                binding.chipModeRoot.isEnabled = false
-                binding.chipModeFile.isChecked = true
-                binding.bufferChipRow.visibility = View.GONE
-                launchFilePicker()
+            .setPositiveButton(android.R.string.ok, null)
+            .show()
+    }
+
+    private fun checkRootAndLoad() {
+        requestRootThen {
+            viewLifecycleOwner.lifecycleScope.launch {
+                val available = withContext(Dispatchers.IO) {
+                    RootLogcatReader.isAvailable(requireContext())
+                }
+                if (available) {
+                    binding.chipModeRoot.isChecked = true
+                    binding.bufferChipRow.visibility = View.VISIBLE
+                    viewModel.loadFromRoot(requireContext(), resolveSelectedBuffer())
+                } else {
+                    setFileModeProgrammatic()
+                }
             }
         }
     }
@@ -243,11 +268,13 @@ class LogcatFragment : Fragment() {
 
         // Sync mode chips (avoid triggering listener loops)
         val isRootMode = state.sourceMode == SourceMode.ROOT
+        isProgrammaticModeChange = true
         if (isRootMode && !binding.chipModeRoot.isChecked) {
             binding.chipModeRoot.isChecked = true
         } else if (state.sourceMode == SourceMode.FILE && !binding.chipModeFile.isChecked) {
             binding.chipModeFile.isChecked = true
         }
+        isProgrammaticModeChange = false
         binding.bufferChipRow.visibility = if (isRootMode) View.VISIBLE else View.GONE
 
         // Sync active buffer chip

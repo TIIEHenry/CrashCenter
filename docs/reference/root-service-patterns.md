@@ -22,7 +22,7 @@ summary: "从 AppSnapShotor 提炼的 libsu RootService 模式；CrashCenter 统
 | 模块 UI 读 canonical JSONL | 否 | 同 UID `files/crash_logs/` |
 | 模块 ingest 读各 app `crashcenter_relay/` | **是（优先）** | 模块进程 libsu，参考 AppSnapShotor |
 | hook 目标进程写模块目录 | 视 DenyList | 目标 UID 内 `su`，可靠性低于模块侧 |
-| prefs 一次性迁移 | 可选 | `PrefMigrator` 已用 `su cat` 读旧包 prefs |
+| prefs 一次性迁移 | — | **已移除**（2026-06-24）；root 仅用于 crash log ingest |
 
 **关键区分**（与 [crash-log-ipc.md](../architecture/crash-log-ipc.md) 一致）：
 

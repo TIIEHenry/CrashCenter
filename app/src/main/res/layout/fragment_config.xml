@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -33,19 +34,18 @@
             android:layout_marginTop="@dimen/filter_row_section_gap" />
 
         <include
-            android:id="@+id/managedFilterChipRow"
-            layout="@layout/view_managed_filter_chip_row"
+            android:id="@+id/interceptFilterChipRow"
+            layout="@layout/view_hook_filter_chip_row"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/filter_row_section_gap" />
 
         <include
-            android:id="@+id/hookFilterChipRow"
-            layout="@layout/view_hook_filter_chip_row"
+            android:id="@+id/sortChipRow"
+            layout="@layout/view_sort_chip_row"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/filter_row_section_gap"
-            android:visibility="gone" />
+            android:layout_marginTop="@dimen/filter_row_section_gap" />
 
     </LinearLayout>
 
@@ -61,6 +61,11 @@
             android:clipToPadding="false"
             android:paddingHorizontal="@dimen/filter_horizontal_padding"
             android:paddingBottom="@dimen/spacing_md"
+            app:fastScrollEnabled="true"
+            app:fastScrollHorizontalThumbDrawable="@drawable/fastscroll_thumb_horizontal"
+            app:fastScrollHorizontalTrackDrawable="@drawable/fastscroll_track_horizontal"
+            app:fastScrollVerticalThumbDrawable="@drawable/fastscroll_thumb_vertical"
+            app:fastScrollVerticalTrackDrawable="@drawable/fastscroll_track_vertical"
             tools:listitem="@layout/view_managed_app_row" />
 
         <include

@@ -3,66 +3,97 @@ package nota.android.crash.xp.app.config
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.StateFlow
+import nota.android.crash.xp.app.PackageVisibilityHelper
+import nota.android.crash.xp.app.common.BaseFlowViewModel
 
 class ConfigViewModel(
-    legacyRepository: LegacyAppRepository,
-    managedRepository: ManagedAppRepository,
-    visibilityRepository: PackageVisibilityRepository,
-) : ViewModel() {
+    private val repository: ManagedAppRepository,
+    private val visibilityRepository: PackageVisibilityRepository,
+) : BaseFlowViewModel<ConfigUiState>(
+    ConfigUiState(
+        handleSystem = repository.readHandleSystem(),
+        showSystemUi = repository.readShowSystemUi(),
+        packageVisibility = visibilityRepository.detectPackageVisibility(),
+    ),
+) {
 
-    private val delegate: ConfigViewModelDelegate = createDelegate(
-        legacyRepository,
-        managedRepository,
-        visibilityRepository,
-    )
+    fun loadApps(forceReload: Boolean = false) {
+        val current = _uiState.value
+        if (!forceReload && current.apps.isNotEmpty()) return
 
-    val uiState: StateFlow<ConfigUiState> = delegate.uiState
-
-    fun loadApps(forceReload: Boolean = false) = delegate.loadApps(forceReload)
-    fun setQuery(query: String) = delegate.setQuery(query)
-    fun setHookFilter(filter: HookFilter) = delegate.setHookFilter(filter)
-    fun setManagedFilter(filter: ManagedFilter) = delegate.setManagedFilter(filter)
-    fun setScopeMode(enabled: Boolean) = delegate.setScopeMode(enabled)
-    fun setHandleSystem(enabled: Boolean) = delegate.setHandleSystem(enabled)
-    fun setShowSystemUi(enabled: Boolean) = delegate.setShowSystemUi(enabled)
-    fun toggleApp(packageName: String) = delegate.toggleApp(packageName)
-    fun setManagedSwitch(packageName: String, enabled: Boolean) = delegate.setManagedSwitch(packageName, enabled)
-    fun addManagedPackages(packages: Collection<String>) = delegate.addManagedPackages(packages)
-    fun selectAll(enabled: Boolean) = delegate.selectAll(enabled)
-    fun setSortMode(mode: SortMode) = delegate.setSortMode(mode)
-    fun clearError() = delegate.clearError()
-
-    private fun createDelegate(
-        legacyRepository: LegacyAppRepository,
-        managedRepository: ManagedAppRepository,
-        visibilityRepository: PackageVisibilityRepository,
-    ): ConfigViewModelDelegate {
-        return if (managedRepository.isLegacyMode()) {
-            LegacyConfigViewModel(legacyRepository, visibilityRepository, viewModelScope)
-        } else {
-            ManagedConfigViewModel(managedRepository, visibilityRepository, viewModelScope)
+        loadWithState(viewModelScope) {
+            val apps = repository.loadInstalledApps()
+            val visibility = visibilityRepository.detectPackageVisibility()
+            emitState { copy(isLoading = false, apps = apps, packageVisibility = visibility) }
+            applyFilters(preserveSort = false)
         }
     }
 
-    companion object {
-        const val EMPTY_FILTER = "filter_empty"
-        const val EMPTY_MANAGED_LIST = "managed_empty"
+    fun setQuery(query: String) {
+        emitState { copy(query = query) }
+        applyFilters(preserveSort = true)
     }
-}
 
-internal interface ConfigViewModelDelegate {
-    val uiState: StateFlow<ConfigUiState>
-    fun loadApps(forceReload: Boolean = false)
-    fun setQuery(query: String)
-    fun setHookFilter(filter: HookFilter)
-    fun setManagedFilter(filter: ManagedFilter)
-    fun setScopeMode(enabled: Boolean)
-    fun setHandleSystem(enabled: Boolean)
-    fun setShowSystemUi(enabled: Boolean)
-    fun toggleApp(packageName: String)
-    fun setManagedSwitch(packageName: String, enabled: Boolean)
-    fun addManagedPackages(packages: Collection<String>)
-    fun selectAll(enabled: Boolean)
-    fun setSortMode(mode: SortMode)
-    fun clearError()
+    fun setHandleSystem(enabled: Boolean) {
+        repository.setHandleSystem(enabled)
+        emitState { copy(handleSystem = enabled) }
+        applyFilters(preserveSort = true)
+    }
+
+    fun setShowSystemUi(enabled: Boolean) {
+        repository.setShowSystemUi(enabled)
+        emitState { copy(showSystemUi = enabled) }
+        applyFilters(preserveSort = true)
+    }
+
+    fun setSortMode(mode: SortMode) {
+        emitState { copy(sortMode = mode) }
+        applyFilters(preserveSort = true)
+    }
+
+    fun setInterceptFilter(filter: InterceptFilter) {
+        emitState { copy(interceptFilter = filter) }
+        applyFilters(preserveSort = true)
+    }
+
+    fun toggleIntercept(packageName: String) {
+        val current = _uiState.value.apps.find { it.packageName == packageName } ?: return
+        val enabled = !current.interceptEnabled
+        repository.setInterceptEnabled(packageName, enabled)
+        val updated = _uiState.value.apps.map { app ->
+            if (app.packageName == packageName) app.copy(interceptEnabled = enabled) else app
+        }
+        emitState { copy(apps = updated) }
+        applyFilters(preserveSort = true)
+    }
+
+    private fun applyFilters(preserveSort: Boolean) {
+        val current = _uiState.value
+        val filtered = AppFilterEngine.sort(
+            current.apps.filter { app ->
+                if (!current.showSystemUi && app.isSystem) return@filter false
+                when (current.interceptFilter) {
+                    InterceptFilter.ENABLED -> if (!app.interceptEnabled) return@filter false
+                    InterceptFilter.DISABLED -> if (app.interceptEnabled) return@filter false
+                    InterceptFilter.ALL -> {}
+                }
+                val q = current.query.trim().lowercase()
+                if (q.isNotEmpty()) {
+                    app.label.lowercase().contains(q) || app.packageName.lowercase().contains(q)
+                } else true
+            },
+            current.sortMode,
+        )
+        val emptyMsg = when {
+            filtered.isNotEmpty() -> null
+            current.apps.isEmpty() -> EMPTY_LIST
+            else -> EMPTY_FILTER
+        }
+        emitState { copy(visibleApps = filtered, emptyMessage = emptyMsg) }
+    }
+
+    companion object {
+        const val EMPTY_LIST = "empty_list"
+        const val EMPTY_FILTER = "filter_empty"
+    }
 }

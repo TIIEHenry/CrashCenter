@@ -7,7 +7,7 @@ import nota.android.crash.xp.app.observe.ObserveHostFragment
 /**
  * Testable coordinator that encapsulates the navigation decisions (tab selection,
  * back navigation, options menu logic) for the shell.  Android-framework glue
- * (BottomNavigationView, Activity#invalidateOptionsMenu, FragmentManager) is
+ * (BottomNavigationView, MenuHost#invalidateMenu, FragmentManager) is
  * injected via [navigator] and the caller-provided [delegate].
  */
 class ShellNavigationCoordinator(
@@ -19,8 +19,8 @@ class ShellNavigationCoordinator(
     interface Delegate {
         /** Sync the BottomNavigationView to reflect [tab]. */
         fun syncBottomNav(tab: ShellTab)
-        /** Ask the host Activity to rebuild its options menu. */
-        fun invalidateOptionsMenu()
+        /** Ask the host Activity to rebuild its options menu via MenuHost. */
+        fun invalidateMenu()
     }
 
     // ─── Tab selection ───
@@ -45,7 +45,7 @@ class ShellNavigationCoordinator(
 
         navigator.select(tab)
         delegate.syncBottomNav(tab)
-        delegate.invalidateOptionsMenu()
+        delegate.invalidateMenu()
         return true
     }
 

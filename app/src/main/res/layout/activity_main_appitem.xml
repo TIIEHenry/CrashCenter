@@ -4,7 +4,6 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:descendantFocusability="blocksDescendants"
     android:minHeight="@dimen/list_item_min_height"
     android:paddingHorizontal="@dimen/spacing_xs"
     android:paddingVertical="@dimen/spacing_xs">
@@ -76,8 +75,6 @@
         style="@style/AppTheme.Switch"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:clickable="false"
-        android:focusable="false"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent" />

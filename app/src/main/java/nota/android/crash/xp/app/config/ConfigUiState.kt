@@ -4,22 +4,15 @@ import nota.android.crash.xp.app.PackageVisibilityHelper
 import nota.android.crash.xp.app.common.HasErrorMessage
 import nota.android.crash.xp.app.common.LoadableState
 
-enum class ManagedFilter {
-    ALL, ENABLED, PENDING,
-}
+enum class InterceptFilter { ALL, ENABLED, DISABLED }
 
 data class ConfigUiState(
     override val isLoading: Boolean = false,
-    val allApps: List<AppItem> = emptyList(),
+    val apps: List<AppItem> = emptyList(),
     val visibleApps: List<AppItem> = emptyList(),
-    val managedApps: List<ManagedApp> = emptyList(),
-    val visibleManagedApps: List<ManagedApp> = emptyList(),
     val query: String = "",
-    val hookFilter: HookFilter = HookFilter.ALL,
-    val managedFilter: ManagedFilter = ManagedFilter.ALL,
-    val isLegacyMode: Boolean = true,
+    val interceptFilter: InterceptFilter = InterceptFilter.ALL,
     val sortMode: SortMode = SortMode.UPDATE_TIME_DESC,
-    val scopeMode: Boolean = false,
     val handleSystem: Boolean = false,
     val showSystemUi: Boolean = false,
     val packageVisibility: PackageVisibilityHelper.Status? = null,

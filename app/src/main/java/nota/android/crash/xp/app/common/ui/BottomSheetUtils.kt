@@ -4,6 +4,7 @@ import android.content.res.ColorStateList
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
+import androidx.activity.OnBackPressedCallback
 import androidx.core.content.ContextCompat
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialog
@@ -175,4 +176,18 @@ fun BottomSheetDialogFragment.configureCrashDetailBottomSheetAppearance(
     sheetContentRoot.layoutParams = sheetContentRoot.layoutParams.apply {
         height = ViewGroup.LayoutParams.MATCH_PARENT
     }
+
+    sheetDialog.onBackPressedDispatcher.addCallback(
+        this.viewLifecycleOwner,
+        object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                val currentHeight = bottomSheet.layoutParams.height
+                if (currentHeight >= fullHeight - 10) {
+                    applySheetHeight(halfHeight)
+                } else {
+                    dismiss()
+                }
+            }
+        },
+    )
 }

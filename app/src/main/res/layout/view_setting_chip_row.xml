@@ -13,14 +13,6 @@
         app:singleSelection="false">
 
         <com.google.android.material.chip.Chip
-            android:id="@+id/chipScopeMode"
-            style="@style/AppTheme.Chip.Setting"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:checkable="true"
-            android:text="@string/item_scope_mode_short" />
-
-        <com.google.android.material.chip.Chip
             android:id="@+id/chipHandleSystem"
             style="@style/AppTheme.Chip.Setting"
             android:layout_width="wrap_content"

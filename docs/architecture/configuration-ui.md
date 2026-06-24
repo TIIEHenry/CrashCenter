@@ -3,15 +3,16 @@ title: "配置域 UI 架构"
 type: architecture
 status: accepted
 phase: N/A
-updated: 2026-06-21
-summary: "配置域以 MainShellActivity 为壳层起点，ActivityMain 已废弃，页面职责由 ConfigFragment 承载；复用 Fluent Design System 与 Phase 3 单屏 IA"
+updated: 2026-06-24
+summary: "ConfigFragment 全量应用列表 + managed_packages Switch；已移除 Legacy/策展/intervention_rules 双轨"
 ---
 
 # 配置域 UI 架构
 
+> **As-built 2026-06-24**：`ConfigFragment` + `ConfigViewModel` + `ManagedAppRepository` 单轨；无 `LegacyAppRepository`、无 `PrefMigrator`。详见 [app-management-ui.md](app-management-ui.md)、[scope-and-prefs.md](scope-and-prefs.md)。下文部分章节为历史目标结构，实现已收敛。
+
 > 适用模块：`:app`
-> 当前源码：`MainShellActivity.kt`、`ConfigFragment.kt`、`ActivityCrashInfo.kt`、`common/ui/adapter/`
-> 目标源码：`MainShellActivity`、`ConfigFragment`、`ConfigViewModel`、`LegacyAppRepository` + `ManagedAppRepository`
+> 当前源码：`MainShellActivity.kt`、`ConfigFragment.kt`、`ConfigViewModel.kt`、`ManagedAppRepository.kt`
 
 ## 概述
 

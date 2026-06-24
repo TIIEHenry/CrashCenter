@@ -24,8 +24,13 @@ fun AppListItem.bindAppInfo(
     val pm = rootView.context.packageManager
     rootView.contentDescription = rootView.context.getString(
         R.string.legacy_app_row_a11y, label, packageName,
+        if (isSystem) rootView.context.getString(R.string.system_app_badge) else "",
     )
-    ivIcon.setImageDrawable(appInfo.loadIcon(pm))
+    ivIcon.setImageDrawable(try {
+        appInfo.loadIcon(pm)
+    } catch (_: Exception) {
+        pm.getDrawable("android", android.R.drawable.sym_def_app_icon, null)
+    })
     tvName.text = label
     tvPackageName.text = packageName
 }

@@ -59,6 +59,12 @@ class FakeCrashLogRepository : CrashLogRepository {
         return events.size < original
     }
 
+    override fun deleteByPackage(packageName: String): Int {
+        val original = events.size
+        _events.update { list -> list.filter { it.packageName != packageName } }
+        return original - events.size
+    }
+
     override fun clear() {
         _events.value = emptyList()
         throwOnGetAll = false

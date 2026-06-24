@@ -3,77 +3,57 @@ package nota.android.crash.xp.app.config
 import nota.android.crash.xp.app.R
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class EmptyStateRendererTest {
 
-    // -- decide empty --
-
     @Test
-    fun `empty list and EMPTY_MANAGED_LIST shows add action`() {
+    fun `empty list and EMPTY_LIST uses managed empty message`() {
         val state = ConfigUiState(
             isLoading = false,
-            isLegacyMode = false,
-            emptyMessage = ConfigViewModel.EMPTY_MANAGED_LIST,
+            emptyMessage = ConfigViewModel.EMPTY_LIST,
         )
 
-        val decision = decideEmpty(state, listCount = 0)
+        val (messageResId, showAction) = decideEmpty(state, listCount = 0)
 
-        assertTrue(decision.isEmpty)
-        assertEquals(R.string.managed_empty_message, decision.messageResId)
-        assertTrue(decision.showAddAction)
-        assertEquals(R.drawable.ic_tab_config, decision.iconResId)
+        assertEquals(R.string.managed_empty_message, messageResId)
+        assertTrue(showAction)
     }
 
     @Test
-    fun `empty list and EMPTY_FILTER hides add action`() {
+    fun `empty list and EMPTY_FILTER uses filter empty message`() {
         val state = ConfigUiState(
             isLoading = false,
-            isLegacyMode = false,
             emptyMessage = ConfigViewModel.EMPTY_FILTER,
         )
 
-        val decision = decideEmpty(state, listCount = 0)
+        val (messageResId, showAction) = decideEmpty(state, listCount = 0)
 
-        assertTrue(decision.isEmpty)
-        assertEquals(R.string.managed_filter_empty, decision.messageResId)
-        assertFalse(decision.showAddAction)
-        assertNull(decision.iconResId)
+        assertEquals(R.string.filter_empty, messageResId)
+        assertFalse(showAction)
     }
 
     @Test
     fun `loading suppresses empty state`() {
         val state = ConfigUiState(
             isLoading = true,
-            emptyMessage = ConfigViewModel.EMPTY_MANAGED_LIST,
+            emptyMessage = ConfigViewModel.EMPTY_LIST,
         )
 
-        val decision = decideEmpty(state, listCount = 0)
+        val (_, showAction) = decideEmpty(state, listCount = 0)
 
-        assertFalse(decision.isEmpty)
+        assertFalse(showAction)
     }
 
-    @Test
-    fun `non-empty list not empty`() {
-        val state = ConfigUiState(isLoading = false)
-
-        val decision = decideEmpty(state, listCount = 5)
-
-        assertFalse(decision.isEmpty)
-    }
-
-    @Test
-    fun `EMPTY_FILTER in legacy mode uses filter_empty resource`() {
-        val state = ConfigUiState(
-            isLoading = false,
-            isLegacyMode = true,
-            emptyMessage = ConfigViewModel.EMPTY_FILTER,
-        )
-
-        val decision = decideEmpty(state, listCount = 0)
-
-        assertEquals(R.string.filter_empty, decision.messageResId)
+    private fun decideEmpty(state: ConfigUiState, listCount: Int): Pair<Int, Boolean> {
+        val empty = !state.isLoading && listCount == 0
+        if (!empty) return Pair(R.string.managed_empty_message, false)
+        val showAction = state.emptyMessage == ConfigViewModel.EMPTY_LIST
+        val messageResId = when (state.emptyMessage) {
+            ConfigViewModel.EMPTY_LIST -> R.string.managed_empty_message
+            else -> R.string.filter_empty
+        }
+        return Pair(messageResId, showAction)
     }
 }

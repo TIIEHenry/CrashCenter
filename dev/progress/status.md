@@ -3,8 +3,8 @@ title: "项目进度状态"
 type: progress
 status: active
 phase: N/A
-updated: 2026-06-23
-summary: "Phase 5 观测/拦截分离 as-built（ADR-023）；4B-β IS 矩阵待验"
+updated: 2026-06-24
+summary: "Phase 5 观测/拦截 as-built；配置单轨化，legacy 迁移已移除"
 ---
 
 # 项目进度状态
@@ -13,15 +13,15 @@ summary: "Phase 5 观测/拦截分离 as-built（ADR-023）；4B-β IS 矩阵待
 
 | 项 | 状态 |
 |---|------|
-| 活跃 Phase | [Phase 3](../roadmap/active/phase3_ui_redesign.md) 🔄（LSPosed 手动 smoke + 3E M3 迁移） |
+| 活跃 Phase | [Phase 3](../roadmap/active/phase3_ui_redesign.md) 🔄（LSPosed 手动 smoke + 3E M3） |
 | 并行 Phase | [Phase 4](../roadmap/active/phase4_crash_observability.md) 🔄 **IS 矩阵待验**；[Phase 5](../roadmap/active/phase5_observe_intercept_split.md) 🔄 **5.1–5.3 as-built** |
 | 阻塞 | LSPosed 手动 smoke（observe + intercept）；4B IS-1~IS-6 / IS-R1~IS-R5 真机矩阵 |
 | 验证基线 | `461QYGDD2226C` **2026-06-19**：consolidated smoke **PASS**；dark mode Meizu **PASS** |
-| 文档 | 2026-06-23 roadmap + 架构 as-built 同步；`docs/design/` accepted |
+| 文档 | 2026-06-24 legacy 兼容移除 + prefs 单轨 as-built 同步 |
 
 ### 已完成
 
-- Phase 1–2 归档；UI Shell（ADR-009）；Phase 3G 受管应用 + 干预规则
+- Phase 1–2 归档；UI Shell（ADR-009）；Phase 3G 受管应用 + 干预规则（**2026-06-24 收敛为全量列表 + managed_packages**）
 - **4B-α**：`CrashLogCoordinator` 多后端并行；`CrashLogProvider`；retention 默认 500/8MB
 - **4B-β（部分）**：`RootSuBackend`、`RootFsBackend`、`RelayMergeBackend`（relay harvest + id dedupe）、`CrashLogIngestCoordinator`；`ingestedFrom` 字段
 - **4C**：历史 Paging + `CrashDetailBottomSheet` + CodeEditor 双载体
@@ -44,6 +44,13 @@ summary: "Phase 5 观测/拦截分离 as-built（ADR-023）；4B-β IS 矩阵待
 ---
 
 ## Recent Sessions
+
+### 2026-06-24 — 移除 legacy 兼容 + 配置单轨化
+
+- **代码**：删除 `PrefMigrator`、`LegacyPrefSnapshotReader`、`ManagedModelMigrator`、`package_list` / `intervention_rules` 模型；`ConfigViewModel` + `ManagedAppRepository` 单轨；`ScopePolicy` 仅读 `managed_packages`
+- **UI**：全量已安装应用列表；Switch 写拦截集；观测子页 ViewPager2 / 单应用崩溃页布局调整
+- **文档**：`scope-and-prefs`、`app-management-ui`、`glossary`、`usage`、ADR-014 superseded
+- **验证**：`:app:assembleDebug` + `:app:testDebugUnitTest` OK
 
 ### 2026-06-23 — 观测菜单去重 + 空态 CTA
 

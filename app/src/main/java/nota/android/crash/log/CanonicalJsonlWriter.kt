@@ -80,6 +80,40 @@ object CanonicalJsonlWriter {
     }
 
     /**
+     * Deletes all lines whose [CrashEvent.packageName] matches [packageName].
+     * Returns the number of lines removed, or 0 if none matched / file does not exist.
+     */
+    fun deleteByPackage(eventsFile: File, packageName: String): Int {
+        if (!eventsFile.isFile) return 0
+        RandomAccessFile(eventsFile, "rw").use { raf ->
+            val lock = raf.channel.lock()
+            try {
+                val lines = readLinesUtf8(raf)
+                val filtered = lines.filter { line ->
+                    val event = CrashEvent.fromJson(line)
+                    event == null || event.packageName != packageName
+                }
+                val removed = lines.size - filtered.size
+                if (removed == 0) return 0
+
+                if (filtered.isEmpty()) {
+                    eventsFile.delete()
+                } else {
+                    raf.setLength(0)
+                    raf.seek(0)
+                    filtered.forEach { line ->
+                        raf.write(line.toByteArray(Charsets.UTF_8))
+                        raf.write('\n'.code)
+                    }
+                }
+                return removed
+            } finally {
+                lock.release()
+            }
+        }
+    }
+
+    /**
      * Removes [eventsFile] under a file lock so concurrent writers finish first.
      * No-op if the file does not exist.
      */

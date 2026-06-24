@@ -1,17 +1,17 @@
 ---
 title: "ADR-014: Legacy Prefs 一次性迁移策略"
 type: decision
-status: accepted
+status: archived
 phase: 3
-updated: 2026-06-19
-summary: "PrefMigrator 首次启动从 tiiehenry.xp.grapcrash / grapcrash.xml 一次性导入配置到 crash.xml，标记 KEY_MIGRATED 后不再读旧路径"
+updated: 2026-06-24
+summary: "已移除：2026-06-24 删除 PrefMigrator 与 tiiehenry.xp.grapcrash 导入；新安装仅使用 crash.xml 当前键"
 ---
 
 # ADR-014: Legacy Prefs 一次性迁移策略
 
 ## 状态
 
-**Accepted** — Phase 3 已实现（`PrefMigrator.kt`）。
+**Archived** — 2026-06-24 移除全部 legacy 迁移代码（`PrefMigrator`、`LegacyPrefSnapshotReader`、`ManagedModelMigrator`）。不再从旧包或 `package_list` / `intervention_rules` 自动导入。
 
 ## 背景
 

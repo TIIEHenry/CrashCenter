@@ -34,6 +34,12 @@
                 <item
                     android:id="@+id/item_sort_by_update_time"
                     android:title="@string/sort_by_update_time" />
+                <item
+                    android:id="@+id/item_sort_by_crash_frequency_reverse"
+                    android:title="@string/sort_by_crash_frequency_reverse" />
+                <item
+                    android:id="@+id/item_sort_by_crash_frequency"
+                    android:title="@string/sort_by_crash_frequency" />
             </group>
         </menu>
     </item>

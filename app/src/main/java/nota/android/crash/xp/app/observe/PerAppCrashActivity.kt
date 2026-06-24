@@ -1,22 +1,28 @@
 package nota.android.crash.xp.app.observe
 
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
 import android.text.format.DateUtils
 import android.view.View
+import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.MenuProvider
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.paging.LoadState
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import nota.android.crash.xp.app.R
 import nota.android.crash.xp.app.SystemBars
 import nota.android.crash.xp.app.common.ui.EmptyState
 import nota.android.crash.xp.app.common.ui.LoadingState
+import nota.android.crash.xp.app.common.ui.VerticalSpacingItemDecoration
 import nota.android.crash.xp.app.common.ui.showErrorToast
 import nota.android.crash.xp.app.config.PackageInfoLoader
 import nota.android.crash.xp.app.data.PerAppStats
@@ -30,6 +36,7 @@ class PerAppCrashActivity : AppCompatActivity() {
     private var packageName: String? = null
     private var exceptionClass: String? = null
     private lateinit var adapter: CrashHistoryPagingAdapter
+    private var lastHistoryCleared = 0
 
     private val viewModel: PerAppCrashViewModel by viewModels {
         ServiceLocator.perAppCrashViewModelFactory(this, packageName, exceptionClass)
@@ -56,6 +63,8 @@ class PerAppCrashActivity : AppCompatActivity() {
 
         loadAppHeader()
         setupList()
+        setupFilter()
+        setupMenu()
 
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -82,35 +91,45 @@ class PerAppCrashActivity : AppCompatActivity() {
         if (pkg == null) {
             binding.tvPackageName.visibility = View.GONE
             binding.tvLabel.text = exceptionClass ?: ""
-            binding.toolbar.title = exceptionClass ?: ""
+            supportActionBar?.title = exceptionClass ?: ""
             binding.tvUninstalled.visibility = View.GONE
-            binding.ivIcon.setImageResource(R.mipmap.ic_launcher)
+            binding.ivIcon.setImageResource(android.R.drawable.sym_def_app_icon)
             return
         }
         binding.tvPackageName.text = pkg
         val appInfo = PackageInfoLoader.loadAppInfo(packageManager, pkg)?.second
         if (appInfo == null) {
-            binding.toolbar.title = pkg
+            supportActionBar?.title = pkg
             binding.tvLabel.text = pkg
             binding.tvUninstalled.visibility = View.VISIBLE
-            binding.ivIcon.setImageResource(R.mipmap.ic_launcher)
+            binding.ivIcon.setImageResource(android.R.drawable.sym_def_app_icon)
             return
         }
         binding.tvUninstalled.visibility = View.GONE
-        binding.ivIcon.setImageDrawable(appInfo.loadIcon(packageManager))
+        binding.ivIcon.setImageDrawable(try {
+            appInfo.loadIcon(packageManager)
+        } catch (_: Exception) {
+            packageManager.getDrawable("android", android.R.drawable.sym_def_app_icon, null)
+        })
         val label = PackageInfoLoader.loadLabel(packageManager, appInfo)
         binding.tvLabel.text = label
-        binding.toolbar.title = label
+        supportActionBar?.title = label
     }
 
     private fun setupList() {
-        adapter = CrashHistoryPagingAdapter { event ->
-            CrashDetailBottomSheet.newInstance(event.id)
-                .show(supportFragmentManager, CrashDetailBottomSheet.TAG)
-        }
+        adapter = CrashHistoryPagingAdapter(
+            onItemClick = { event ->
+                CrashDetailBottomSheet.newInstance(event.id)
+                    .show(supportFragmentManager, CrashDetailBottomSheet.TAG)
+            },
+            displayMode = CrashHistoryDisplayMode.PER_APP,
+        )
         binding.recyclerView.apply {
             adapter = this@PerAppCrashActivity.adapter
             layoutManager = LinearLayoutManager(this@PerAppCrashActivity, RecyclerView.VERTICAL, false)
+            addItemDecoration(VerticalSpacingItemDecoration(
+                resources.getDimensionPixelSize(R.dimen.spacing_xs)
+            ))
         }
         EmptyState.bind(binding.emptyState.root, getString(R.string.per_app_empty), R.drawable.ic_tab_observe)
         adapter.addLoadStateListener { loadStates ->
@@ -139,10 +158,56 @@ class PerAppCrashActivity : AppCompatActivity() {
         }
     }
 
+    private fun setupFilter() {
+        binding.etFilter.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+            override fun afterTextChanged(s: Editable?) {
+                viewModel.setFilterQuery(s?.toString().orEmpty())
+            }
+        })
+    }
+
+    private fun setupMenu() {
+        addMenuProvider(object : MenuProvider {
+            override fun onCreateMenu(menu: android.view.Menu, menuInflater: android.view.MenuInflater) {
+                menuInflater.inflate(R.menu.menu_per_app_crash, menu)
+            }
+
+            override fun onMenuItemSelected(menuItem: android.view.MenuItem): Boolean {
+                return when (menuItem.itemId) {
+                    R.id.item_clear_per_app -> {
+                        showClearDialog()
+                        true
+                    }
+                    else -> false
+                }
+            }
+        })
+    }
+
+    private fun showClearDialog() {
+        val label = binding.tvLabel.text.toString()
+        MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.per_app_clear_confirm_title)
+            .setMessage(getString(R.string.per_app_clear_confirm_message, label))
+            .setPositiveButton(android.R.string.ok) { _, _ ->
+                viewModel.clearRecords()
+                Toast.makeText(this, R.string.per_app_clear_success, Toast.LENGTH_SHORT).show()
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
+    }
+
     private fun renderSummary(state: PerAppCrashUiState) {
         val summary = state.summary
         if (summary != null) {
             renderSummaryStats(summary)
+        }
+        if (state.historyCleared != lastHistoryCleared) {
+            lastHistoryCleared = state.historyCleared
+            adapter.refresh()
+            viewModel.loadSummary()
         }
         showErrorToast(state.errorMessage) { viewModel.clearError() }
     }

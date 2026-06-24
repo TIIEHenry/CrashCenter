@@ -76,7 +76,7 @@ SuProbe（规划）               → 各后端各自探测                     
 
 | 进程 | RootService bind | RootAccessClient 实现 | 典型调用方 |
 |------|----------------|----------------------|------------|
-| **模块 app**（`nota.android.crash.xp.app`） | **是**，`Application.onCreate` 后后台线程 | `RootServiceRemoteAdapter` | `LegacyPrefSnapshotReader`、`CrashLogIngestCoordinator`、`RootFsBackend` |
+| **模块 app**（`nota.android.crash.xp.app`） | **是**，`Application.onCreate` 后后台线程 | `RootServiceRemoteAdapter` | `CrashLogIngestCoordinator`、`RootFsBackend` |
 | **目标 app**（hook） | **否** | `ShellOnlyAdapter` | `RootSuBackend` Phase 1 append |
 
 **hook 绝不 bind `CrashCenterRootService`**（延续 [ADR-008](../decisions/008-multi-backend-crash-log-storage.md)）：

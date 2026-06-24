@@ -44,7 +44,7 @@ class ShellNavigationCoordinatorTest {
         assertEquals(ShellTab.OBSERVE, viewModel.uiState.value.selectedTab)
         verify(navigator).select(ShellTab.OBSERVE)
         verify(delegate).syncBottomNav(ShellTab.OBSERVE)
-        verify(delegate).invalidateOptionsMenu()
+        verify(delegate).invalidateMenu()
     }
 
     @Test
@@ -69,7 +69,7 @@ class ShellNavigationCoordinatorTest {
         assertFalse(switched)
         verify(navigator, never()).select(any())
         verify(delegate).syncBottomNav(ShellTab.CONFIG)
-        verify(delegate, never()).invalidateOptionsMenu()
+        verify(delegate, never()).invalidateMenu()
     }
 
     @Test

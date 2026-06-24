@@ -64,7 +64,7 @@ class CrashEventBinderTest {
     fun `bind sets appName to appLabel when present`() {
         val e = event(appLabel = "My App")
 
-        CrashEventBinder.bind(binding, e)
+        CrashEventBinder.bindGlobal(binding, e)
 
         assertEquals("My App", binding.tvAppName.text.toString())
     }
@@ -76,7 +76,7 @@ class CrashEventBinderTest {
             message = "bad state",
         )
 
-        CrashEventBinder.bind(binding, e)
+        CrashEventBinder.bindGlobal(binding, e)
 
         val subtitle = binding.tvSubtitle.text.toString()
         assertTrue(subtitle.contains("IllegalStateException"))
@@ -87,7 +87,7 @@ class CrashEventBinderTest {
     fun `bind sets contentDescription with label and subtitle`() {
         val e = event(appLabel = "TestApp")
 
-        CrashEventBinder.bind(binding, e)
+        CrashEventBinder.bindGlobal(binding, e)
 
         val cd = binding.root.contentDescription?.toString().orEmpty()
         assertTrue(cd.contains("TestApp"))
@@ -95,7 +95,7 @@ class CrashEventBinderTest {
 
     @Test
     fun `bind sets icon drawable without crashing`() {
-        CrashEventBinder.bind(binding, event())
+        CrashEventBinder.bindGlobal(binding, event())
 
         assertNotNull(binding.ivIcon.drawable)
     }
@@ -106,7 +106,7 @@ class CrashEventBinderTest {
     fun `bind falls back to packageName when appLabel is null`() {
         val e = event(packageName = "com.example.pkg", appLabel = null)
 
-        CrashEventBinder.bind(binding, e)
+        CrashEventBinder.bindGlobal(binding, e)
 
         assertEquals("com.example.pkg", binding.tvAppName.text.toString())
     }
@@ -115,7 +115,7 @@ class CrashEventBinderTest {
     fun `bind falls back to packageName when appLabel is empty`() {
         val e = event(packageName = "com.example.pkg", appLabel = "")
 
-        CrashEventBinder.bind(binding, e)
+        CrashEventBinder.bindGlobal(binding, e)
 
         assertEquals("com.example.pkg", binding.tvAppName.text.toString())
     }
@@ -130,7 +130,7 @@ class CrashEventBinderTest {
             message = null,
         )
 
-        CrashEventBinder.bind(binding, e)
+        CrashEventBinder.bindGlobal(binding, e)
 
         val subtitle = binding.tvSubtitle.text.toString()
         assertTrue(subtitle.contains("com.example.pkg"))
@@ -144,7 +144,7 @@ class CrashEventBinderTest {
             message = "   ",
         )
 
-        CrashEventBinder.bind(binding, e)
+        CrashEventBinder.bindGlobal(binding, e)
 
         val subtitle = binding.tvSubtitle.text.toString()
         assertTrue(subtitle.contains("com.example.pkg"))
@@ -156,7 +156,7 @@ class CrashEventBinderTest {
     fun `bind shows source badge for uncaught source`() {
         val e = event(source = "uncaught")
 
-        CrashEventBinder.bind(binding, e)
+        CrashEventBinder.bindGlobal(binding, e)
 
         assertEquals(View.VISIBLE, binding.tvSourceBadge.visibility)
         assertEquals("UEH", binding.tvSourceBadge.text.toString())
@@ -166,7 +166,7 @@ class CrashEventBinderTest {
     fun `bind shows source badge for looper source`() {
         val e = event(source = "looper")
 
-        CrashEventBinder.bind(binding, e)
+        CrashEventBinder.bindGlobal(binding, e)
 
         assertEquals(View.VISIBLE, binding.tvSourceBadge.visibility)
         assertEquals("Looper", binding.tvSourceBadge.text.toString())
@@ -176,7 +176,7 @@ class CrashEventBinderTest {
     fun `bind hides source badge when source is null`() {
         val e = event(source = null)
 
-        CrashEventBinder.bind(binding, e)
+        CrashEventBinder.bindGlobal(binding, e)
 
         assertEquals(View.GONE, binding.tvSourceBadge.visibility)
     }
@@ -185,7 +185,7 @@ class CrashEventBinderTest {
     fun `bind hides source badge when source is empty`() {
         val e = event(source = "")
 
-        CrashEventBinder.bind(binding, e)
+        CrashEventBinder.bindGlobal(binding, e)
 
         assertEquals(View.GONE, binding.tvSourceBadge.visibility)
     }
@@ -194,7 +194,7 @@ class CrashEventBinderTest {
     fun `bind shows raw source label for unknown source`() {
         val e = event(source = "customSource")
 
-        CrashEventBinder.bind(binding, e)
+        CrashEventBinder.bindGlobal(binding, e)
 
         assertEquals(View.VISIBLE, binding.tvSourceBadge.visibility)
         assertEquals("customSource", binding.tvSourceBadge.text.toString())
@@ -206,7 +206,7 @@ class CrashEventBinderTest {
     fun `bind uses fallback icon for nonexistent package`() {
         val e = event(packageName = "com.nonexistent.fake.package")
 
-        CrashEventBinder.bind(binding, e)
+        CrashEventBinder.bindGlobal(binding, e)
 
         assertNotNull(binding.ivIcon.drawable)
     }

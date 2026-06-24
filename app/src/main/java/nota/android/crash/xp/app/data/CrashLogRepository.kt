@@ -22,6 +22,7 @@ interface CrashLogRepository {
     fun getCount(filter: CrashFilter = CrashFilter()): Int
     fun getPackageCounts(filter: CrashFilter = CrashFilter()): List<Pair<String, Int>>
     fun deleteById(id: String): Boolean
+    fun deleteByPackage(packageName: String): Int
     fun clear()
     fun applyRetention()
 }
@@ -129,6 +130,14 @@ class FileCrashLogRepository(
             val deleted = CanonicalJsonlWriter.deleteById(eventsFile, id)
             if (deleted) invalidateCache()
             deleted
+        }
+    }
+
+    override fun deleteByPackage(packageName: String): Int {
+        return lock.write {
+            val removed = CanonicalJsonlWriter.deleteByPackage(eventsFile, packageName)
+            if (removed > 0) invalidateCache()
+            removed
         }
     }
 

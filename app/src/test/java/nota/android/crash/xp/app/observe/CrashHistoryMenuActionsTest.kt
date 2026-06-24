@@ -53,12 +53,6 @@ class CrashHistoryMenuActionsTest {
     @Mock private lateinit var menu: Menu
     @Mock private lateinit var filterItem: MenuItem
     @Mock private lateinit var packageFilterItem: MenuItem
-    @Mock private lateinit var sortTimeNewestItem: MenuItem
-    @Mock private lateinit var sortTimeOldestItem: MenuItem
-    @Mock private lateinit var sortPackageAscItem: MenuItem
-    @Mock private lateinit var sortPackageDescItem: MenuItem
-    @Mock private lateinit var sortExceptionAscItem: MenuItem
-    @Mock private lateinit var sortExceptionDescItem: MenuItem
     @Mock private lateinit var exportItem: MenuItem
     @Mock private lateinit var retentionItem: MenuItem
     @Mock private lateinit var clearHistoryItem: MenuItem
@@ -87,12 +81,6 @@ class CrashHistoryMenuActionsTest {
         }
         whenever(fragment.viewLifecycleOwner).thenReturn(testLifecycleOwner)
 
-        `when`(sortTimeNewestItem.itemId).thenReturn(R.id.item_sort_time_newest)
-        `when`(sortTimeOldestItem.itemId).thenReturn(R.id.item_sort_time_oldest)
-        `when`(sortPackageAscItem.itemId).thenReturn(R.id.item_sort_package_asc)
-        `when`(sortPackageDescItem.itemId).thenReturn(R.id.item_sort_package_desc)
-        `when`(sortExceptionAscItem.itemId).thenReturn(R.id.item_sort_exception_asc)
-        `when`(sortExceptionDescItem.itemId).thenReturn(R.id.item_sort_exception_desc)
         `when`(filterItem.itemId).thenReturn(R.id.item_observe_filter)
         `when`(packageFilterItem.itemId).thenReturn(R.id.item_observe_package_filter)
         `when`(exportItem.itemId).thenReturn(R.id.item_observe_export)
@@ -114,84 +102,12 @@ class CrashHistoryMenuActionsTest {
     }
 
     private fun menuItem(id: Int): MenuItem = when (id) {
-        R.id.item_sort_time_newest -> sortTimeNewestItem
-        R.id.item_sort_time_oldest -> sortTimeOldestItem
-        R.id.item_sort_package_asc -> sortPackageAscItem
-        R.id.item_sort_package_desc -> sortPackageDescItem
-        R.id.item_sort_exception_asc -> sortExceptionAscItem
-        R.id.item_sort_exception_desc -> sortExceptionDescItem
         R.id.item_observe_filter -> filterItem
         R.id.item_observe_package_filter -> packageFilterItem
         R.id.item_observe_export -> exportItem
         R.id.item_observe_retention -> retentionItem
         R.id.item_clear_history -> clearHistoryItem
         else -> unknownItem
-    }
-
-    // ─── Sort Mode Delegation ───
-
-    @Test
-    fun `handleItem sort_time_newest delegates setSortMode`() = testScope.runTest {
-        val handled = actions.handleItem(menuItem(R.id.item_sort_time_newest))
-
-        assertTrue(handled)
-        assertEquals(CrashSortMode.TIME_NEWEST, viewModel.uiState.value.sortMode)
-    }
-
-    @Test
-    fun `handleItem sort_time_oldest delegates setSortMode`() = testScope.runTest {
-        val handled = actions.handleItem(menuItem(R.id.item_sort_time_oldest))
-
-        assertTrue(handled)
-        assertEquals(CrashSortMode.TIME_OLDEST, viewModel.uiState.value.sortMode)
-    }
-
-    @Test
-    fun `handleItem sort_package_asc delegates setSortMode`() = testScope.runTest {
-        val handled = actions.handleItem(menuItem(R.id.item_sort_package_asc))
-
-        assertTrue(handled)
-        assertEquals(CrashSortMode.PACKAGE_ASC, viewModel.uiState.value.sortMode)
-    }
-
-    @Test
-    fun `handleItem sort_package_desc delegates setSortMode`() = testScope.runTest {
-        val handled = actions.handleItem(menuItem(R.id.item_sort_package_desc))
-
-        assertTrue(handled)
-        assertEquals(CrashSortMode.PACKAGE_DESC, viewModel.uiState.value.sortMode)
-    }
-
-    @Test
-    fun `handleItem sort_exception_asc delegates setSortMode`() = testScope.runTest {
-        val handled = actions.handleItem(menuItem(R.id.item_sort_exception_asc))
-
-        assertTrue(handled)
-        assertEquals(CrashSortMode.EXCEPTION_ASC, viewModel.uiState.value.sortMode)
-    }
-
-    @Test
-    fun `handleItem sort_exception_desc delegates setSortMode`() = testScope.runTest {
-        val handled = actions.handleItem(menuItem(R.id.item_sort_exception_desc))
-
-        assertTrue(handled)
-        assertEquals(CrashSortMode.EXCEPTION_DESC, viewModel.uiState.value.sortMode)
-    }
-
-    @Test
-    fun `initial sortMode is TIME_NEWEST`() = testScope.runTest {
-        assertEquals(CrashSortMode.TIME_NEWEST, viewModel.uiState.value.sortMode)
-    }
-
-    @Test
-    fun `sort mode change preserves active filter`() = testScope.runTest {
-        viewModel.setFilter(CrashFilter(packageName = "com.example.a"))
-        advanceUntilIdle()
-
-        actions.handleItem(menuItem(R.id.item_sort_time_oldest))
-
-        assertEquals(CrashSortMode.TIME_OLDEST, viewModel.uiState.value.sortMode)
-        assertEquals(CrashFilter(packageName = "com.example.a"), viewModel.uiState.value.activeFilter)
     }
 
     // ─── Filter Toggle via handleItem ───

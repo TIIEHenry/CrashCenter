@@ -5,33 +5,15 @@ import nota.android.crash.xp.app.R
 import nota.android.crash.xp.app.common.ui.EmptyState
 import nota.android.crash.xp.app.databinding.FragmentConfigBinding
 
-data class EmptyDecision(
-    val isEmpty: Boolean,
-    val messageResId: Int,
-    val showAddAction: Boolean,
-    val iconResId: Int?,
-)
-
-fun decideEmpty(state: ConfigUiState, listCount: Int): EmptyDecision {
+private fun decideEmpty(state: ConfigUiState, listCount: Int): Pair<Int, Boolean> {
     val empty = !state.isLoading && listCount == 0
-    if (!empty) return EmptyDecision(
-        isEmpty = false,
-        messageResId = R.string.managed_empty_message,
-        showAddAction = false,
-        iconResId = null,
-    )
-    val showAddAction = !state.isLegacyMode &&
-        state.emptyMessage == ConfigViewModel.EMPTY_MANAGED_LIST
+    if (!empty) return Pair(R.string.managed_empty_message, false)
+    val showAction = state.emptyMessage == ConfigViewModel.EMPTY_LIST
     val messageResId = when (state.emptyMessage) {
-        ConfigViewModel.EMPTY_MANAGED_LIST -> R.string.managed_empty_message
-        else -> if (state.isLegacyMode) R.string.filter_empty else R.string.managed_filter_empty
+        ConfigViewModel.EMPTY_LIST -> R.string.managed_empty_message
+        else -> R.string.filter_empty
     }
-    return EmptyDecision(
-        isEmpty = true,
-        messageResId = messageResId,
-        showAddAction = showAddAction,
-        iconResId = if (showAddAction) R.drawable.ic_tab_config else null,
-    )
+    return Pair(messageResId, showAction)
 }
 
 class EmptyStateRenderer(
@@ -39,18 +21,20 @@ class EmptyStateRenderer(
     private val onAddManagedApp: () -> Unit,
 ) {
     fun render(state: ConfigUiState, listCount: Int) {
-        val decision = decideEmpty(state, listCount)
-        binding.emptyState.root.visibility = if (decision.isEmpty) View.VISIBLE else View.GONE
-        binding.recyclerv.visibility = if (!decision.isEmpty && listCount > 0) View.VISIBLE else View.GONE
+        val (messageResId, showAction) = decideEmpty(state, listCount)
+        val isEmpty = !state.isLoading && listCount == 0
 
-        if (decision.isEmpty) {
-            val message = binding.root.context.getString(decision.messageResId)
+        binding.emptyState.root.visibility = if (isEmpty) View.VISIBLE else View.GONE
+        binding.recyclerv.visibility = if (!isEmpty && listCount > 0) View.VISIBLE else View.GONE
+
+        if (isEmpty) {
+            val message = binding.root.context.getString(messageResId)
             EmptyState.bind(
                 binding.emptyState.root,
                 message,
-                if (decision.showAddAction) binding.root.context.getString(R.string.add_managed_app) else null,
-                if (decision.showAddAction) ({ onAddManagedApp() }) else null,
-                decision.iconResId,
+                null,
+                null,
+                null,
             )
         }
     }

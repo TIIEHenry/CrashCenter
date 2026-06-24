@@ -72,7 +72,7 @@ Material v1 已实现（见 [material-ui-redesign-2026-06-19.md](../../iteration
 
 - [x] [app-management-ui.md](../../../docs/architecture/app-management-ui.md) accepted + [ADR-015](../../../docs/decisions/015-managed-apps-intervention-rules.md)
 - [x] 迭代记录 [managed-apps-intervention-2026-06-19.md](../../iterations/configuration-ui/managed-apps-intervention-2026-06-19.md)
-- [x] 3G-α：`managed_packages` / `intervention_rules` + `PrefMigrator` 迁移 + `ScopePolicy` 扩展
+- [x] 3G-α：`managed_packages` + `ScopePolicy`（**2026-06-24**：移除 `intervention_rules` / `PrefMigrator` / legacy 双轨）
 - [x] 3G-β：受管列表 UI + 行内 Switch + `AddManagedAppBottomSheet` + `AppInterventionEditActivity`
 - [x] M5：`AddManagedAppBottomSheet` 装饰 polish — 28dp 顶圆角 + DragHandle + `peekHeight` 50%（全功能拖曳 / Full chrome morph defer）
 - [x] M2：permission banner compact — Xposed 未激活时单行文案、隐藏 Grant（整行仍可点 rationale）

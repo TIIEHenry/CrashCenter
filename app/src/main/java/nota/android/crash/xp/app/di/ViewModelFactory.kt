@@ -7,8 +7,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.savedstate.SavedStateRegistryOwner
 import nota.android.crash.analysis.RuleEngine
-import nota.android.crash.xp.app.config.AddManagedAppViewModel
-import nota.android.crash.xp.app.config.AppInterventionEditViewModel
 import nota.android.crash.xp.app.config.ConfigViewModel
 import nota.android.crash.xp.app.observe.CrashDetailViewModel
 import nota.android.crash.xp.app.observe.CrashHistoryViewModel
@@ -50,7 +48,6 @@ fun ServiceLocator.shellViewModelFactory(
 fun ServiceLocator.configViewModelFactory(context: Context): ViewModelProvider.Factory =
     ViewModelFactory {
         ConfigViewModel(
-            legacyAppRepository(context),
             managedAppRepository(context),
             packageVisibilityRepository(context),
         )
@@ -76,22 +73,6 @@ fun ServiceLocator.perAppCrashViewModelFactory(
 ): ViewModelProvider.Factory =
     ViewModelFactory {
         PerAppCrashViewModel(packageName, exceptionClass, crashLogRepository(context))
-    }
-
-fun ServiceLocator.addManagedAppViewModelFactory(context: Context): ViewModelProvider.Factory =
-    ViewModelFactory {
-        AddManagedAppViewModel(managedAppRepository(context))
-    }
-
-fun ServiceLocator.appInterventionEditViewModelFactory(
-    context: Context,
-    packageName: String,
-): ViewModelProvider.Factory =
-    ViewModelFactory {
-        AppInterventionEditViewModel(
-            packageName,
-            managedAppRepository(context),
-        )
     }
 
 /**

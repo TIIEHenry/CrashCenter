@@ -17,7 +17,6 @@ import nota.android.crash.log.CanonicalJsonlWriter
 import nota.android.crash.xp.PrefManager
 import nota.android.crash.xp.app.R
 import nota.android.crash.xp.app.data.CrashFilter
-import nota.android.crash.xp.app.data.CrashSortMode
 import nota.android.crash.xp.app.di.ServiceLocator
 import java.io.File
 import java.text.SimpleDateFormat
@@ -66,30 +65,6 @@ internal class CrashHistoryMenuActions(
             }
             R.id.item_observe_package_filter -> {
                 showPackageFilterDialog()
-                true
-            }
-            R.id.item_sort_time_newest -> {
-                viewModel.setSortMode(CrashSortMode.TIME_NEWEST)
-                true
-            }
-            R.id.item_sort_time_oldest -> {
-                viewModel.setSortMode(CrashSortMode.TIME_OLDEST)
-                true
-            }
-            R.id.item_sort_package_asc -> {
-                viewModel.setSortMode(CrashSortMode.PACKAGE_ASC)
-                true
-            }
-            R.id.item_sort_package_desc -> {
-                viewModel.setSortMode(CrashSortMode.PACKAGE_DESC)
-                true
-            }
-            R.id.item_sort_exception_asc -> {
-                viewModel.setSortMode(CrashSortMode.EXCEPTION_ASC)
-                true
-            }
-            R.id.item_sort_exception_desc -> {
-                viewModel.setSortMode(CrashSortMode.EXCEPTION_DESC)
                 true
             }
             R.id.item_observe_export -> {

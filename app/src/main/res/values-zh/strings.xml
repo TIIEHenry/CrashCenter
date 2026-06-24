@@ -61,7 +61,7 @@
     <string name="crash_history_empty">暂无崩溃记录。观测到的崩溃将显示在此处。</string>
     <string name="history_empty_action">前往配置</string>
     <string name="crash_history_loading">正在加载崩溃历史…</string>
-    <string name="crash_event_subtitle_format">%1$s · %2$s · %3$s</string>
+    <string name="crash_event_subtitle_format">%1$s · %2$s</string>
     <string name="crash_source_ueh">未捕获</string>
     <string name="crash_source_looper">循环</string>
     <string name="crash_source_ueh_a11y">未捕获异常</string>
@@ -109,7 +109,7 @@
     <string name="observe_stats_top_packages">崩溃最多包名</string>
     <string name="observe_stats_package_entry">%1$s：%2$d 次</string>
     <string name="crash_detail_not_found">未找到崩溃记录：%1$s</string>
-    <string name="legacy_app_row_a11y">%1$s，%2$s</string>
+    <string name="legacy_app_row_a11y">%1$s，%2$s，%3$s</string>
 
     <!-- Root status & crash test -->
     <string name="item_test_crash">测试崩溃</string>
@@ -149,7 +149,9 @@
     <!-- Logcat analysis (4F) -->
     <string name="tab_logcat">Logcat</string>
     <string name="observe_menu_import_logcat">导入 Logcat</string>
-    <string name="logcat_empty">未加载 Logcat 数据。请导入通过 adb logcat 抓取的 .txt 文件。</string>
+    <string name="logcat_empty">未加载 Logcat 数据。请导入通过 adb logcat 抓取的 .txt 文件，或开启 Root 模式直接读取本机 Logcat 缓冲区。</string>
+    <string name="root_permission_title">Root 授权</string>
+    <string name="root_permission_message">Root 权限用于读取已 Hook 应用的崩溃日志，以及直接读取本机 Logcat 缓冲区。\n\n请在 Root 管理器应用中为 CrashCenter 手动开启 Root 权限。</string>
     <string name="logcat_loading">正在解析 Logcat…</string>
     <string name="logcat_import_action">导入 Logcat 文件</string>
     <string name="logcat_import_error">读取 Logcat 文件失败</string>

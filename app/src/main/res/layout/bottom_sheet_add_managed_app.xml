@@ -98,6 +98,11 @@
             android:layout_height="match_parent"
             android:clipToPadding="false"
             android:paddingHorizontal="@dimen/filter_horizontal_padding"
+            app:fastScrollEnabled="true"
+            app:fastScrollHorizontalThumbDrawable="@drawable/fastscroll_thumb_horizontal"
+            app:fastScrollHorizontalTrackDrawable="@drawable/fastscroll_track_horizontal"
+            app:fastScrollVerticalThumbDrawable="@drawable/fastscroll_thumb_vertical"
+            app:fastScrollVerticalTrackDrawable="@drawable/fastscroll_track_vertical"
             tools:listitem="@layout/item_pickable_app" />
 
         <include

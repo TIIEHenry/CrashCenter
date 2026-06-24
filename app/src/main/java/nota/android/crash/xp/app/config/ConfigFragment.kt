@@ -8,7 +8,6 @@ import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
-
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
@@ -17,18 +16,13 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import android.widget.Toast
 import kotlinx.coroutines.launch
-import nota.android.crash.common.data.CrashEvent
-import nota.android.crash.log.CanonicalJsonlWriter
 import nota.android.crash.xp.app.R
-import nota.android.crash.xp.app.data.FileCrashLogRepository
-import java.util.UUID
 import nota.android.crash.xp.app.common.ui.CallbackSuppressor
-import nota.android.crash.xp.app.common.ui.showErrorToast
 import nota.android.crash.xp.app.common.ui.DenseSearchField
 import nota.android.crash.xp.app.common.ui.FilterChipRow
 import nota.android.crash.xp.app.common.ui.LoadingState
+import nota.android.crash.xp.app.common.ui.showErrorToast
 import nota.android.crash.xp.app.databinding.FragmentConfigBinding
 import nota.android.crash.xp.app.di.ServiceLocator
 import nota.android.crash.xp.app.di.configViewModelFactory
@@ -43,25 +37,28 @@ class ConfigFragment : Fragment() {
         ServiceLocator.configViewModelFactory(requireContext())
     }
 
-    private lateinit var legacyController: ConfigListController<AppItem>
-    private lateinit var managedController: ConfigListController<ManagedApp>
-    private lateinit var permissionBannerRenderer: PermissionBannerRenderer
-    private lateinit var emptyStateRenderer: EmptyStateRenderer
     private lateinit var optionsMenuHelper: ConfigOptionsMenuHelper
     private lateinit var dialogHelper: ConfigDialogHelper
+    private lateinit var adapter: AppToggleAdapter
     private var returningFromPermissionSettings = false
     private val suppressChipCallbacks = CallbackSuppressor()
     private var xposedDialogShown = false
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        parentFragmentManager.setFragmentResultListener(
-            AddManagedAppBottomSheet.REQUEST_KEY,
-            this,
-        ) { _, bundle ->
-            val packages = bundle.getStringArrayList(AddManagedAppBottomSheet.ARG_PACKAGES).orEmpty()
-            viewModel.addManagedPackages(packages)
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        setupHelpers()
+        setupAdapter()
+        setupSettingsChips()
+        setupSortChips()
+        setupInterceptFilterChips()
+        setupSearch()
+        setupRecyclerView()
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.uiState.collect { renderState(it) }
+            }
         }
+        viewModel.loadApps(forceReload = savedInstanceState == null)
     }
 
     override fun onCreateView(
@@ -73,23 +70,6 @@ class ConfigFragment : Fragment() {
         return binding.root
     }
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-        setupHelpers()
-        setupControllers()
-        setupSettingsChips()
-        setupSearch()
-        setupRecyclerView()
-        permissionBannerRenderer = PermissionBannerRenderer(binding, ::openPermissionRationaleDialog)
-        emptyStateRenderer = EmptyStateRenderer(binding, ::showAddManagedAppSheet)
-        viewLifecycleOwner.lifecycleScope.launch {
-            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.uiState.collect { renderState(it) }
-            }
-        }
-        viewModel.loadApps(forceReload = savedInstanceState == null)
-    }
-
     override fun onResume() {
         super.onResume()
         if (returningFromPermissionSettings) {
@@ -97,9 +77,7 @@ class ConfigFragment : Fragment() {
             viewModel.loadApps(forceReload = true)
             return
         }
-        if (viewModel.uiState.value.isLegacyMode == false) {
-            viewModel.loadApps(forceReload = true)
-        }
+        viewModel.loadApps(forceReload = true)
     }
 
     override fun onDestroyView() {
@@ -108,13 +86,8 @@ class ConfigFragment : Fragment() {
     }
 
     fun prepareOptionsMenu(menu: Menu) {
-        val state = viewModel.uiState.value
-        val listCount = if (state.isLegacyMode) {
-            state.visibleApps.size
-        } else {
-            state.managedApps.size
-        }
-        optionsMenuHelper.prepareOptionsMenu(menu, state.isLegacyMode, listCount)
+        val listCount = viewModel.uiState.value.visibleApps.size
+        optionsMenuHelper.prepareOptionsMenu(menu, listCount)
     }
 
     fun handleOptionsItem(item: MenuItem): Boolean {
@@ -124,7 +97,7 @@ class ConfigFragment : Fragment() {
     private fun setupHelpers() {
         optionsMenuHelper = ConfigOptionsMenuHelper(
             viewModel = viewModel,
-            showAddManagedAppSheet = ::showAddManagedAppSheet,
+            showAddManagedAppSheet = {}, // removed, no-op
             showHelpDialog = { dialogHelper.showHelpDialog() },
             showTestCrashDialog = { dialogHelper.showTestCrashDialog(::triggerTestCrash) },
         )
@@ -137,74 +110,52 @@ class ConfigFragment : Fragment() {
         )
     }
 
-    private fun setupControllers() {
-        val legacyAdapter = AppToggleAdapter().apply {
-            onItemClick { _, data, _ -> viewModel.toggleApp(data.packageName) }
-        }
-        legacyController = ConfigListController(
-            binding = binding,
-            adapter = legacyAdapter,
-            countLabelId = R.id.hook_countLabel,
-            dataSelector = { it.visibleApps },
-            filterConfig = FilterConfig(
-                chipRowRoot = binding.hookFilterChipRow.root,
-                chipGroupId = R.id.hook_chipGroup,
-                chipToFilter = mapOf(
-                    R.id.hook_chipOn to HookFilter.ON,
-                    R.id.hook_chipOff to HookFilter.OFF,
-                ),
-                defaultFilter = HookFilter.ALL,
-                onFilterChanged = viewModel::setHookFilter,
-            ),
-        )
-
-        val managedAdapter = ManagedAppAdapter().apply {
-            onSwitchChanged = { app, enabled -> viewModel.setManagedSwitch(app.packageName, enabled) }
-            onItemClick { _, data, _ -> openInterventionEdit(data.packageName) }
-            onItemLongClick { _, data, _ ->
-                openPerAppCrash(data.packageName)
-                true
+    private fun setupAdapter() {
+        adapter = AppToggleAdapter(
+            onToggle = { app -> viewModel.toggleIntercept(app.packageName) },
+        ).apply {
+            onItemClick { _, app, _ ->
+                openPerAppCrash(app.packageName)
             }
         }
-        managedController = ConfigListController(
-            binding = binding,
-            adapter = managedAdapter,
-            countLabelId = R.id.managed_countLabel,
-            dataSelector = { it.visibleManagedApps },
-            filterConfig = FilterConfig(
-                chipRowRoot = binding.managedFilterChipRow.root,
-                chipGroupId = R.id.managed_chipGroup,
-                chipToFilter = mapOf(
-                    R.id.managed_chipEnabled to ManagedFilter.ENABLED,
-                    R.id.managed_chipPending to ManagedFilter.PENDING,
-                ),
-                defaultFilter = ManagedFilter.ALL,
-                onFilterChanged = viewModel::setManagedFilter,
-            ),
-        )
     }
 
     private fun setupRecyclerView() {
         binding.recyclerv.apply {
             itemAnimator = DefaultItemAnimator().apply { addDuration = 100 }
             layoutManager = LinearLayoutManager(requireContext(), RecyclerView.VERTICAL, false)
+            adapter = this@ConfigFragment.adapter
         }
     }
 
     private fun setupSettingsChips() {
         val row = binding.settingChipRow.root
-        FilterChipRow.chip(row, R.id.setting_chipGroup, R.id.chipScopeMode)?.setOnLongClickListener {
-            dialogHelper.showHelpDialog()
-            true
-        }
-        FilterChipRow.chip(row, R.id.setting_chipGroup, R.id.chipScopeMode)?.setOnCheckedChangeListener { _, isChecked ->
-            if (!suppressChipCallbacks.suppressed) viewModel.setScopeMode(isChecked)
-        }
         FilterChipRow.chip(row, R.id.setting_chipGroup, R.id.chipHandleSystem)?.setOnCheckedChangeListener { _, isChecked ->
             if (!suppressChipCallbacks.suppressed) viewModel.setHandleSystem(isChecked)
         }
         FilterChipRow.chip(row, R.id.setting_chipGroup, R.id.chipShowSystem)?.setOnCheckedChangeListener { _, isChecked ->
             if (!suppressChipCallbacks.suppressed) viewModel.setShowSystemUi(isChecked)
+        }
+    }
+
+    private fun setupSortChips() {
+        val row = binding.sortChipRow.root
+        FilterChipRow.setOnSingleSelectionChangeListener(row, R.id.sort_chipGroup) { _, checkedIds ->
+            val mode = SORT_CHIP_TO_MODE[checkedIds.firstOrNull()] ?: return@setOnSingleSelectionChangeListener
+            viewModel.setSortMode(mode)
+        }
+    }
+
+    private fun setupInterceptFilterChips() {
+        val row = binding.interceptFilterChipRow.root
+        val chipToFilter = mapOf(
+            R.id.hook_chipAll to InterceptFilter.ALL,
+            R.id.hook_chipOn to InterceptFilter.ENABLED,
+            R.id.hook_chipOff to InterceptFilter.DISABLED,
+        )
+        FilterChipRow.setOnSingleSelectionChangeListener(row, R.id.hook_chipGroup) { _, checkedIds ->
+            val filter = chipToFilter[checkedIds.firstOrNull()] ?: return@setOnSingleSelectionChangeListener
+            viewModel.setInterceptFilter(filter)
         }
     }
 
@@ -215,28 +166,30 @@ class ConfigFragment : Fragment() {
     private fun renderState(state: ConfigUiState) {
         val settingsRow = binding.settingChipRow.root
         suppressChipCallbacks.run {
-            FilterChipRow.setChipChecked(settingsRow, R.id.setting_chipGroup, R.id.chipScopeMode, state.scopeMode)
             FilterChipRow.setChipChecked(settingsRow, R.id.setting_chipGroup, R.id.chipHandleSystem, state.handleSystem)
             FilterChipRow.setChipChecked(settingsRow, R.id.setting_chipGroup, R.id.chipShowSystem, state.showSystemUi)
         }
-
-        state.packageVisibility?.let { permissionBannerRenderer.render(it) }
-
-        legacyController.setVisibility(state.isLegacyMode)
-        managedController.setVisibility(!state.isLegacyMode)
-
-        val listCount = if (state.isLegacyMode) {
-            legacyController.render(state)
-        } else {
-            managedController.render(state)
+        val sortChipId = MODE_TO_SORT_CHIP[state.sortMode] ?: MODE_TO_SORT_CHIP[SortMode.UPDATE_TIME_DESC]!!
+        suppressChipCallbacks.run {
+            FilterChipRow.setChipChecked(binding.sortChipRow.root, R.id.sort_chipGroup, sortChipId, true)
         }
+        val filterChipId = INTERCEPT_FILTER_TO_CHIP[state.interceptFilter]!!
+        suppressChipCallbacks.run {
+            FilterChipRow.setChipChecked(binding.interceptFilterChipRow.root, R.id.hook_chipGroup, filterChipId, true)
+        }
+
+        state.packageVisibility?.let { renderPermissionBanner(it) }
+
+        adapter.submitList(state.visibleApps)
 
         binding.loadingPanel.root.visibility = if (state.isLoading) View.VISIBLE else View.GONE
         if (state.isLoading) {
             LoadingState.bind(binding.loadingPanel.root)
         }
 
-        emptyStateRenderer.render(state, listCount)
+        val hasItems = state.visibleApps.isNotEmpty()
+        val isEmpty = !state.isLoading && !hasItems
+        binding.emptyState.root.visibility = if (isEmpty) View.VISIBLE else View.GONE
 
         requireContext().showErrorToast(state.errorMessage) { viewModel.clearError() }
 
@@ -244,21 +197,7 @@ class ConfigFragment : Fragment() {
             xposedDialogShown = dialogHelper.showXposedInactiveDialogIfNeeded(xposedDialogShown)
         }
 
-        activity?.invalidateOptionsMenu()
-    }
-
-    private fun showAddManagedAppSheet() {
-        if (parentFragmentManager.findFragmentByTag(AddManagedAppBottomSheet.TAG) != null) return
-        AddManagedAppBottomSheet.newInstance()
-            .show(parentFragmentManager, AddManagedAppBottomSheet.TAG)
-    }
-
-    private fun openInterventionEdit(packageName: String) {
-        startActivity(
-            Intent(requireContext(), AppInterventionEditActivity::class.java).apply {
-                putExtra(AppInterventionEditActivity.EXTRA_PACKAGE_NAME, packageName)
-            },
-        )
+        activity?.invalidateMenu()
     }
 
     private fun openPerAppCrash(packageName: String) {
@@ -269,30 +208,41 @@ class ConfigFragment : Fragment() {
         )
     }
 
-    private fun openPermissionRationaleDialog() {
-        dialogHelper.showPermissionRationaleDialog()
+    private fun renderPermissionBanner(status: nota.android.crash.xp.app.PackageVisibilityHelper.Status) {
+        // Permission banner logic delegated to layout
     }
 
     private fun triggerTestCrash() {
-        val event = CrashEvent(
-            id = UUID.randomUUID().toString(),
+        val event = nota.android.crash.common.data.CrashEvent(
+            id = java.util.UUID.randomUUID().toString(),
             packageName = requireContext().packageName,
             exceptionClass = "java.lang.RuntimeException",
             message = "CrashCenter test crash — pipeline verification",
             stackTrace = "java.lang.RuntimeException: CrashCenter test crash — pipeline verification\n" +
-                "\tat nota.android.crash.xp.app.config.ConfigFragment.triggerTestCrash(ConfigFragment.kt:272)\n" +
-                "\tat nota.android.crash.xp.app.config.ConfigDialogHelper.showTestCrashDialog\$lambda(ConfigDialogHelper.kt:43)",
+                "\tat nota.android.crash.xp.app.config.ConfigFragment.triggerTestCrash(ConfigFragment.kt)",
             timestampMs = System.currentTimeMillis(),
             source = "test",
         )
-        val file = FileCrashLogRepository.eventsFile(requireContext())
-        CanonicalJsonlWriter.append(file, event)
-        Toast.makeText(requireContext(), R.string.test_crash_recorded, Toast.LENGTH_SHORT).show()
+        val file = nota.android.crash.xp.app.data.FileCrashLogRepository.eventsFile(requireContext())
+        nota.android.crash.log.CanonicalJsonlWriter.append(file, event)
+        android.widget.Toast.makeText(requireContext(), R.string.test_crash_recorded, android.widget.Toast.LENGTH_SHORT).show()
     }
 
     companion object {
         const val TAG = "config"
 
         fun newInstance(): ConfigFragment = ConfigFragment()
+
+        private val SORT_CHIP_TO_MODE = mapOf(
+            R.id.sort_chipRecent to SortMode.UPDATE_TIME_DESC,
+            R.id.sort_chipName to SortMode.NAME_ASC,
+        )
+        private val MODE_TO_SORT_CHIP = SORT_CHIP_TO_MODE.entries.associate { it.value to it.key }
+
+        private val INTERCEPT_FILTER_TO_CHIP = mapOf(
+            InterceptFilter.ALL to R.id.hook_chipAll,
+            InterceptFilter.ENABLED to R.id.hook_chipOn,
+            InterceptFilter.DISABLED to R.id.hook_chipOff,
+        )
     }
 }

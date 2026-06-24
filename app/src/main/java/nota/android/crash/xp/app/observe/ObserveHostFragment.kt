@@ -9,10 +9,15 @@ import android.view.ViewGroup
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.commit
 import androidx.fragment.app.viewModels
-import com.google.android.material.tabs.TabLayout
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
+import com.google.android.material.chip.Chip
+import com.google.android.material.tabs.TabLayoutMediator
+import kotlinx.coroutines.launch
 import nota.android.crash.xp.app.R
+import nota.android.crash.xp.app.data.CrashSortMode
 import nota.android.crash.xp.app.databinding.FragmentObserveHostBinding
 import nota.android.crash.xp.app.di.ServiceLocator
 import nota.android.crash.xp.app.di.crashHistoryViewModelFactory
@@ -60,24 +65,69 @@ class ObserveHostFragment : Fragment() {
 
         val binding = checkNotNull(_binding)
 
-        binding.tabLayout.addTab(binding.tabLayout.newTab().setText(R.string.tab_history))
-        binding.tabLayout.addTab(binding.tabLayout.newTab().setText(R.string.tab_stats))
-        binding.tabLayout.addTab(binding.tabLayout.newTab().setText(R.string.tab_logcat))
+        val pagerAdapter = ObservePagerAdapter(this)
+        binding.viewPager.adapter = pagerAdapter
 
-        binding.tabLayout.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
-            override fun onTabSelected(tab: TabLayout.Tab) {
-                switchToTab(tab.position)
+        TabLayoutMediator(binding.tabLayout, binding.viewPager) { tab, position ->
+            tab.text = when (position) {
+                TAB_HISTORY -> getString(R.string.tab_history)
+                TAB_STATS -> getString(R.string.tab_stats)
+                TAB_LOGCAT -> getString(R.string.tab_logcat)
+                else -> ""
             }
-            override fun onTabUnselected(tab: TabLayout.Tab) {}
-            override fun onTabReselected(tab: TabLayout.Tab) {}
+        }.attach()
+
+        binding.viewPager.registerOnPageChangeCallback(object : androidx.viewpager2.widget.ViewPager2.OnPageChangeCallback() {
+            override fun onPageSelected(position: Int) {
+                currentTab = position
+                binding.sortChipRow.visibility = if (position == TAB_HISTORY) View.VISIBLE else View.GONE
+                activity?.invalidateMenu()
+            }
         })
 
-        if (savedInstanceState == null) {
-            currentTab = TAB_HISTORY
-            binding.tabLayout.selectTab(binding.tabLayout.getTabAt(TAB_HISTORY))
-            childFragmentManager.commit {
-                replace(R.id.observeContent, CrashHistoryFragment.newInstance(), CrashHistoryFragment.TAG)
+        if (savedInstanceState != null) {
+            currentTab = binding.viewPager.currentItem
+        }
+        binding.sortChipRow.visibility = if (currentTab == TAB_HISTORY) View.VISIBLE else View.GONE
+
+        setupSortChips(binding)
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                historyViewModel.uiState.collect { syncSortChip(it.sortMode) }
             }
+        }
+    }
+
+    private fun setupSortChips(binding: FragmentObserveHostBinding) {
+        val chipToMode = mapOf(
+            R.id.item_sort_time_newest to CrashSortMode.TIME_NEWEST,
+            R.id.item_sort_time_oldest to CrashSortMode.TIME_OLDEST,
+            R.id.item_sort_package_asc to CrashSortMode.PACKAGE_ASC,
+            R.id.item_sort_package_desc to CrashSortMode.PACKAGE_DESC,
+            R.id.item_sort_exception_asc to CrashSortMode.EXCEPTION_ASC,
+            R.id.item_sort_exception_desc to CrashSortMode.EXCEPTION_DESC,
+        )
+        binding.sortChipGroup.setOnCheckedStateChangeListener { group, checkedIds ->
+            val checkedId = checkedIds.firstOrNull() ?: return@setOnCheckedStateChangeListener
+            val mode = chipToMode[checkedId] ?: return@setOnCheckedStateChangeListener
+            historyViewModel.setSortMode(mode)
+        }
+        syncSortChip(historyViewModel.uiState.value.sortMode)
+    }
+
+    private fun syncSortChip(mode: CrashSortMode) {
+        val binding = _binding ?: return
+        val chipId = when (mode) {
+            CrashSortMode.TIME_NEWEST -> R.id.item_sort_time_newest
+            CrashSortMode.TIME_OLDEST -> R.id.item_sort_time_oldest
+            CrashSortMode.PACKAGE_ASC -> R.id.item_sort_package_asc
+            CrashSortMode.PACKAGE_DESC -> R.id.item_sort_package_desc
+            CrashSortMode.EXCEPTION_ASC -> R.id.item_sort_exception_asc
+            CrashSortMode.EXCEPTION_DESC -> R.id.item_sort_exception_desc
+        }
+        val chip = binding.root.findViewById<Chip>(chipId)
+        if (chip != null && !chip.isChecked) {
+            chip.isChecked = true
         }
     }
 
@@ -87,53 +137,17 @@ class ObserveHostFragment : Fragment() {
     }
 
     fun selectSubTab(tab: Int) {
-        _binding?.tabLayout?.getTabAt(tab)?.select()
+        _binding?.viewPager?.setCurrentItem(tab, true)
     }
 
     fun openConfigTab() {
         (requireActivity() as? MainShellActivity)?.requestShellTab(ShellTab.CONFIG)
     }
 
-    private fun switchToTab(position: Int) {
-        val tag = tagForTab(position)
-        if (position == currentTab && childFragmentManager.findFragmentByTag(tag) != null) {
-            return
-        }
-        currentTab = position
-        childFragmentManager.commit {
-            when (position) {
-                TAB_HISTORY -> replace(
-                    R.id.observeContent,
-                    CrashHistoryFragment.newInstance(),
-                    CrashHistoryFragment.TAG,
-                )
-                TAB_STATS -> replace(
-                    R.id.observeContent,
-                    CrashStatsFragment.newInstance(),
-                    CrashStatsFragment.TAG,
-                )
-                TAB_LOGCAT -> replace(
-                    R.id.observeContent,
-                    LogcatFragment.newInstance(),
-                    LogcatFragment.TAG,
-                )
-            }
-        }
-        activity?.invalidateOptionsMenu()
-    }
-
-    private fun tagForTab(position: Int): String = when (position) {
-        TAB_HISTORY -> CrashHistoryFragment.TAG
-        TAB_STATS -> CrashStatsFragment.TAG
-        TAB_LOGCAT -> LogcatFragment.TAG
-        else -> CrashHistoryFragment.TAG
-    }
-
     fun prepareOptionsMenu(menu: Menu) {
         val historyOnlyIds = intArrayOf(
             R.id.item_observe_filter,
             R.id.item_observe_package_filter,
-            R.id.item_observe_sort,
         )
         val sharedIds = intArrayOf(
             R.id.item_observe_export,
@@ -168,7 +182,7 @@ class ObserveHostFragment : Fragment() {
     }
 
     private fun logcatFragment(): LogcatFragment? {
-        return childFragmentManager.findFragmentByTag(LogcatFragment.TAG) as? LogcatFragment
+        return childFragmentManager.findFragmentByTag("f$TAB_LOGCAT") as? LogcatFragment
     }
 
     companion object {

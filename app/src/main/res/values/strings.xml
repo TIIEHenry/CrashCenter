@@ -21,6 +21,11 @@
     <string name="sort_by_install_time_reverse">sort by install time (reverse)</string>
     <string name="sort_by_update_time">sort by update time</string>
     <string name="sort_by_update_time_reverse">sort by update time (reverse)</string>
+    <string name="sort_by_crash_frequency">sort by crash frequency</string>
+    <string name="sort_by_crash_frequency_reverse">sort by crash frequency (reverse)</string>
+    <string name="sort_recent_short">Recent</string>
+    <string name="sort_name_short">Name</string>
+    <string name="sort_crash_freq_short">Crash</string>
     <string name="loading_message">loading, please wait</string>
 
     <string name="xposed_not_active">Xposed module is not actived</string>
@@ -70,10 +75,14 @@
         <item quantity="one">%d crash record</item>
         <item quantity="other">%d crash records</item>
     </plurals>
+    <string name="per_app_clear_menu">Clear app records</string>
+    <string name="per_app_clear_confirm_title">Clear crash records?</string>
+    <string name="per_app_clear_confirm_message">All crash records for %s will be permanently deleted.</string>
+    <string name="per_app_clear_success">Crash records cleared</string>
     <string name="crash_history_empty">No crash records yet. Observed crashes will appear here when logging is enabled.</string>
     <string name="history_empty_action">Open configuration</string>
     <string name="crash_history_loading">Loading crash history…</string>
-    <string name="crash_event_subtitle_format">%1$s · %2$s · %3$s</string>
+    <string name="crash_event_subtitle_format">%1$s · %2$s</string>
     <string name="crash_source_ueh">UEH</string>
     <string name="crash_source_looper">Looper</string>
     <string name="crash_source_ueh_a11y">Uncaught exception handler</string>
@@ -121,7 +130,7 @@
     <string name="observe_stats_top_packages">Top crashing packages</string>
     <string name="observe_stats_package_entry">%1$s: %2$d crashes</string>
     <string name="crash_detail_not_found">Crash record not found: %1$s</string>
-    <string name="legacy_app_row_a11y">%1$s, %2$s</string>
+    <string name="legacy_app_row_a11y">%1$s, %2$s, %3$s</string>
 
     <!-- Managed apps (Phase 3G) -->
     <string name="managed_filter_enabled">Intercepting</string>
@@ -155,7 +164,9 @@
     <!-- Logcat analysis (4F) -->
     <string name="tab_logcat">Logcat</string>
     <string name="observe_menu_import_logcat">Import logcat</string>
-    <string name="logcat_empty">No logcat data loaded. Import a logcat file (.txt) captured via adb logcat.</string>
+    <string name="logcat_empty">No logcat data loaded. Import a logcat file (.txt) captured via adb logcat, or enable root mode to read logcat buffers directly.</string>
+    <string name="root_permission_title">Root access</string>
+    <string name="root_permission_message">Root access allows CrashCenter to read crash logs from hooked apps and read Logcat buffers directly from the device.\n\nPlease manually enable root permission for CrashCenter in your root manager app.</string>
     <string name="logcat_loading">Parsing logcat…</string>
     <string name="logcat_import_action">Import logcat file</string>
     <string name="logcat_import_error">Failed to read logcat file</string>

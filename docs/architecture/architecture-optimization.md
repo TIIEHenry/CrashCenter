@@ -78,7 +78,7 @@ flowchart TB
 | `nota.android.crash.xp.app.data.FileCrashLogRepository` | 模块 | canonical JSONL 读 |
 | `nota.android.crash.xp.app.ActivityMain` | 模块 | 配置 UI 全功能单体 |
 | `nota.android.crash.ActivityCrashInfo` | 模块 | 通知详情（依赖 `xp.app` UI 组件） |
-| `nota.android.crash.xp.PrefMigrator` | 模块 | legacy prefs 迁移（含可选 root 读） |
+| `nota.android.crash.xp.PrefManager` | 模块 + hook | prefs 键常量 |
 
 ### 1.3 数据流（as-is）
 

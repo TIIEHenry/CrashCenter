@@ -7,6 +7,7 @@ import nota.android.crash.xp.app.data.PerAppStats
 data class PerAppCrashUiState(
     override val isLoading: Boolean = true,
     val summary: PerAppStats? = null,
+    val historyCleared: Int = 0,
     override val errorMessage: String? = null,
 ) : LoadableState, HasErrorMessage {
     override fun copyWithLoading(isLoading: Boolean): PerAppCrashUiState = copy(isLoading = isLoading)
